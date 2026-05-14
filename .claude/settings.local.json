@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Virtual\\\\AndroidStudioProjects\\\\LifeTrack\" -Recurse -Depth 2)",
+      "Bash(Select-Object FullName, PSIsContainer)",
+      "Bash(Format-Table -AutoSize)",
+      "WebSearch",
+      "Bash(Get-ChildItem -Recurse -Filter \"*.kt\")",
+      "Bash(Select-Object FullName)",
+      "Bash(xargs grep -l \"Instant\\\\|ColumnAdapter\")",
+      "WebFetch(domain:central.sonatype.com)",
+      "WebFetch(domain:github.com)"
+    ]
+  }
+}

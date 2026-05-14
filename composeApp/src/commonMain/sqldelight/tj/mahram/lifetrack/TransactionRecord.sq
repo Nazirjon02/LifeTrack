@@ -1,0 +1,45 @@
+CREATE TABLE transaction_record (
+    id TEXT NOT NULL PRIMARY KEY,
+    amount REAL NOT NULL,
+    type TEXT NOT NULL,
+    categoryId TEXT NOT NULL,
+    note TEXT,
+    date INTEGER NOT NULL,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    isRecurring INTEGER NOT NULL DEFAULT 0,
+    recurringType TEXT,
+    cryptoCoinId TEXT
+);
+
+insertTransaction:
+INSERT INTO transaction_record VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectAllTransactions:
+SELECT * FROM transaction_record ORDER BY date DESC;
+
+selectTransactionsByType:
+SELECT * FROM transaction_record WHERE type = ? ORDER BY date DESC;
+
+selectTransactionsByCategory:
+SELECT * FROM transaction_record WHERE categoryId = ? ORDER BY date DESC;
+
+selectTransactionsByDateRange:
+SELECT * FROM transaction_record WHERE date >= :startDate AND date <= :endDate ORDER BY date DESC;
+
+selectTransactionsByTypeAndDateRange:
+SELECT * FROM transaction_record WHERE type = ? AND date >= :startDate AND date <= :endDate ORDER BY date DESC;
+
+sumByTypeAndDateRange:
+SELECT COALESCE(SUM(amount), 0.0) FROM transaction_record WHERE type = ? AND date >= :startDate AND date <= :endDate;
+
+searchTransactions:
+SELECT * FROM transaction_record WHERE note LIKE '%' || :query || '%' ORDER BY date DESC;
+
+updateTransaction:
+UPDATE transaction_record SET amount = ?, type = ?, categoryId = ?, note = ?, date = ?, currency = ? WHERE id = ?;
+
+deleteTransaction:
+DELETE FROM transaction_record WHERE id = ?;
+
+selectRecentTransactions:
+SELECT * FROM transaction_record ORDER BY date DESC LIMIT :limit;

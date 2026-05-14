@@ -1,0 +1,68 @@
+CREATE TABLE crypto_portfolio_item (
+    id TEXT NOT NULL PRIMARY KEY,
+    coinId TEXT NOT NULL,
+    coinSymbol TEXT NOT NULL,
+    coinName TEXT NOT NULL,
+    amount REAL NOT NULL,
+    purchasePrice REAL NOT NULL DEFAULT 0.0,
+    addedAt INTEGER NOT NULL
+);
+
+CREATE TABLE crypto_watchlist_item (
+    coinId TEXT NOT NULL PRIMARY KEY,
+    coinSymbol TEXT NOT NULL,
+    coinName TEXT NOT NULL,
+    addedAt INTEGER NOT NULL
+);
+
+CREATE TABLE crypto_price_alert (
+    id TEXT NOT NULL PRIMARY KEY,
+    coinId TEXT NOT NULL,
+    coinSymbol TEXT NOT NULL,
+    targetPrice REAL NOT NULL,
+    isAbove INTEGER NOT NULL DEFAULT 1,
+    isTriggered INTEGER NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL
+);
+
+insertPortfolioItem:
+INSERT INTO crypto_portfolio_item VALUES (?, ?, ?, ?, ?, ?, ?);
+
+selectAllPortfolioItems:
+SELECT * FROM crypto_portfolio_item ORDER BY addedAt DESC;
+
+selectPortfolioItemByCoinId:
+SELECT * FROM crypto_portfolio_item WHERE coinId = ?;
+
+updatePortfolioItemAmount:
+UPDATE crypto_portfolio_item SET amount = ? WHERE id = ?;
+
+deletePortfolioItem:
+DELETE FROM crypto_portfolio_item WHERE id = ?;
+
+insertWatchlistItem:
+INSERT OR REPLACE INTO crypto_watchlist_item VALUES (?, ?, ?, ?);
+
+selectAllWatchlistItems:
+SELECT * FROM crypto_watchlist_item ORDER BY addedAt DESC;
+
+isInWatchlist:
+SELECT COUNT(*) FROM crypto_watchlist_item WHERE coinId = ?;
+
+deleteWatchlistItem:
+DELETE FROM crypto_watchlist_item WHERE coinId = ?;
+
+insertPriceAlert:
+INSERT INTO crypto_price_alert VALUES (?, ?, ?, ?, ?, ?, ?);
+
+selectAllPriceAlerts:
+SELECT * FROM crypto_price_alert ORDER BY createdAt DESC;
+
+selectActiveAlertsByCoin:
+SELECT * FROM crypto_price_alert WHERE coinId = ? AND isTriggered = 0;
+
+updateAlertTriggered:
+UPDATE crypto_price_alert SET isTriggered = 1 WHERE id = ?;
+
+deletePriceAlert:
+DELETE FROM crypto_price_alert WHERE id = ?;

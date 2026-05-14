@@ -1,0 +1,26 @@
+CREATE TABLE budget (
+    id TEXT NOT NULL PRIMARY KEY,
+    categoryId TEXT NOT NULL,
+    amount REAL NOT NULL,
+    period TEXT NOT NULL DEFAULT 'MONTHLY',
+    startDate INTEGER NOT NULL,
+    endDate INTEGER NOT NULL
+);
+
+insertBudget:
+INSERT INTO budget VALUES (?, ?, ?, ?, ?, ?);
+
+selectAllBudgets:
+SELECT * FROM budget ORDER BY startDate DESC;
+
+selectBudgetByCategory:
+SELECT * FROM budget WHERE categoryId = ?;
+
+selectActiveBudgets:
+SELECT * FROM budget WHERE startDate <= :now AND endDate >= :now;
+
+updateBudget:
+UPDATE budget SET amount = ?, period = ?, startDate = ?, endDate = ? WHERE id = ?;
+
+deleteBudget:
+DELETE FROM budget WHERE id = ?;

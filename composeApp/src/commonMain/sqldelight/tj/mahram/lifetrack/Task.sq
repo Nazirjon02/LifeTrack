@@ -1,0 +1,73 @@
+CREATE TABLE task (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    priority TEXT NOT NULL DEFAULT 'MEDIUM',
+    categoryId TEXT,
+    isCompleted INTEGER NOT NULL DEFAULT 0,
+    dueDate INTEGER,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    isRecurring INTEGER NOT NULL DEFAULT 0,
+    recurringType TEXT,
+    parentTaskId TEXT
+);
+
+insertTask:
+INSERT INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectAllTasks:
+SELECT * FROM task WHERE parentTaskId IS NULL ORDER BY
+    CASE priority
+        WHEN 'CRITICAL' THEN 1
+        WHEN 'HIGH' THEN 2
+        WHEN 'MEDIUM' THEN 3
+        ELSE 4
+    END,
+    createdAt DESC;
+
+selectTaskById:
+SELECT * FROM task WHERE id = ?;
+
+selectSubtasks:
+SELECT * FROM task WHERE parentTaskId = ? ORDER BY createdAt ASC;
+
+selectTasksForToday:
+SELECT * FROM task
+WHERE dueDate >= :startOfDay AND dueDate <= :endOfDay AND parentTaskId IS NULL
+ORDER BY isCompleted ASC,
+    CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 ELSE 4 END;
+
+selectTasksByCategory:
+SELECT * FROM task WHERE categoryId = ? AND parentTaskId IS NULL ORDER BY createdAt DESC;
+
+selectCompletedTasks:
+SELECT * FROM task WHERE isCompleted = 1 AND parentTaskId IS NULL ORDER BY updatedAt DESC;
+
+selectPendingTasks:
+SELECT * FROM task WHERE isCompleted = 0 AND parentTaskId IS NULL ORDER BY
+    CASE priority WHEN 'CRITICAL' THEN 1 WHEN 'HIGH' THEN 2 WHEN 'MEDIUM' THEN 3 ELSE 4 END;
+
+searchTasks:
+SELECT * FROM task WHERE (title LIKE '%' || :query || '%' OR description LIKE '%' || :query || '%') AND parentTaskId IS NULL ORDER BY createdAt DESC;
+
+updateTask:
+UPDATE task SET title = ?, description = ?, priority = ?, categoryId = ?, isCompleted = ?, dueDate = ?, updatedAt = ?, isRecurring = ?, recurringType = ? WHERE id = ?;
+
+updateTaskCompletion:
+UPDATE task SET isCompleted = ?, updatedAt = ? WHERE id = ?;
+
+deleteTask:
+DELETE FROM task WHERE id = ?;
+
+deleteSubtasks:
+DELETE FROM task WHERE parentTaskId = ?;
+
+countCompletedToday:
+SELECT COUNT(*) FROM task WHERE isCompleted = 1 AND dueDate >= :startOfDay AND dueDate <= :endOfDay;
+
+countTotalToday:
+SELECT COUNT(*) FROM task WHERE dueDate >= :startOfDay AND dueDate <= :endOfDay;
+
+countCompletedInRange:
+SELECT COUNT(*) FROM task WHERE isCompleted = 1 AND updatedAt >= :start AND updatedAt <= :end;
