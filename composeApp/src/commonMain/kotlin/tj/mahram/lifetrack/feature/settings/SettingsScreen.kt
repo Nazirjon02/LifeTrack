@@ -1,15 +1,25 @@
 package tj.mahram.lifetrack.feature.settings
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
+import androidx.compose.foundation.border
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.AppTheme
 import tj.mahram.lifetrack.domain.model.SupportedCurrencies
@@ -27,57 +37,69 @@ class SettingsScreen : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
+    val s = LocalStrings.current
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("Settings") },
-                colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
+                title = {
+                    Column {
+                        Text(
+                            s.settingsTitle,
+                            style = MaterialTheme.typography.headlineSmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                        Text(
+                            s.settingsSubtitle,
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                },
+                colors = TopAppBarDefaults.topAppBarColors(
+                    containerColor = MaterialTheme.colorScheme.background
+                )
             )
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(
-                top = padding.calculateTopPadding(),
-                bottom = padding.calculateBottomPadding() + 16.dp
-            )
+                top = padding.calculateTopPadding() + 8.dp,
+                start = 16.dp,
+                end = 16.dp,
+                bottom = padding.calculateBottomPadding() + 32.dp
+            ),
+            verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            item { SettingsHeader("Appearance") }
-            item {
-                SettingsRow(title = "Theme") {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AppTheme.entries.forEach { theme ->
-                            FilterChip(
-                                selected = state.settings.theme == theme,
-                                onClick = { onIntent(SettingsIntent.SetTheme(theme)) },
-                                label = { Text(theme.label, style = MaterialTheme.typography.labelSmall) }
-                            )
-                        }
-                    }
-                }
-            }
 
-            item { SettingsHeader("Finance") }
+            // ── Appearance ──────────────────────────────────────────
+            item { SectionLabel(s.sectionAppearance) }
             item {
-                SettingsRow(title = "Base Currency") {
-                    var expanded by remember { mutableStateOf(false) }
-                    ExposedDropdownMenuBox(expanded = expanded, onExpandedChange = { expanded = it }) {
-                        OutlinedTextField(
-                            value = state.settings.currency,
-                            onValueChange = {},
-                            readOnly = true,
-                            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                            modifier = Modifier.menuAnchor().width(120.dp),
-                            textStyle = MaterialTheme.typography.bodySmall
+                SettingsCard {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            s.labelTheme,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
-                        ExposedDropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
-                            SupportedCurrencies.forEach { currency ->
-                                DropdownMenuItem(
-                                    text = { Text(currency) },
-                                    onClick = {
-                                        onIntent(SettingsIntent.SetCurrency(currency))
-                                        expanded = false
-                                    }
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                            AppTheme.entries.forEach { theme ->
+                                val (emoji, themeLabel) = when (theme) {
+                                    AppTheme.DARK   -> "🌙" to s.themeDark
+                                    AppTheme.LIGHT  -> "☀️" to s.themeLight
+                                    AppTheme.SYSTEM -> "💻" to s.themeSystem
+                                }
+                                EmojiSelectChip(
+                                    emoji = emoji,
+                                    label = themeLabel,
+                                    isSelected = state.settings.theme == theme,
+                                    onClick = { onIntent(SettingsIntent.SetTheme(theme)) },
+                                    modifier = Modifier.weight(1f)
                                 )
                             }
                         }
@@ -85,55 +107,357 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                 }
             }
 
-            item { SettingsHeader("Language") }
+            // ── Language ─────────────────────────────────────────────
+            item { SectionLabel(s.sectionLanguage) }
             item {
-                SettingsRow(title = "App Language") {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        AppLanguage.entries.forEach { lang ->
-                            FilterChip(
-                                selected = state.settings.language == lang,
-                                onClick = { onIntent(SettingsIntent.SetLanguage(lang)) },
-                                label = { Text(lang.label, style = MaterialTheme.typography.labelSmall) }
+                SettingsCard {
+                    Column(
+                        modifier = Modifier.padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Text(
+                            s.labelAppLanguage,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                            LanguageCard(
+                                flag = "🇺🇸",
+                                name = "English",
+                                isSelected = state.settings.language == AppLanguage.ENGLISH,
+                                onClick = { onIntent(SettingsIntent.SetLanguage(AppLanguage.ENGLISH)) },
+                                modifier = Modifier.weight(1f)
+                            )
+                            LanguageCard(
+                                flag = "🇷🇺",
+                                name = "Русский",
+                                isSelected = state.settings.language == AppLanguage.RUSSIAN,
+                                onClick = { onIntent(SettingsIntent.SetLanguage(AppLanguage.RUSSIAN)) },
+                                modifier = Modifier.weight(1f)
                             )
                         }
                     }
                 }
             }
 
-            item { SettingsHeader("Notifications") }
+            // ── Finance ───────────────────────────────────────────────
+            item { SectionLabel(s.sectionFinance) }
             item {
-                SwitchRow("Enable Notifications", state.settings.notificationsEnabled) {
-                    onIntent(SettingsIntent.SetNotifications(it))
-                }
-            }
-            item {
-                SwitchRow("Task Reminders", state.settings.taskNotificationsEnabled) {
-                    onIntent(SettingsIntent.SetTaskNotifications(it))
-                }
-            }
-            item {
-                SwitchRow("Finance Alerts", state.settings.financeNotificationsEnabled) {
-                    onIntent(SettingsIntent.SetFinanceNotifications(it))
-                }
-            }
-            item {
-                SwitchRow("Crypto Price Alerts", state.settings.cryptoNotificationsEnabled) {
-                    onIntent(SettingsIntent.SetCryptoNotifications(it))
+                SettingsCard {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 14.dp),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                s.labelBaseCurrency,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            Text(
+                                s.labelCurrencySubtitle,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                        var expanded by remember { mutableStateOf(false) }
+                        ExposedDropdownMenuBox(
+                            expanded = expanded,
+                            onExpandedChange = { expanded = it }
+                        ) {
+                            OutlinedTextField(
+                                value = state.settings.currency,
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = {
+                                    ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+                                },
+                                modifier = Modifier
+                                    .menuAnchor()
+                                    .width(120.dp),
+                                textStyle = MaterialTheme.typography.bodySmall,
+                                shape = RoundedCornerShape(12.dp)
+                            )
+                            ExposedDropdownMenu(
+                                expanded = expanded,
+                                onDismissRequest = { expanded = false }
+                            ) {
+                                SupportedCurrencies.forEach { currency ->
+                                    DropdownMenuItem(
+                                        text = { Text(currency) },
+                                        onClick = {
+                                            onIntent(SettingsIntent.SetCurrency(currency))
+                                            expanded = false
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
-            item { SettingsHeader("About") }
+            // ── Notifications ─────────────────────────────────────────
+            item { SectionLabel(s.sectionNotifications) }
             item {
-                ListItem(
-                    headlineContent = { Text("LifeTrack") },
-                    supportingContent = { Text("Version 1.0.0 • Kotlin Multiplatform") },
-                    colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)
-                )
+                SettingsCard {
+                    Column {
+                        NotifRow(
+                            title = s.labelEnableNotif,
+                            subtitle = s.labelEnableNotifSub,
+                            checked = state.settings.notificationsEnabled,
+                            onToggle = { onIntent(SettingsIntent.SetNotifications(it)) },
+                            showDivider = true
+                        )
+                        NotifRow(
+                            title = s.labelTaskReminders,
+                            subtitle = s.labelTaskRemindersSub,
+                            checked = state.settings.taskNotificationsEnabled,
+                            onToggle = { onIntent(SettingsIntent.SetTaskNotifications(it)) },
+                            showDivider = true
+                        )
+                        NotifRow(
+                            title = s.labelFinanceAlerts,
+                            subtitle = s.labelFinanceAlertsSub,
+                            checked = state.settings.financeNotificationsEnabled,
+                            onToggle = { onIntent(SettingsIntent.SetFinanceNotifications(it)) },
+                            showDivider = false
+                        )
+                    }
+                }
+            }
+
+            // ── About ─────────────────────────────────────────────────
+            item { SectionLabel(s.sectionAbout) }
+            item {
+                SettingsCard {
+                    ListItem(
+                        leadingContent = {
+                            Box(
+                                modifier = Modifier
+                                    .size(42.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text("⚡", style = MaterialTheme.typography.titleLarge)
+                            }
+                        },
+                        headlineContent = {
+                            Text("LifeTrack", fontWeight = FontWeight.SemiBold)
+                        },
+                        supportingContent = {
+                            Text(
+                                s.aboutVersion,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        },
+                        colors = ListItemDefaults.colors(
+                            containerColor = MaterialTheme.colorScheme.surface
+                        )
+                    )
+                }
             }
         }
     }
 }
 
+// ── Private helpers ────────────────────────────────────────────────────────────
+
+@Composable
+private fun SectionLabel(title: String) {
+    Text(
+        title,
+        style = MaterialTheme.typography.labelMedium,
+        fontWeight = FontWeight.SemiBold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
+    )
+}
+
+@Composable
+private fun SettingsCard(content: @Composable () -> Unit) {
+    Card(
+        shape = RoundedCornerShape(20.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        modifier = Modifier.fillMaxWidth()
+    ) {
+        content()
+    }
+}
+
+@Composable
+private fun LanguageCard(
+    flag: String,
+    name: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        animationSpec = tween(250),
+        label = "langBg"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected)
+            MaterialTheme.colorScheme.primary
+        else
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+        animationSpec = tween(250),
+        label = "langBorder"
+    )
+    val textColor by animateColorAsState(
+        targetValue = if (isSelected)
+            MaterialTheme.colorScheme.onPrimaryContainer
+        else
+            MaterialTheme.colorScheme.onSurface,
+        animationSpec = tween(250),
+        label = "langText"
+    )
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(16.dp))
+            .background(bgColor)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(16.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 20.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            Text(flag, style = MaterialTheme.typography.headlineMedium)
+            Text(
+                name,
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
+                color = textColor
+            )
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(
+                        if (isSelected) MaterialTheme.colorScheme.primary
+                        else MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                    )
+            )
+        }
+    }
+}
+
+@Composable
+private fun EmojiSelectChip(
+    emoji: String,
+    label: String,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val bgColor by animateColorAsState(
+        targetValue = if (isSelected)
+            MaterialTheme.colorScheme.primaryContainer
+        else
+            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        animationSpec = tween(250),
+        label = "chipBg"
+    )
+    val borderColor by animateColorAsState(
+        targetValue = if (isSelected)
+            MaterialTheme.colorScheme.primary
+        else
+            MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+        animationSpec = tween(250),
+        label = "chipBorder"
+    )
+
+    Box(
+        modifier = modifier
+            .clip(RoundedCornerShape(12.dp))
+            .background(bgColor)
+            .border(
+                width = if (isSelected) 1.5.dp else 1.dp,
+                color = borderColor,
+                shape = RoundedCornerShape(12.dp)
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 10.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            Text(emoji, style = MaterialTheme.typography.bodyLarge)
+            Text(
+                label,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                color = if (isSelected)
+                    MaterialTheme.colorScheme.onPrimaryContainer
+                else
+                    MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun NotifRow(
+    title: String,
+    subtitle: String,
+    checked: Boolean,
+    onToggle: (Boolean) -> Unit,
+    showDivider: Boolean
+) {
+    ListItem(
+        headlineContent = {
+            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+        },
+        supportingContent = {
+            Text(
+                subtitle,
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        },
+        trailingContent = {
+            Switch(
+                checked = checked,
+                onCheckedChange = onToggle,
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary
+                )
+            )
+        },
+        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)
+    )
+    if (showDivider) {
+        HorizontalDivider(
+            modifier = Modifier.padding(horizontal = 16.dp),
+            color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
+        )
+    }
+}
+
+// Legacy helpers
 @Composable
 fun SettingsHeader(title: String) {
     Text(
@@ -162,7 +486,10 @@ fun SwitchRow(title: String, checked: Boolean, onToggle: (Boolean) -> Unit) {
             Switch(
                 checked = checked,
                 onCheckedChange = onToggle,
-                colors = SwitchDefaults.colors(checkedThumbColor = MaterialTheme.colorScheme.onPrimary, checkedTrackColor = MaterialTheme.colorScheme.primary)
+                colors = SwitchDefaults.colors(
+                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                    checkedTrackColor = MaterialTheme.colorScheme.primary
+                )
             )
         },
         colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)

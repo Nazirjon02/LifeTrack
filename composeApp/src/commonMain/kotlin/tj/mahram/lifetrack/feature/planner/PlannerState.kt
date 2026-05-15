@@ -18,8 +18,11 @@ data class PlannerState(
             (searchQuery.isBlank() || task.title.contains(searchQuery, ignoreCase = true))
         }
 
-    val pendingTasks: List<Task> get() = filteredTasks.filter { !it.isCompleted }
+    val pendingTasks: List<Task>   get() = filteredTasks.filter { !it.isCompleted }
     val completedTasks: List<Task> get() = filteredTasks.filter { it.isCompleted }
+
+    val progressPercent: Float
+        get() = if (tasks.isEmpty()) 0f else tasks.count { it.isCompleted }.toFloat() / tasks.size
 }
 
 sealed class PlannerIntent {

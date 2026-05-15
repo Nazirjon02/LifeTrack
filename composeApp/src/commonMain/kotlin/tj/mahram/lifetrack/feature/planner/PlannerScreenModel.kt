@@ -2,9 +2,12 @@ package tj.mahram.lifetrack.feature.planner
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlin.time.Clock
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import tj.mahram.lifetrack.domain.model.CategoryType
+import tj.mahram.lifetrack.domain.model.TaskPriority
 import tj.mahram.lifetrack.domain.repository.CategoryRepository
 import tj.mahram.lifetrack.domain.usecase.task.*
 
@@ -23,6 +26,7 @@ class PlannerScreenModel(
     init {
         observeTasks()
         observeCategories()
+        seedDefaultTasksIfEmpty()
     }
 
     fun handleIntent(intent: PlannerIntent) {
@@ -33,7 +37,9 @@ class PlannerScreenModel(
             is PlannerIntent.DeleteTask -> screenModelScope.launch {
                 deleteTask(intent.taskId)
             }
-            is PlannerIntent.SelectCategory -> _state.update { it.copy(selectedCategoryId = intent.categoryId) }
+            is PlannerIntent.SelectCategory ->
+                _state.update { it.copy(selectedCategoryId = intent.categoryId) }
+
             is PlannerIntent.Search -> {
                 _state.update { it.copy(searchQuery = intent.query) }
                 if (intent.query.isNotBlank()) {
@@ -42,10 +48,14 @@ class PlannerScreenModel(
                             _state.update { it.copy(tasks = tasks) }
                         }
                     }
-                } else observeTasks()
+                } else {
+                    observeTasks()
+                }
             }
+
             PlannerIntent.ShowAddTask -> _state.update { it.copy(showAddTaskSheet = true) }
             PlannerIntent.HideAddTask -> _state.update { it.copy(showAddTaskSheet = false) }
+
             is PlannerIntent.CreateTask -> screenModelScope.launch {
                 try {
                     createTask(
@@ -75,6 +85,35 @@ class PlannerScreenModel(
         screenModelScope.launch {
             categoryRepository.getCategoriesByType(CategoryType.TASK).collectLatest { cats ->
                 _state.update { it.copy(categories = cats) }
+            }
+        }
+    }
+
+    private fun seedDefaultTasksIfEmpty() {
+        screenModelScope.launch {
+            delay(400L) // wait for first DB emission
+            val existing = getAllTasks().first()
+            if (existing.isNotEmpty()) return@launch
+
+            val today = Clock.System.now().toEpochMilliseconds()
+            val defaultTasks = listOf(
+                Triple("Deep work session 🎯",     TaskPriority.CRITICAL, "Focus on your most important project"),
+                Triple("Morning workout 💪",        TaskPriority.HIGH,     "Start the day strong and energized"),
+                Triple("Plan tomorrow's goals 📋",  TaskPriority.HIGH,     "End the day with tomorrow clarified"),
+                Triple("Read for 30 minutes 📚",    TaskPriority.MEDIUM,   "Expand your knowledge daily"),
+                Triple("Review notes & ideas 📝",   TaskPriority.MEDIUM,   "Keep your projects on track"),
+                Triple("Meditate 10 minutes 🧘",    TaskPriority.LOW,      "Clear your mind and reduce stress"),
+                Triple("Connect with a friend 🤝",  TaskPriority.LOW,      "Relationships are your superpower"),
+            )
+            defaultTasks.forEach { (title, priority, description) ->
+                runCatching {
+                    createTask(
+                        title = title,
+                        description = description,
+                        priority = priority,
+                        dueDateMillis = today
+                    )
+                }
             }
         }
     }

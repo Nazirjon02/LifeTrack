@@ -1,27 +1,23 @@
 package tj.mahram.lifetrack.feature.dashboard
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
-import kotlinx.datetime.Instant as KInstant
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.core.util.MonthNames
 import tj.mahram.lifetrack.core.util.formatCurrency
-import tj.mahram.lifetrack.core.util.formatPercent
 import tj.mahram.lifetrack.ui.theme.ErrorColor
 import tj.mahram.lifetrack.ui.theme.SuccessColor
 
@@ -39,8 +35,8 @@ class DashboardScreen : Screen {
 @Composable
 fun DashboardContent(state: DashboardState, onRefresh: () -> Unit) {
     val tz = TimeZone.currentSystemDefault()
-    val now = Clock.System.now().toEpochMilliseconds().let { KInstant.fromEpochMilliseconds(it) }.toLocalDateTime(tz)
-    val dateStr = "${now.dayOfMonth} ${tj.mahram.lifetrack.core.util.MonthNames[now.monthNumber - 1]} ${now.year}"
+    val now = Clock.System.now().toLocalDateTime(tz)
+    val dateStr = "${now.dayOfMonth} ${MonthNames[now.monthNumber - 1]} ${now.year}"
 
     Scaffold(
         topBar = {
@@ -75,13 +71,13 @@ fun DashboardContent(state: DashboardState, onRefresh: () -> Unit) {
                 return@Column
             }
 
-            // Balance card
+            // Monthly finance card
             state.monthlyFinance?.let { finance ->
                 DashboardCard(title = "This Month") {
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly) {
-                        BalanceMini("Income", finance.totalIncome, true, state.currency)
-                        BalanceMini("Expense", finance.totalExpense, false, state.currency)
-                        BalanceMini("Balance", finance.balance, finance.balance >= 0, state.currency)
+                        BalanceMini("Income",  finance.totalIncome,  isPositive = true,  currency = state.currency)
+                        BalanceMini("Expense", finance.totalExpense, isPositive = false, currency = state.currency)
+                        BalanceMini("Balance", finance.balance, isPositive = finance.balance >= 0, currency = state.currency)
                     }
                 }
             }
@@ -89,12 +85,13 @@ fun DashboardContent(state: DashboardState, onRefresh: () -> Unit) {
             // Tasks card
             DashboardCard(title = "Today's Tasks") {
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    Box(
-                        modifier = Modifier.size(56.dp),
-                        contentAlignment = Alignment.Center
-                    ) {
+                    Box(modifier = Modifier.size(56.dp), contentAlignment = Alignment.Center) {
                         CircularProgressIndicator(
-                            progress = { if (state.totalTasksToday > 0) state.completedTasksToday.toFloat() / state.totalTasksToday else 0f },
+                            progress = {
+                                if (state.totalTasksToday > 0)
+                                    state.completedTasksToday.toFloat() / state.totalTasksToday
+                                else 0f
+                            },
                             color = MaterialTheme.colorScheme.primary,
                             trackColor = MaterialTheme.colorScheme.surfaceVariant,
                             strokeWidth = 5.dp
@@ -106,48 +103,10 @@ fun DashboardContent(state: DashboardState, onRefresh: () -> Unit) {
                     }
                     Spacer(Modifier.width(16.dp))
                     Text(
-                        if (state.totalTasksToday == 0) "No tasks today. Great!"
+                        if (state.totalTasksToday == 0) "No tasks today — enjoy! 🎉"
                         else "${state.totalTasksToday - state.completedTasksToday} remaining",
                         style = MaterialTheme.typography.bodyMedium
                     )
-                }
-            }
-
-            // Crypto portfolio mini card
-            state.portfolioSummary?.let { portfolio ->
-                if (portfolio.totalValue > 0) {
-                    DashboardCard(title = "Crypto Portfolio") {
-                        val isPositive = portfolio.totalPnl >= 0
-                        Row(
-                            Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Column {
-                                Text(
-                                    portfolio.totalValue.formatCurrency(state.currency),
-                                    style = MaterialTheme.typography.titleLarge,
-                                    color = MaterialTheme.colorScheme.onSurface
-                                )
-                                Text(
-                                    "Total Value",
-                                    style = MaterialTheme.typography.labelSmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                            Surface(
-                                shape = RoundedCornerShape(8.dp),
-                                color = (if (isPositive) SuccessColor else ErrorColor).copy(alpha = 0.15f)
-                            ) {
-                                Text(
-                                    portfolio.totalPnlPercent.formatPercent(),
-                                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 5.dp),
-                                    color = if (isPositive) SuccessColor else ErrorColor,
-                                    style = MaterialTheme.typography.labelMedium
-                                )
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -165,11 +124,7 @@ fun DashboardCard(title: String, content: @Composable ColumnScope.() -> Unit) {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Text(
-                title,
-                style = MaterialTheme.typography.titleSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
+            Text(title, style = MaterialTheme.typography.titleSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Spacer(Modifier.height(12.dp))
             content()
         }

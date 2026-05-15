@@ -10,7 +10,6 @@ import kotlinx.datetime.toLocalDateTime
 import tj.mahram.lifetrack.core.util.endOfMonth
 import tj.mahram.lifetrack.core.util.startOfMonth
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
-import tj.mahram.lifetrack.domain.usecase.crypto.GetPortfolioSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetFinanceSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.task.GetTaskStatsUseCase
 import tj.mahram.lifetrack.domain.usecase.task.GetTodayTasksUseCase
@@ -19,7 +18,6 @@ class DashboardScreenModel(
     private val getTodayTasks: GetTodayTasksUseCase,
     private val getTaskStats: GetTaskStatsUseCase,
     private val getFinanceSummary: GetFinanceSummaryUseCase,
-    private val getPortfolioSummary: GetPortfolioSummaryUseCase,
     private val settingsRepository: SettingsRepository
 ) : ScreenModel {
 
@@ -41,7 +39,7 @@ class DashboardScreenModel(
             val greeting = when {
                 hour < 12 -> "Good morning"
                 hour < 17 -> "Good afternoon"
-                else -> "Good evening"
+                else      -> "Good evening"
             }
 
             settingsRepository.getSettings().collectLatest { settings ->
@@ -49,9 +47,6 @@ class DashboardScreenModel(
                     val (completed, total) = getTaskStats()
                     val finance = try {
                         getFinanceSummary(startOfMonth(), endOfMonth())
-                    } catch (e: Exception) { null }
-                    val portfolio = try {
-                        getPortfolioSummary(settings.currency.lowercase()).getOrNull()
                     } catch (e: Exception) { null }
 
                     _state.update {
@@ -62,7 +57,6 @@ class DashboardScreenModel(
                             completedTasksToday = completed,
                             totalTasksToday = total,
                             monthlyFinance = finance,
-                            portfolioSummary = portfolio,
                             currency = settings.currency
                         )
                     }
