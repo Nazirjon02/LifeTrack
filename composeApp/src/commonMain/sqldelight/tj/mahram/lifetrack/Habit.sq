@@ -1,0 +1,53 @@
+CREATE TABLE habit (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    icon TEXT NOT NULL DEFAULT '⚡',
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    frequency TEXT NOT NULL DEFAULT 'DAILY',
+    targetDaysPerWeek INTEGER NOT NULL DEFAULT 7,
+    createdAt INTEGER NOT NULL,
+    isArchived INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE habit_entry (
+    id TEXT NOT NULL PRIMARY KEY,
+    habitId TEXT NOT NULL,
+    completedAt INTEGER NOT NULL
+);
+
+insertHabit:
+INSERT INTO habit VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectAllHabits:
+SELECT * FROM habit WHERE isArchived = 0 ORDER BY createdAt ASC;
+
+selectHabitById:
+SELECT * FROM habit WHERE id = ?;
+
+updateHabit:
+UPDATE habit SET name = ?, description = ?, icon = ?, color = ?, frequency = ?, targetDaysPerWeek = ? WHERE id = ?;
+
+archiveHabit:
+UPDATE habit SET isArchived = 1 WHERE id = ?;
+
+deleteHabit:
+DELETE FROM habit WHERE id = ?;
+
+insertHabitEntry:
+INSERT INTO habit_entry VALUES (?, ?, ?);
+
+selectEntriesForHabit:
+SELECT * FROM habit_entry WHERE habitId = ? ORDER BY completedAt DESC;
+
+selectEntryForHabitOnDay:
+SELECT * FROM habit_entry WHERE habitId = ? AND completedAt >= :startOfDay AND completedAt <= :endOfDay LIMIT 1;
+
+deleteEntryForHabitOnDay:
+DELETE FROM habit_entry WHERE habitId = ? AND completedAt >= :startOfDay AND completedAt <= :endOfDay;
+
+selectEntriesForHabitInRange:
+SELECT * FROM habit_entry WHERE habitId = ? AND completedAt >= :start AND completedAt <= :end ORDER BY completedAt DESC;
+
+countEntriesForHabitInRange:
+SELECT COUNT(*) FROM habit_entry WHERE habitId = ? AND completedAt >= :start AND completedAt <= :end;

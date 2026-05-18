@@ -56,6 +56,23 @@ class PlannerScreenModel(
             PlannerIntent.ShowAddTask -> _state.update { it.copy(showAddTaskSheet = true) }
             PlannerIntent.HideAddTask -> _state.update { it.copy(showAddTaskSheet = false) }
 
+            // View switching
+            is PlannerIntent.SetView -> _state.update { it.copy(plannerView = intent.view) }
+
+            // Navigate within same view (no view change)
+            is PlannerIntent.NavigateYear ->
+                _state.update { it.copy(selectedYear = intent.year) }
+            is PlannerIntent.NavigateMonth ->
+                _state.update { it.copy(selectedYear = intent.year, selectedMonth = intent.month) }
+            is PlannerIntent.NavigateDay ->
+                _state.update { it.copy(selectedYear = intent.year, selectedMonth = intent.month, selectedDay = intent.day) }
+
+            // Drill-down (switches view)
+            is PlannerIntent.SelectMonth ->
+                _state.update { it.copy(selectedYear = intent.year, selectedMonth = intent.month, plannerView = PlannerView.MONTH) }
+            is PlannerIntent.SelectDay ->
+                _state.update { it.copy(selectedYear = intent.year, selectedMonth = intent.month, selectedDay = intent.day, plannerView = PlannerView.DAY) }
+
             is PlannerIntent.CreateTask -> screenModelScope.launch {
                 try {
                     createTask(
@@ -91,19 +108,19 @@ class PlannerScreenModel(
 
     private fun seedDefaultTasksIfEmpty() {
         screenModelScope.launch {
-            delay(400L) // wait for first DB emission
+            delay(400L)
             val existing = getAllTasks().first()
             if (existing.isNotEmpty()) return@launch
 
             val today = Clock.System.now().toEpochMilliseconds()
             val defaultTasks = listOf(
-                Triple("Deep work session 🎯",     TaskPriority.CRITICAL, "Focus on your most important project"),
-                Triple("Morning workout 💪",        TaskPriority.HIGH,     "Start the day strong and energized"),
-                Triple("Plan tomorrow's goals 📋",  TaskPriority.HIGH,     "End the day with tomorrow clarified"),
-                Triple("Read for 30 minutes 📚",    TaskPriority.MEDIUM,   "Expand your knowledge daily"),
-                Triple("Review notes & ideas 📝",   TaskPriority.MEDIUM,   "Keep your projects on track"),
-                Triple("Meditate 10 minutes 🧘",    TaskPriority.LOW,      "Clear your mind and reduce stress"),
-                Triple("Connect with a friend 🤝",  TaskPriority.LOW,      "Relationships are your superpower"),
+                Triple("Deep work session 🎯",    TaskPriority.CRITICAL, "Focus on your most important project"),
+                Triple("Morning workout 💪",       TaskPriority.HIGH,     "Start the day strong and energized"),
+                Triple("Plan tomorrow's goals 📋", TaskPriority.HIGH,     "End the day with tomorrow clarified"),
+                Triple("Read for 30 minutes 📚",   TaskPriority.MEDIUM,   "Expand your knowledge daily"),
+                Triple("Review notes & ideas 📝",  TaskPriority.MEDIUM,   "Keep your projects on track"),
+                Triple("Meditate 10 minutes 🧘",   TaskPriority.LOW,      "Clear your mind and reduce stress"),
+                Triple("Connect with a friend 🤝", TaskPriority.LOW,      "Relationships are your superpower"),
             )
             defaultTasks.forEach { (title, priority, description) ->
                 runCatching {

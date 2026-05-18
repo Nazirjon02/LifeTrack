@@ -1,6 +1,8 @@
 package tj.mahram.lifetrack.feature.settings
 
 import androidx.compose.animation.animateColorAsState
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -9,13 +11,19 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import org.koin.compose.getKoin
@@ -39,54 +47,30 @@ class SettingsScreen : Screen {
 fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
     val s = LocalStrings.current
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    Column {
-                        Text(
-                            s.settingsTitle,
-                            style = MaterialTheme.typography.headlineSmall,
-                            fontWeight = FontWeight.Bold
-                        )
-                        Text(
-                            s.settingsSubtitle,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background
-                )
-            )
-        },
-        containerColor = MaterialTheme.colorScheme.background
-    ) { padding ->
+    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(
-                top = padding.calculateTopPadding() + 8.dp,
+                top = padding.calculateTopPadding(),
                 start = 16.dp,
                 end = 16.dp,
                 bottom = padding.calculateBottomPadding() + 32.dp
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
+            // ── App Profile Banner ────────────────────────────────────────
+            item(key = "profile") {
+                Spacer(Modifier.height(16.dp))
+                AppProfileBanner()
+            }
 
-            // ── Appearance ──────────────────────────────────────────
-            item { SectionLabel(s.sectionAppearance) }
-            item {
-                SettingsCard {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            s.labelTheme,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            // ── Appearance ────────────────────────────────────────────────
+            item(key = "sec_appearance") {
+                SettingsSectionHeader(label = s.sectionAppearance, icon = Icons.Default.Palette)
+            }
+            item(key = "theme") {
+                ModernSettingsCard {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SettingsRowLabel(label = s.labelTheme, icon = Icons.Default.BrightnessMedium)
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             AppTheme.entries.forEach { theme ->
                                 val (emoji, themeLabel) = when (theme) {
@@ -107,20 +91,14 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                 }
             }
 
-            // ── Language ─────────────────────────────────────────────
-            item { SectionLabel(s.sectionLanguage) }
-            item {
-                SettingsCard {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Text(
-                            s.labelAppLanguage,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+            // ── Language ──────────────────────────────────────────────────
+            item(key = "sec_lang") {
+                SettingsSectionHeader(label = s.sectionLanguage, icon = Icons.Default.Language)
+            }
+            item(key = "language") {
+                ModernSettingsCard {
+                    Column(modifier = Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                        SettingsRowLabel(label = s.labelAppLanguage, icon = Icons.Default.Translate)
                         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                             LanguageCard(
                                 flag = "🇺🇸",
@@ -141,10 +119,12 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                 }
             }
 
-            // ── Finance ───────────────────────────────────────────────
-            item { SectionLabel(s.sectionFinance) }
-            item {
-                SettingsCard {
+            // ── Finance ───────────────────────────────────────────────────
+            item(key = "sec_finance") {
+                SettingsSectionHeader(label = s.sectionFinance, icon = Icons.Default.AccountBalance)
+            }
+            item(key = "currency") {
+                ModernSettingsCard {
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -152,17 +132,36 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                            Text(
-                                s.labelBaseCurrency,
-                                style = MaterialTheme.typography.bodyMedium,
-                                fontWeight = FontWeight.Medium
-                            )
-                            Text(
-                                s.labelCurrencySubtitle,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Box(
+                                modifier = Modifier
+                                    .size(40.dp)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .background(MaterialTheme.colorScheme.primaryContainer),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    Icons.Default.AttachMoney,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.primary,
+                                    modifier = Modifier.size(20.dp)
+                                )
+                            }
+                            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                                Text(
+                                    s.labelBaseCurrency,
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    fontWeight = FontWeight.Medium
+                                )
+                                Text(
+                                    s.labelCurrencySubtitle,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
                         }
                         var expanded by remember { mutableStateOf(false) }
                         ExposedDropdownMenuBox(
@@ -178,7 +177,7 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                                 },
                                 modifier = Modifier
                                     .menuAnchor()
-                                    .width(120.dp),
+                                    .width(110.dp),
                                 textStyle = MaterialTheme.typography.bodySmall,
                                 shape = RoundedCornerShape(12.dp)
                             )
@@ -201,14 +200,17 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                 }
             }
 
-            // ── Notifications ─────────────────────────────────────────
-            item { SectionLabel(s.sectionNotifications) }
-            item {
-                SettingsCard {
+            // ── Notifications ─────────────────────────────────────────────
+            item(key = "sec_notif") {
+                SettingsSectionHeader(label = s.sectionNotifications, icon = Icons.Default.Notifications)
+            }
+            item(key = "notifications") {
+                ModernSettingsCard {
                     Column {
                         NotifRow(
                             title = s.labelEnableNotif,
                             subtitle = s.labelEnableNotifSub,
+                            icon = Icons.Default.NotificationsActive,
                             checked = state.settings.notificationsEnabled,
                             onToggle = { onIntent(SettingsIntent.SetNotifications(it)) },
                             showDivider = true
@@ -216,6 +218,7 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                         NotifRow(
                             title = s.labelTaskReminders,
                             subtitle = s.labelTaskRemindersSub,
+                            icon = Icons.Default.CheckCircle,
                             checked = state.settings.taskNotificationsEnabled,
                             onToggle = { onIntent(SettingsIntent.SetTaskNotifications(it)) },
                             showDivider = true
@@ -223,6 +226,7 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                         NotifRow(
                             title = s.labelFinanceAlerts,
                             subtitle = s.labelFinanceAlertsSub,
+                            icon = Icons.Default.AccountBalance,
                             checked = state.settings.financeNotificationsEnabled,
                             onToggle = { onIntent(SettingsIntent.SetFinanceNotifications(it)) },
                             showDivider = false
@@ -231,35 +235,136 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                 }
             }
 
-            // ── About ─────────────────────────────────────────────────
-            item { SectionLabel(s.sectionAbout) }
-            item {
-                SettingsCard {
-                    ListItem(
-                        leadingContent = {
-                            Box(
-                                modifier = Modifier
-                                    .size(42.dp)
-                                    .clip(RoundedCornerShape(12.dp))
-                                    .background(MaterialTheme.colorScheme.primaryContainer),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Text("⚡", style = MaterialTheme.typography.titleLarge)
-                            }
-                        },
-                        headlineContent = {
-                            Text("LifeTrack", fontWeight = FontWeight.SemiBold)
-                        },
-                        supportingContent = {
+            // ── About ─────────────────────────────────────────────────────
+            item(key = "sec_about") {
+                SettingsSectionHeader(label = s.sectionAbout, icon = Icons.Default.Info)
+            }
+            item(key = "about") {
+                ModernSettingsCard {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(14.dp)
+                    ) {
+                        Box(
+                            modifier = Modifier
+                                .size(48.dp)
+                                .clip(RoundedCornerShape(14.dp))
+                                .background(
+                                    Brush.linearGradient(
+                                        listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.secondary
+                                        )
+                                    )
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                "⚡",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontSize = 22.sp
+                            )
+                        }
+                        Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                            Text(
+                                "LifeTrack",
+                                style = MaterialTheme.typography.bodyLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
                             Text(
                                 s.aboutVersion,
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                        },
-                        colors = ListItemDefaults.colors(
-                            containerColor = MaterialTheme.colorScheme.surface
-                        )
+                        }
+                        Spacer(Modifier.weight(1f))
+                        Box(
+                            modifier = Modifier
+                                .clip(RoundedCornerShape(8.dp))
+                                .background(MaterialTheme.colorScheme.primaryContainer)
+                                .padding(horizontal = 10.dp, vertical = 4.dp)
+                        ) {
+                            Text(
+                                "v1.0",
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        }
+                    }
+                }
+            }
+
+            item(key = "bottom_space") { Spacer(Modifier.height(8.dp)) }
+        }
+    }
+}
+
+// ─── App Profile Banner ────────────────────────────────────────────────────────
+
+@Composable
+private fun AppProfileBanner() {
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(28.dp))
+            .background(
+                Brush.linearGradient(
+                    colors = listOf(
+                        MaterialTheme.colorScheme.primary,
+                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.9f)
+                    )
+                )
+            )
+            .padding(22.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(18.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(68.dp)
+                    .clip(CircleShape)
+                    .background(Color.White.copy(alpha = 0.18f))
+                    .border(2.dp, Color.White.copy(alpha = 0.35f), CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    "LT",
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    fontSize = 22.sp
+                )
+            }
+            Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(
+                    "LifeTrack",
+                    style = MaterialTheme.typography.headlineSmall,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White
+                )
+                Text(
+                    "Your personal life manager",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Color.White.copy(alpha = 0.7f)
+                )
+                Spacer(Modifier.height(4.dp))
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color.White.copy(alpha = 0.15f))
+                        .padding(horizontal = 10.dp, vertical = 4.dp)
+                ) {
+                    Text(
+                        "✨ Premium",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = Color.White,
+                        fontWeight = FontWeight.SemiBold
                     )
                 }
             }
@@ -267,30 +372,66 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
     }
 }
 
-// ── Private helpers ────────────────────────────────────────────────────────────
+// ─── Section Header ────────────────────────────────────────────────────────────
 
 @Composable
-private fun SectionLabel(title: String) {
-    Text(
-        title,
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.SemiBold,
-        color = MaterialTheme.colorScheme.primary,
-        modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp)
-    )
+private fun SettingsSectionHeader(label: String, icon: ImageVector) {
+    Row(
+        modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.primary,
+            modifier = Modifier.size(15.dp)
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelMedium,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.primary
+        )
+    }
 }
 
+// ─── Settings Card ─────────────────────────────────────────────────────────────
+
 @Composable
-private fun SettingsCard(content: @Composable () -> Unit) {
+private fun ModernSettingsCard(content: @Composable () -> Unit) {
     Card(
         shape = RoundedCornerShape(20.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
         modifier = Modifier.fillMaxWidth()
     ) {
         content()
     }
 }
+
+@Composable
+private fun SettingsRowLabel(label: String, icon: ImageVector) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+            modifier = Modifier.size(16.dp)
+        )
+        Text(
+            label,
+            style = MaterialTheme.typography.labelLarge,
+            fontWeight = FontWeight.SemiBold,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+// ─── Language Card ─────────────────────────────────────────────────────────────
 
 @Composable
 private fun LanguageCard(
@@ -301,26 +442,20 @@ private fun LanguageCard(
     modifier: Modifier = Modifier
 ) {
     val bgColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.primaryContainer
-        else
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        animationSpec = tween(250),
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                      else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        animationSpec = spring(stiffness = Spring.StiffnessMediumLow),
         label = "langBg"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
         animationSpec = tween(250),
         label = "langBorder"
     )
     val textColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.onPrimaryContainer
-        else
-            MaterialTheme.colorScheme.onSurface,
+        targetValue = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                      else MaterialTheme.colorScheme.onSurface,
         animationSpec = tween(250),
         label = "langText"
     )
@@ -355,12 +490,14 @@ private fun LanguageCard(
                     .clip(CircleShape)
                     .background(
                         if (isSelected) MaterialTheme.colorScheme.primary
-                        else MaterialTheme.colorScheme.surface.copy(alpha = 0f)
+                        else Color.Transparent
                     )
             )
         }
     }
 }
+
+// ─── Emoji Select Chip ─────────────────────────────────────────────────────────
 
 @Composable
 private fun EmojiSelectChip(
@@ -371,18 +508,14 @@ private fun EmojiSelectChip(
     modifier: Modifier = Modifier
 ) {
     val bgColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.primaryContainer
-        else
-            MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer
+                      else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         animationSpec = tween(250),
         label = "chipBg"
     )
     val borderColor by animateColorAsState(
-        targetValue = if (isSelected)
-            MaterialTheme.colorScheme.primary
-        else
-            MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
+        targetValue = if (isSelected) MaterialTheme.colorScheme.primary
+                      else MaterialTheme.colorScheme.outline.copy(alpha = 0.25f),
         animationSpec = tween(250),
         label = "chipBorder"
     )
@@ -409,46 +542,70 @@ private fun EmojiSelectChip(
                 label,
                 style = MaterialTheme.typography.labelSmall,
                 fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
-                color = if (isSelected)
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                else
-                    MaterialTheme.colorScheme.onSurfaceVariant
+                color = if (isSelected) MaterialTheme.colorScheme.onPrimaryContainer
+                        else MaterialTheme.colorScheme.onSurfaceVariant
             )
         }
     }
 }
 
+// ─── Notification Row ──────────────────────────────────────────────────────────
+
 @Composable
 private fun NotifRow(
     title: String,
     subtitle: String,
+    icon: ImageVector,
     checked: Boolean,
     onToggle: (Boolean) -> Unit,
     showDivider: Boolean
 ) {
-    ListItem(
-        headlineContent = {
-            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
-        },
-        supportingContent = {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier
+                .size(38.dp)
+                .clip(RoundedCornerShape(10.dp))
+                .background(
+                    if (checked) MaterialTheme.colorScheme.primaryContainer
+                    else MaterialTheme.colorScheme.surfaceVariant
+                ),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = if (checked) MaterialTheme.colorScheme.primary
+                       else MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.size(19.dp)
+            )
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(
+                title,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
             Text(
                 subtitle,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
-        },
-        trailingContent = {
-            Switch(
-                checked = checked,
-                onCheckedChange = onToggle,
-                colors = SwitchDefaults.colors(
-                    checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
-                    checkedTrackColor = MaterialTheme.colorScheme.primary
-                )
+        }
+        Switch(
+            checked = checked,
+            onCheckedChange = onToggle,
+            colors = SwitchDefaults.colors(
+                checkedThumbColor = MaterialTheme.colorScheme.onPrimary,
+                checkedTrackColor = MaterialTheme.colorScheme.primary
             )
-        },
-        colors = ListItemDefaults.colors(containerColor = MaterialTheme.colorScheme.surface)
-    )
+        )
+    }
     if (showDivider) {
         HorizontalDivider(
             modifier = Modifier.padding(horizontal = 16.dp),
@@ -457,7 +614,8 @@ private fun NotifRow(
     }
 }
 
-// Legacy helpers
+// ─── Public legacy exports ─────────────────────────────────────────────────────
+
 @Composable
 fun SettingsHeader(title: String) {
     Text(

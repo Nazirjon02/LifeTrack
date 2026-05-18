@@ -96,6 +96,8 @@ sqldelight {
     databases {
         create("AppDatabase") {
             packageName.set("tj.mahram.lifetrack.data.local.db")
+            schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
+            verifyMigrations.set(false)
         }
     }
 }

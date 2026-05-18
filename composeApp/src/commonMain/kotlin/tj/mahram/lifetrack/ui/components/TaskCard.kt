@@ -23,6 +23,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import kotlin.time.Clock
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.toLocalDateTime
 import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.formatDate
 import tj.mahram.lifetrack.core.util.isToday
@@ -134,20 +137,30 @@ fun TaskCard(
                     }
                     // Due date badge
                     task.dueDate?.let { date ->
-                        val todayDue = date.isToday()
+                        val tz = TimeZone.currentSystemDefault()
+                        val today = Clock.System.now().toLocalDateTime(tz).date
+                        val taskDay = date.toLocalDateTime(tz).date
+                        val todayDue = taskDay == today
+                        val isOverdue = !task.isCompleted && taskDay < today
                         Surface(
                             shape = RoundedCornerShape(6.dp),
                             color = when {
-                                todayDue && !task.isCompleted -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
-                                else -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
+                                isOverdue                         -> MaterialTheme.colorScheme.errorContainer
+                                todayDue && !task.isCompleted     -> MaterialTheme.colorScheme.errorContainer.copy(alpha = 0.8f)
+                                else                              -> MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.4f)
                             }
                         ) {
                             Text(
-                                text = if (todayDue) "Today" else date.formatDate(),
+                                text = when {
+                                    isOverdue -> "Overdue"
+                                    todayDue  -> "Today"
+                                    else      -> date.formatDate()
+                                },
                                 modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
                                 style = MaterialTheme.typography.labelSmall,
+                                fontWeight = if (isOverdue) FontWeight.SemiBold else FontWeight.Normal,
                                 color = when {
-                                    todayDue && !task.isCompleted -> MaterialTheme.colorScheme.error
+                                    isOverdue || (todayDue && !task.isCompleted) -> MaterialTheme.colorScheme.error
                                     else -> MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = contentAlpha)
                                 }
                             )

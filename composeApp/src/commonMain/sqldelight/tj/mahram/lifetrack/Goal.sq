@@ -1,0 +1,35 @@
+CREATE TABLE goal (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    icon TEXT NOT NULL DEFAULT '🎯',
+    targetValue REAL NOT NULL DEFAULT 100,
+    currentValue REAL NOT NULL DEFAULT 0,
+    unit TEXT NOT NULL DEFAULT '',
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    deadline INTEGER,
+    isCompleted INTEGER NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+insertGoal:
+INSERT INTO goal VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectAllGoals:
+SELECT * FROM goal ORDER BY isCompleted ASC, createdAt DESC;
+
+selectActiveGoals:
+SELECT * FROM goal WHERE isCompleted = 0 ORDER BY createdAt DESC;
+
+selectGoalById:
+SELECT * FROM goal WHERE id = ?;
+
+updateGoalProgress:
+UPDATE goal SET currentValue = ?, isCompleted = ?, updatedAt = ? WHERE id = ?;
+
+updateGoal:
+UPDATE goal SET title = ?, description = ?, icon = ?, targetValue = ?, unit = ?, color = ?, deadline = ?, updatedAt = ? WHERE id = ?;
+
+deleteGoal:
+DELETE FROM goal WHERE id = ?;

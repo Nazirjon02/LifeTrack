@@ -1,0 +1,32 @@
+CREATE TABLE IF NOT EXISTS habit (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    description TEXT,
+    icon TEXT NOT NULL DEFAULT '⚡',
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    frequency TEXT NOT NULL DEFAULT 'DAILY',
+    targetDaysPerWeek INTEGER NOT NULL DEFAULT 7,
+    createdAt INTEGER NOT NULL,
+    isArchived INTEGER NOT NULL DEFAULT 0
+);
+
+CREATE TABLE IF NOT EXISTS habit_entry (
+    id TEXT NOT NULL PRIMARY KEY,
+    habitId TEXT NOT NULL,
+    completedAt INTEGER NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS goal (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    icon TEXT NOT NULL DEFAULT '🎯',
+    targetValue REAL NOT NULL DEFAULT 100,
+    currentValue REAL NOT NULL DEFAULT 0,
+    unit TEXT NOT NULL DEFAULT '',
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    deadline INTEGER,
+    isCompleted INTEGER NOT NULL DEFAULT 0,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);

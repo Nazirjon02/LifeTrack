@@ -9,7 +9,15 @@
       "Bash(Select-Object FullName)",
       "Bash(xargs grep -l \"Instant\\\\|ColumnAdapter\")",
       "WebFetch(domain:central.sonatype.com)",
-      "WebFetch(domain:github.com)"
+      "WebFetch(domain:github.com)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Virtual\\\\AndroidStudioProjects\\\\LifeTrack\" -Recurse -Force)",
+      "Bash(Select-Object -Property FullName)",
+      "Bash(ConvertTo-Csv -NoTypeInformation)",
+      "PowerShell(Get-ChildItem -Path \"C:\\\\Users\\\\Virtual\\\\AndroidStudioProjects\\\\LifeTrack\" -Recurse -Force | Where-Object {$_.PSIsContainer -eq $false} | Select-Object -ExpandProperty FullName | Sort-Object)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Virtual\\\\AndroidStudioProjects\\\\LifeTrack\" -Recurse -Directory)",
+      "Bash(Select-Object -ExpandProperty FullName)",
+      "Bash(Sort-Object)",
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Virtual\\\\AndroidStudioProjects\\\\LifeTrack\\\\composeApp\\\\src\\\\commonMain\\\\kotlin\\\\tj\\\\mahram\\\\lifetrack\" -Directory)"
     ]
   }
 }
