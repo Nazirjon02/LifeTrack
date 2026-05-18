@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import androidx.compose.material3.ExposedDropdownMenuAnchorType
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -176,7 +177,7 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                                     ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
                                 },
                                 modifier = Modifier
-                                    .menuAnchor()
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, enabled = true)
                                     .width(110.dp),
                                 textStyle = MaterialTheme.typography.bodySmall,
                                 shape = RoundedCornerShape(12.dp)
@@ -288,7 +289,7 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                                 .padding(horizontal = 10.dp, vertical = 4.dp)
                         ) {
                             Text(
-                                "v1.0",
+                                s.settingsVersionLabel,
                                 style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 fontWeight = FontWeight.SemiBold
@@ -307,6 +308,7 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
 
 @Composable
 private fun AppProfileBanner() {
+    val s = LocalStrings.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -349,7 +351,7 @@ private fun AppProfileBanner() {
                     color = Color.White
                 )
                 Text(
-                    "Your personal life manager",
+                    s.settingsAppTagline,
                     style = MaterialTheme.typography.bodySmall,
                     color = Color.White.copy(alpha = 0.7f)
                 )
@@ -361,7 +363,7 @@ private fun AppProfileBanner() {
                         .padding(horizontal = 10.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "✨ Premium",
+                        s.settingsPremium,
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White,
                         fontWeight = FontWeight.SemiBold

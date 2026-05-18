@@ -17,6 +17,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.domain.model.HabitFrequency
 
 private val HabitIcons = listOf("🏃", "💪", "📚", "🧘", "💧", "🥗", "😴", "🧠", "✍️", "🎯", "🎵", "🌿", "☀️", "🚴", "🏊")
@@ -37,6 +38,7 @@ fun AddHabitSheet(
     onDismiss: () -> Unit,
     onConfirm: (HabitsIntent) -> Unit
 ) {
+    val s = LocalStrings.current
     var name by remember { mutableStateOf("") }
     var selectedIcon by remember { mutableStateOf("🏃") }
     var selectedColor by remember { mutableStateOf("#7C3AED") }
@@ -56,7 +58,7 @@ fun AddHabitSheet(
             verticalArrangement = Arrangement.spacedBy(20.dp)
         ) {
             Text(
-                "New Habit ✨",
+                s.addHabitTitle,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold
             )
@@ -64,9 +66,9 @@ fun AddHabitSheet(
             OutlinedTextField(
                 value = name,
                 onValueChange = { name = it; nameError = false },
-                label = { Text("Habit name") },
+                label = { Text(s.addHabitFieldName) },
                 isError = nameError,
-                supportingText = if (nameError) { { Text("Please enter a name") } } else null,
+                supportingText = if (nameError) { { Text(s.addHabitErrorEmpty) } } else null,
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(16.dp),
                 singleLine = true,
@@ -77,7 +79,7 @@ fun AddHabitSheet(
             )
 
             // Icon picker
-            Text("Pick an icon", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(s.addHabitPickIcon, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             LazyVerticalGrid(
                 columns = GridCells.Fixed(5),
                 modifier = Modifier.height(120.dp),
@@ -108,7 +110,7 @@ fun AddHabitSheet(
             }
 
             // Color picker
-            Text("Color", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(s.addHabitColorLabel, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 HabitColorPairs.forEach { (hex, color) ->
                     val isSelected = selectedColor == hex
@@ -128,14 +130,14 @@ fun AddHabitSheet(
             }
 
             // Frequency
-            Text("Frequency", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            Text(s.addHabitFrequencyLabel, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf(HabitFrequency.DAILY, HabitFrequency.WEEKDAYS, HabitFrequency.WEEKENDS).forEach { freq ->
                     val isSelected = selectedFrequency == freq
                     FilterChip(
                         selected = isSelected,
                         onClick = { selectedFrequency = freq },
-                        label = { Text(freq.label, style = MaterialTheme.typography.labelMedium) },
+                        label = { Text(s.habitFrequencyLabel(freq), style = MaterialTheme.typography.labelMedium) },
                         colors = FilterChipDefaults.filterChipColors(
                             selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                             selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
@@ -152,7 +154,7 @@ fun AddHabitSheet(
                 modifier = Modifier.fillMaxWidth().height(52.dp),
                 shape = RoundedCornerShape(16.dp)
             ) {
-                Text("Create Habit", fontWeight = FontWeight.SemiBold)
+                Text(s.addHabitCreateButton, fontWeight = FontWeight.SemiBold)
             }
         }
     }

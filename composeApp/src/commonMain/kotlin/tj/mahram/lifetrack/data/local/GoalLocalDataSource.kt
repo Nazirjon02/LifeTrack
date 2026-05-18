@@ -7,7 +7,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import tj.mahram.lifetrack.data.local.db.AppDatabase
 import tj.mahram.lifetrack.domain.model.Goal
 import tj.mahram.lifetrack.Goal as DbGoal
@@ -15,14 +15,14 @@ import tj.mahram.lifetrack.Goal as DbGoal
 class GoalLocalDataSource(private val db: AppDatabase) {
 
     fun getAllGoals(): Flow<List<Goal>> =
-        db.goalQueries.selectAllGoals().asFlow().mapToList(Dispatchers.IO)
+        db.goalQueries.selectAllGoals().asFlow().mapToList(Dispatchers.Default)
             .map { list -> list.map { it.toDomain() } }
 
     fun getActiveGoals(): Flow<List<Goal>> =
-        db.goalQueries.selectActiveGoals().asFlow().mapToList(Dispatchers.IO)
+        db.goalQueries.selectActiveGoals().asFlow().mapToList(Dispatchers.Default)
             .map { list -> list.map { it.toDomain() } }
 
-    suspend fun insert(goal: Goal): Unit = withContext(Dispatchers.IO) {
+    suspend fun insert(goal: Goal): Unit = withContext(Dispatchers.Default) {
         db.goalQueries.insertGoal(
             id = goal.id,
             title = goal.title,
@@ -40,7 +40,7 @@ class GoalLocalDataSource(private val db: AppDatabase) {
         Unit
     }
 
-    suspend fun updateProgress(goalId: String, newValue: Double): Unit = withContext(Dispatchers.IO) {
+    suspend fun updateProgress(goalId: String, newValue: Double): Unit = withContext(Dispatchers.Default) {
         val goal = db.goalQueries.selectGoalById(goalId).executeAsOneOrNull() ?: return@withContext
         val completed = if (newValue >= goal.targetValue) 1L else 0L
         db.goalQueries.updateGoalProgress(
@@ -52,7 +52,7 @@ class GoalLocalDataSource(private val db: AppDatabase) {
         Unit
     }
 
-    suspend fun delete(goalId: String): Unit = withContext(Dispatchers.IO) {
+    suspend fun delete(goalId: String): Unit = withContext(Dispatchers.Default) {
         db.goalQueries.deleteGoal(goalId)
         Unit
     }

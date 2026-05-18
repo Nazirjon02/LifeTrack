@@ -11,6 +11,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.domain.model.Category
 import tj.mahram.lifetrack.domain.model.TransactionType
 import tj.mahram.lifetrack.ui.theme.ErrorColor
@@ -30,6 +31,7 @@ fun AddTransactionSheet(
     }
     val relevantCats = categories.filter { it.type == catType }
 
+    val s = LocalStrings.current
     var amountText by remember { mutableStateOf("") }
     var selectedCategory by remember { mutableStateOf(relevantCats.firstOrNull()) }
     var note by remember { mutableStateOf("") }
@@ -55,29 +57,29 @@ fun AddTransactionSheet(
                 horizontalArrangement = Arrangement.SpaceBetween
             ) {
                 Text(
-                    "Add ${type.label}",
+                    "${s.cryptoAddButton} ${s.transactionTypeLabel(type)}",
                     style = MaterialTheme.typography.titleLarge,
                     color = accentColor
                 )
                 IconButton(onClick = onDismiss) {
-                    Icon(Icons.Default.Close, contentDescription = "Close")
+                    Icon(Icons.Default.Close, contentDescription = null)
                 }
             }
 
             OutlinedTextField(
                 value = amountText,
                 onValueChange = { amountText = it; amountError = false },
-                label = { Text("Amount *") },
+                label = { Text(s.financeAmountLabel) },
                 modifier = Modifier.fillMaxWidth(),
                 keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                 isError = amountError,
-                supportingText = if (amountError) {{ Text("Enter a valid amount") }} else null,
+                supportingText = if (amountError) {{ Text(s.financeAmountError) }} else null,
                 prefix = { Text(if (type == TransactionType.INCOME) "+" else "-") },
                 singleLine = true
             )
 
             if (relevantCats.isNotEmpty()) {
-                Text("Category *", style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(s.financeCategoryLabel, style = MaterialTheme.typography.labelLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     relevantCats.chunked(3).forEach { row ->
                         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -96,7 +98,7 @@ fun AddTransactionSheet(
             OutlinedTextField(
                 value = note,
                 onValueChange = { note = it },
-                label = { Text("Note (optional)") },
+                label = { Text(s.financeNoteLabel) },
                 modifier = Modifier.fillMaxWidth(),
                 singleLine = true
             )
@@ -118,7 +120,7 @@ fun AddTransactionSheet(
                 modifier = Modifier.fillMaxWidth(),
                 colors = ButtonDefaults.buttonColors(containerColor = accentColor)
             ) {
-                Text("Add ${type.label}")
+                Text("${s.cryptoAddButton} ${s.transactionTypeLabel(type)}")
             }
         }
     }

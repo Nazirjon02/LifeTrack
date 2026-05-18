@@ -7,7 +7,7 @@ import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import tj.mahram.lifetrack.data.local.db.AppDatabase
 import tj.mahram.lifetrack.Transaction_record as DbTransaction
 import tj.mahram.lifetrack.domain.model.RecurringType
@@ -17,23 +17,23 @@ import tj.mahram.lifetrack.domain.model.TransactionType
 class TransactionLocalDataSource(private val db: AppDatabase) {
 
     fun getAllTransactions(): Flow<List<Transaction>> =
-        db.transactionRecordQueries.selectAllTransactions().asFlow().mapToList(Dispatchers.IO)
+        db.transactionRecordQueries.selectAllTransactions().asFlow().mapToList(Dispatchers.Default)
             .map { it.map { t -> t.toDomain() } }
 
     fun getByType(type: TransactionType): Flow<List<Transaction>> =
-        db.transactionRecordQueries.selectTransactionsByType(type.name).asFlow().mapToList(Dispatchers.IO)
+        db.transactionRecordQueries.selectTransactionsByType(type.name).asFlow().mapToList(Dispatchers.Default)
             .map { it.map { t -> t.toDomain() } }
 
     fun getByDateRange(start: Long, end: Long): Flow<List<Transaction>> =
-        db.transactionRecordQueries.selectTransactionsByDateRange(start, end).asFlow().mapToList(Dispatchers.IO)
+        db.transactionRecordQueries.selectTransactionsByDateRange(start, end).asFlow().mapToList(Dispatchers.Default)
             .map { it.map { t -> t.toDomain() } }
 
     fun getRecent(limit: Long): Flow<List<Transaction>> =
-        db.transactionRecordQueries.selectRecentTransactions(limit).asFlow().mapToList(Dispatchers.IO)
+        db.transactionRecordQueries.selectRecentTransactions(limit).asFlow().mapToList(Dispatchers.Default)
             .map { it.map { t -> t.toDomain() } }
 
     suspend fun insert(transaction: Transaction) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.transactionRecordQueries.insertTransaction(
                 id = transaction.id,
                 amount = transaction.amount,
@@ -50,12 +50,12 @@ class TransactionLocalDataSource(private val db: AppDatabase) {
     }
 
     suspend fun delete(id: String) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.transactionRecordQueries.deleteTransaction(id)
         }
     }
 
-    suspend fun getSumByTypeAndRange(type: String, start: Long, end: Long): Double = withContext(Dispatchers.IO) {
+    suspend fun getSumByTypeAndRange(type: String, start: Long, end: Long): Double = withContext(Dispatchers.Default) {
         db.transactionRecordQueries.sumByTypeAndDateRange(type, start, end).executeAsOne()
     }
 

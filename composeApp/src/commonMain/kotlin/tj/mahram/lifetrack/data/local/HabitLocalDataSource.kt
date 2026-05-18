@@ -4,11 +4,12 @@ import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlin.time.Clock
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.DateTimeUnit
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
@@ -24,7 +25,7 @@ import tj.mahram.lifetrack.Habit_entry as DbEntry
 class HabitLocalDataSource(private val db: AppDatabase) {
 
     fun getAllHabitsWithEntries(): Flow<List<Habit>> {
-        return db.habitQueries.selectAllHabits().asFlow().mapToList(Dispatchers.IO).map { habits ->
+        return db.habitQueries.selectAllHabits().asFlow().mapToList(Dispatchers.Default).map { habits ->
             habits.map { dbHabit ->
                 val entries = db.habitQueries.selectEntriesForHabit(dbHabit.id)
                     .executeAsList()
@@ -34,7 +35,7 @@ class HabitLocalDataSource(private val db: AppDatabase) {
         }
     }
 
-    suspend fun insert(habit: Habit): Unit = withContext(Dispatchers.IO) {
+    suspend fun insert(habit: Habit): Unit = withContext(Dispatchers.Default) {
         db.habitQueries.insertHabit(
             id = habit.id,
             name = habit.name,
@@ -49,12 +50,12 @@ class HabitLocalDataSource(private val db: AppDatabase) {
         Unit
     }
 
-    suspend fun delete(habitId: String): Unit = withContext(Dispatchers.IO) {
+    suspend fun delete(habitId: String): Unit = withContext(Dispatchers.Default) {
         db.habitQueries.deleteHabit(habitId)
         Unit
     }
 
-    suspend fun toggleToday(habitId: String): Unit = withContext(Dispatchers.IO) {
+    suspend fun toggleToday(habitId: String): Unit = withContext(Dispatchers.Default) {
         val start = startOfDay().toEpochMilliseconds()
         val end = endOfDay().toEpochMilliseconds()
         val existing = db.habitQueries.selectEntryForHabitOnDay(habitId, start, end).executeAsOneOrNull()
@@ -71,7 +72,7 @@ class HabitLocalDataSource(private val db: AppDatabase) {
         }
     }
 
-    suspend fun getStreak(habitId: String): Int = withContext(Dispatchers.IO) {
+    suspend fun getStreak(habitId: String): Int = withContext(Dispatchers.Default) {
         val entries = db.habitQueries.selectEntriesForHabit(habitId).executeAsList()
         if (entries.isEmpty()) return@withContext 0
         val tz = TimeZone.currentSystemDefault()

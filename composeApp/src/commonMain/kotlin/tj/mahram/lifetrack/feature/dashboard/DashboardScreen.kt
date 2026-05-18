@@ -29,8 +29,10 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import kotlinx.datetime.TimeZone
+import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.MonthNames
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.domain.model.Habit
@@ -61,10 +63,11 @@ fun DashboardContent(
     onRefresh: () -> Unit,
     onIntent: (DashboardIntent) -> Unit
 ) {
+    val s = LocalStrings.current
     val tz = TimeZone.currentSystemDefault()
     val now = Clock.System.now().toLocalDateTime(tz)
     val dayName = now.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-    val dateStr = "$dayName, ${now.dayOfMonth} ${MonthNames[now.monthNumber - 1]}"
+    val dateStr = "$dayName, ${now.day} ${MonthNames[now.month.number - 1]}"
 
     Scaffold(
         topBar = {
@@ -86,7 +89,7 @@ fun DashboardContent(
                 actions = {
                     IconButton(onClick = onRefresh) {
                         Icon(
-                            Icons.Default.Refresh, contentDescription = "Refresh",
+                            Icons.Default.Refresh, contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -157,6 +160,7 @@ private fun DashStatGrid(
     today: kotlinx.datetime.LocalDate,
     tz: TimeZone
 ) {
+    val s = LocalStrings.current
     val balance = state.monthlyFinance?.balance
     val balancePositive = (balance ?: 0.0) >= 0
 
@@ -170,7 +174,7 @@ private fun DashStatGrid(
             GradientStatCard(
                 modifier = Modifier.weight(1f),
                 emoji = "✅",
-                label = "Tasks Today",
+                label = s.dashboardTasksToday,
                 value = if (state.totalTasksToday == 0) "—"
                         else "${state.completedTasksToday}/${state.totalTasksToday}",
                 gradient = listOf(
@@ -182,7 +186,7 @@ private fun DashStatGrid(
             GradientStatCard(
                 modifier = Modifier.weight(1f),
                 emoji = "🔥",
-                label = "Habits Done",
+                label = s.dashboardHabitsDoneLabel,
                 value = if (state.habits.isEmpty()) "—"
                         else "$habitsDone/${state.habits.size}",
                 gradient = listOf(
@@ -196,7 +200,7 @@ private fun DashStatGrid(
             GradientStatCard(
                 modifier = Modifier.weight(1f),
                 emoji = if (balancePositive) "📈" else "📉",
-                label = "Balance",
+                label = s.dashboardBalance,
                 value = balance?.formatCurrency(state.currency) ?: "—",
                 gradient = if (balancePositive)
                     listOf(SuccessColor.copy(alpha = 0.18f), SuccessColor.copy(alpha = 0.05f))
@@ -207,7 +211,7 @@ private fun DashStatGrid(
             GradientStatCard(
                 modifier = Modifier.weight(1f),
                 emoji = "🍅",
-                label = "Pomodoros",
+                label = s.dashboardPomodorosLabel,
                 value = if (state.pomodoro.completedPomodoros == 0) "—"
                         else "${state.pomodoro.completedPomodoros}",
                 gradient = listOf(
@@ -262,6 +266,7 @@ private fun PomodoroCard(
     onToggle: () -> Unit,
     onReset: () -> Unit
 ) {
+    val s = LocalStrings.current
     val workColor  = MaterialTheme.colorScheme.primary
     val breakColor = SuccessColor
     val timerColor = if (pomodoro.mode == PomodoroMode.WORK) workColor else breakColor
@@ -301,14 +306,14 @@ private fun PomodoroCard(
             ) {
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        if (pomodoro.mode == PomodoroMode.WORK) "Focus Time 🎯" else "Break Time ☕",
+                        if (pomodoro.mode == PomodoroMode.WORK) s.dashboardFocusTime else s.dashboardBreakTime,
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold
                     )
                     Text(
                         if (pomodoro.completedPomodoros > 0)
-                            "🍅 ${pomodoro.completedPomodoros} session${if (pomodoro.completedPomodoros > 1) "s" else ""}"
-                        else "Build momentum, stay focused",
+                            s.dashboardSession(pomodoro.completedPomodoros)
+                        else s.dashboardIdleMessage,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -320,7 +325,7 @@ private fun PomodoroCard(
                     ),
                     modifier = Modifier.size(38.dp)
                 ) {
-                    Icon(Icons.Default.Refresh, contentDescription = "Reset", modifier = Modifier.size(18.dp))
+                    Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
                 }
             }
 
@@ -358,7 +363,7 @@ private fun PomodoroCard(
                         color = timerColor
                     )
                     Text(
-                        if (pomodoro.mode == PomodoroMode.WORK) "WORK" else "REST",
+                        if (pomodoro.mode == PomodoroMode.WORK) s.dashboardModeWork else s.dashboardModeRest,
                         style = MaterialTheme.typography.labelSmall,
                         fontWeight = FontWeight.Bold,
                         letterSpacing = 2.sp,
@@ -400,7 +405,7 @@ private fun PomodoroCard(
                             modifier = Modifier.size(22.dp)
                         )
                         Text(
-                            if (running) "Pause" else "Start Focus",
+                            if (running) s.dashboardPause else s.dashboardStartFocus,
                             style = MaterialTheme.typography.titleSmall,
                             fontWeight = FontWeight.Bold,
                             color = if (running) timerColor else Color.White
@@ -420,6 +425,7 @@ private fun FinanceMonthCard(
     finance: tj.mahram.lifetrack.domain.model.FinanceSummary,
     currency: String
 ) {
+    val s = LocalStrings.current
     Card(
         modifier = Modifier
             .fillMaxWidth()
@@ -430,7 +436,7 @@ private fun FinanceMonthCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                "This Month",
+                s.dashboardFinanceMonth,
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.SemiBold,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -441,11 +447,11 @@ private fun FinanceMonthCard(
                 horizontalArrangement = Arrangement.SpaceEvenly,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                FinanceMiniStat("Income",   finance.totalIncome,  true, currency)
+                FinanceMiniStat(s.dashboardIncome,  finance.totalIncome,  true, currency)
                 Box(Modifier.width(1.dp).height(38.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)))
-                FinanceMiniStat("Expenses", finance.totalExpense, false, currency)
+                FinanceMiniStat(s.dashboardExpense, finance.totalExpense, false, currency)
                 Box(Modifier.width(1.dp).height(38.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.18f)))
-                FinanceMiniStat("Balance",  finance.balance, finance.balance >= 0, currency)
+                FinanceMiniStat(s.dashboardBalance, finance.balance, finance.balance >= 0, currency)
             }
         }
     }
@@ -473,6 +479,7 @@ private fun HabitsQuickWidget(
     habitStreaks: Map<String, Int>,
     onToggle: (String) -> Unit
 ) {
+    val s = LocalStrings.current
     val tz    = TimeZone.currentSystemDefault()
     val today = Clock.System.now().toLocalDateTime(tz).date
     val doneCount = habits.count { h -> h.entries.any { it.completedAt.toLocalDateTime(tz).date == today } }
@@ -487,12 +494,12 @@ private fun HabitsQuickWidget(
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(
-                "Today's Habits",
+                s.dashboardTodaysHabits,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold
             )
             Text(
-                "$doneCount/${habits.size} done",
+                s.dashboardHabitsDoneCount(doneCount, habits.size),
                 style = MaterialTheme.typography.labelMedium,
                 color = SuccessColor,
                 fontWeight = FontWeight.SemiBold

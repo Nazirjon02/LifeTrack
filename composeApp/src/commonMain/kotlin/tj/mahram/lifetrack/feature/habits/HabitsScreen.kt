@@ -33,6 +33,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.minus
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.domain.model.Habit
 import tj.mahram.lifetrack.domain.model.HabitEntry
 import tj.mahram.lifetrack.ui.theme.SuccessColor
@@ -50,19 +51,20 @@ class HabitsScreen : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun HabitsContent(state: HabitsState, onIntent: (HabitsIntent) -> Unit) {
+    val s = LocalStrings.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
                         Text(
-                            "Habits",
+                            s.habitsTitle,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
                         if (state.habits.isNotEmpty()) {
                             Text(
-                                "${state.completedTodayCount}/${state.habits.size} done today",
+                                s.habitsSubtitle(state.completedTodayCount, state.habits.size),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -79,7 +81,7 @@ fun HabitsContent(state: HabitsState, onIntent: (HabitsIntent) -> Unit) {
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add habit", modifier = Modifier.size(26.dp))
+                Icon(Icons.Default.Add, contentDescription = s.habitsTitle, modifier = Modifier.size(26.dp))
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -129,6 +131,7 @@ fun HabitsContent(state: HabitsState, onIntent: (HabitsIntent) -> Unit) {
 
 @Composable
 private fun HabitsSummaryBanner(state: HabitsState) {
+    val s = LocalStrings.current
     val completionRate = if (state.habits.isEmpty()) 0f
                         else state.completedTodayCount.toFloat() / state.habits.size
 
@@ -165,17 +168,17 @@ private fun HabitsSummaryBanner(state: HabitsState) {
             ) {
                 Text(
                     when {
-                        completionRate >= 1f   -> "Perfect day! 🌟"
-                        completionRate >= 0.5f -> "Great progress! 🔥"
-                        completionRate > 0f    -> "Keep going! 💪"
-                        else                   -> "Start your day! ✨"
+                        completionRate >= 1f   -> s.habitsCompletionPerfect
+                        completionRate >= 0.5f -> s.habitsCompletionGreat
+                        completionRate > 0f    -> s.habitsCompletionKeepGoing
+                        else                   -> s.habitsCompletionStart
                     },
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
                 )
                 Text(
-                    "${state.completedTodayCount} of ${state.habits.size} habits done",
+                    s.habitsSubtitle(state.completedTodayCount, state.habits.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -192,7 +195,7 @@ private fun HabitsSummaryBanner(state: HabitsState) {
                                 .padding(horizontal = 10.dp, vertical = 5.dp)
                         ) {
                             Text(
-                                "🔥 Best streak: $bestStreak days",
+                                s.habitsBestStreak(bestStreak),
                                 style = MaterialTheme.typography.labelMedium,
                                 fontWeight = FontWeight.SemiBold,
                                 color = Color.White
@@ -233,7 +236,7 @@ private fun HabitsSummaryBanner(state: HabitsState) {
                         color = Color.White
                     )
                     Text(
-                        "done",
+                        s.plannerDoneLabel,
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White.copy(alpha = 0.75f)
                     )
@@ -253,6 +256,7 @@ private fun HabitCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val s = LocalStrings.current
     val tz = TimeZone.currentSystemDefault()
     val today = kotlin.time.Clock.System.now().toLocalDateTime(tz).date
     val isDone = habit.entries.any { it.completedAt.toLocalDateTime(tz).date == today }
@@ -312,14 +316,14 @@ private fun HabitCard(
                         )
                         if (streak > 0) {
                             Text(
-                                "🔥 $streak day streak",
+                                s.habitsDayStreak(streak),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = if (streak >= 7) Color(0xFFFF8C00)
                                         else MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         } else {
                             Text(
-                                habit.frequency.label,
+                                s.habitFrequencyLabel(habit.frequency),
                                 style = MaterialTheme.typography.labelMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -330,7 +334,7 @@ private fun HabitCard(
                     IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Delete",
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                             modifier = Modifier.size(17.dp)
                         )
@@ -422,6 +426,7 @@ private fun MiniHeatmap(entries: List<HabitEntry>, color: Color) {
 
 @Composable
 private fun HabitsEmptyState(modifier: Modifier = Modifier) {
+    val s = LocalStrings.current
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -430,13 +435,13 @@ private fun HabitsEmptyState(modifier: Modifier = Modifier) {
         Text("🌱", fontSize = 72.sp)
         Spacer(Modifier.height(20.dp))
         Text(
-            "No habits yet",
+            s.habitsEmptyTitle,
             style = MaterialTheme.typography.headlineSmall,
             fontWeight = FontWeight.Bold
         )
         Spacer(Modifier.height(8.dp))
         Text(
-            "Build positive routines one day at a time",
+            s.habitsEmptySubtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )

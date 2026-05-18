@@ -1,7 +1,7 @@
 package tj.mahram.lifetrack.domain.repository
 
 import kotlinx.coroutines.flow.Flow
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import tj.mahram.lifetrack.domain.model.FinanceSummary
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType

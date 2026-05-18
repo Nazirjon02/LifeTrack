@@ -17,7 +17,21 @@
       "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Virtual\\\\AndroidStudioProjects\\\\LifeTrack\" -Recurse -Directory)",
       "Bash(Select-Object -ExpandProperty FullName)",
       "Bash(Sort-Object)",
-      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Virtual\\\\AndroidStudioProjects\\\\LifeTrack\\\\composeApp\\\\src\\\\commonMain\\\\kotlin\\\\tj\\\\mahram\\\\lifetrack\" -Directory)"
+      "Bash(Get-ChildItem -Path \"C:\\\\Users\\\\Virtual\\\\AndroidStudioProjects\\\\LifeTrack\\\\composeApp\\\\src\\\\commonMain\\\\kotlin\\\\tj\\\\mahram\\\\lifetrack\" -Directory)",
+      "Bash(./gradlew :composeApp:compileKotlinAndroid)",
+      "Bash(bash gradlew :composeApp:compileKotlinAndroid)",
+      "Bash(bash gradlew :composeApp:compileKotlinAndroid --stacktrace)",
+      "Bash(./gradlew :composeApp:compileKotlinIosArm64)",
+      "Bash(bash gradlew :composeApp:compileKotlinIosArm64)",
+      "Bash(bash gradlew :composeApp:compileKotlinIosArm64 --stacktrace)",
+      "Bash(java -version)",
+      "Bash(/usr/libexec/java_home -V)",
+      "Bash(JAVA_HOME=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home bash gradlew :composeApp:compileKotlinIosArm64)",
+      "Bash(echo \"org.gradle.java.home=/Library/Java/JavaVirtualMachines/temurin-17.jdk/Contents/Home\")",
+      "Read(//Users/qurbonjonkhalilov/.gradle/**)",
+      "Bash(chmod +x /Users/qurbonjonkhalilov/AndroidStudioProjects/LifeTrack/gradlew)",
+      "Bash(xattr -l /Users/qurbonjonkhalilov/AndroidStudioProjects/LifeTrack/gradlew)",
+      "Bash(/Users/qurbonjonkhalilov/AndroidStudioProjects/LifeTrack/gradlew --version)"
     ]
   }
 }

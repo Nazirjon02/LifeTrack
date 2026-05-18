@@ -1,6 +1,6 @@
 package tj.mahram.lifetrack.domain.model
 
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 
 data class Task(
     val id: String,

@@ -1,6 +1,7 @@
 package tj.mahram.lifetrack.core.util
 
 import kotlin.math.abs
+import kotlin.math.pow
 
 fun Double.formatCurrency(currency: String = "USD", showSign: Boolean = false): String {
     val symbol = currencySymbol(currency)
@@ -28,7 +29,7 @@ fun Double.formatPercent(showSign: Boolean = true): String {
 }
 
 fun Double.roundTo(decimals: Int): String {
-    val factor = Math.pow(10.0, decimals.toDouble())
+    val factor = 10.0.pow(decimals)
     val rounded = kotlin.math.round(this * factor) / factor
     val str = rounded.toString()
     val dotIdx = str.indexOf('.')

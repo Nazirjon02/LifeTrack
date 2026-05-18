@@ -26,6 +26,7 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.domain.model.Category
 import tj.mahram.lifetrack.domain.model.FinanceSummary
@@ -50,6 +51,7 @@ class FinanceScreen : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit) {
+    val s = LocalStrings.current
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
         floatingActionButton = {
@@ -92,12 +94,12 @@ fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit) {
                 ) {
                     Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            "Finance",
+                            s.financeTitle,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
                         Text(
-                            "Track your money",
+                            s.financeSubtitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -142,8 +144,8 @@ fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit) {
                 item(key = "empty") {
                     EmptyState(
                         emoji = "💰",
-                        title = "No transactions",
-                        subtitle = "Tap + to add your first transaction",
+                        title = s.financeEmptyTitle,
+                        subtitle = s.financeEmptySubtitle,
                         modifier = Modifier.padding(top = 48.dp)
                     )
                 }
@@ -176,6 +178,7 @@ fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit) {
 
 @Composable
 private fun FinanceBalanceHero(summary: FinanceSummary, currency: String) {
+    val s = LocalStrings.current
     Box(
         modifier = Modifier
             .fillMaxWidth()
@@ -193,7 +196,7 @@ private fun FinanceBalanceHero(summary: FinanceSummary, currency: String) {
     ) {
         Column {
             Text(
-                "Total Balance",
+                s.financeTotalBalance,
                 style = MaterialTheme.typography.labelLarge,
                 color = Color.White.copy(alpha = 0.6f),
                 fontWeight = FontWeight.Medium
@@ -213,7 +216,7 @@ private fun FinanceBalanceHero(summary: FinanceSummary, currency: String) {
             ) {
                 HeroStatPill(
                     modifier = Modifier.weight(1f),
-                    label = "Income",
+                    label = s.financeIncomeLabel,
                     amount = summary.totalIncome,
                     currency = currency,
                     color = SuccessColor,
@@ -221,7 +224,7 @@ private fun FinanceBalanceHero(summary: FinanceSummary, currency: String) {
                 )
                 HeroStatPill(
                     modifier = Modifier.weight(1f),
-                    label = "Expenses",
+                    label = s.financeExpensesLabel,
                     amount = summary.totalExpense,
                     currency = currency,
                     color = ErrorColor,
@@ -289,10 +292,11 @@ private fun FinancePillTabs(
     selectedType: TransactionType?,
     onSelect: (TransactionType?) -> Unit
 ) {
+    val s = LocalStrings.current
     val tabs = listOf<Pair<String, TransactionType?>>(
-        "All" to null,
-        "Expenses" to TransactionType.EXPENSE,
-        "Income" to TransactionType.INCOME
+        s.financeTabAll to null,
+        s.financeTabExpenses to TransactionType.EXPENSE,
+        s.financeTabIncome to TransactionType.INCOME
     )
 
     Row(
@@ -345,6 +349,7 @@ private fun ExpenseDonutCard(
     categories: List<Category>,
     currency: String
 ) {
+    val s = LocalStrings.current
     val total = expensesByCategory.values.sum().coerceAtLeast(0.01)
     val entries = expensesByCategory.entries
         .sortedByDescending { it.value }
@@ -364,7 +369,7 @@ private fun ExpenseDonutCard(
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
             Text(
-                "Expense Breakdown",
+                s.financeExpenseBreakdown,
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.SemiBold
             )
@@ -405,7 +410,7 @@ private fun ExpenseDonutCard(
                             color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            "total",
+                            s.financeTotalLabel,
                             style = MaterialTheme.typography.labelSmall,
                             fontSize = 9.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -453,6 +458,7 @@ private fun ExpenseDonutCard(
 
 @Composable
 private fun FinanceSparklineCard(transactions: List<Transaction>) {
+    val s = LocalStrings.current
     val expenses = transactions.filter { it.type == TransactionType.EXPENSE }
     if (expenses.size < 2) return
 
@@ -482,7 +488,7 @@ private fun FinanceSparklineCard(transactions: List<Transaction>) {
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    "Expense Trend",
+                    s.financeExpenseTrend,
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold
                 )
@@ -493,7 +499,7 @@ private fun FinanceSparklineCard(transactions: List<Transaction>) {
                         .padding(horizontal = 8.dp, vertical = 4.dp)
                 ) {
                     Text(
-                        "${expenses.size} records",
+                        s.financeRecords(expenses.size),
                         style = MaterialTheme.typography.labelSmall,
                         color = ErrorColor,
                         fontWeight = FontWeight.Medium

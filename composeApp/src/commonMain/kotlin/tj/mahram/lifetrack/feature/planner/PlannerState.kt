@@ -20,8 +20,8 @@ data class PlannerState(
     val error: String? = null,
     val plannerView: PlannerView = PlannerView.DAY,
     val selectedYear: Int = currentDate().year,
-    val selectedMonth: Int = currentDate().monthNumber,
-    val selectedDay: Int = currentDate().dayOfMonth,
+    val selectedMonth: Int = currentDate().month.number,
+    val selectedDay: Int = currentDate().day,
 ) {
     val todayDate: LocalDate get() = currentDate()
 
@@ -46,13 +46,13 @@ data class PlannerState(
 
     fun tasksForMonth(year: Int, month: Int): List<Task> = tasks.filter { task ->
         task.dueDate?.toLocalDateTime(TimeZone.currentSystemDefault())?.date?.let {
-            it.year == year && it.monthNumber == month
+            it.year == year && it.month.number == month
         } ?: false
     }
 
     fun tasksForDay(year: Int, month: Int, day: Int): List<Task> = tasks.filter { task ->
         task.dueDate?.toLocalDateTime(TimeZone.currentSystemDefault())?.date?.let {
-            it.year == year && it.monthNumber == month && it.dayOfMonth == day
+            it.year == year && it.month.number == month && it.day == day
         } ?: false
     }
 

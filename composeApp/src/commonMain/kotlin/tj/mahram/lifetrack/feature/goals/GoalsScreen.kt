@@ -31,6 +31,8 @@ import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.core.i18n.LocalStrings
+import tj.mahram.lifetrack.core.util.roundTo
 import tj.mahram.lifetrack.domain.model.Goal
 import tj.mahram.lifetrack.feature.habits.parseHabitColor
 
@@ -53,19 +55,20 @@ class GoalsScreen : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
+    val s = LocalStrings.current
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
                     Column {
                         Text(
-                            "Goals",
+                            s.goalsTitle,
                             style = MaterialTheme.typography.headlineMedium,
                             fontWeight = FontWeight.Bold
                         )
                         if (state.goals.isNotEmpty()) {
                             Text(
-                                "${state.completedGoals.size}/${state.goals.size} completed",
+                                s.goalsSubtitle(state.completedGoals.size, state.goals.size),
                                 style = MaterialTheme.typography.bodySmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
@@ -82,7 +85,7 @@ fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
                 contentColor = MaterialTheme.colorScheme.onPrimary,
                 shape = CircleShape
             ) {
-                Icon(Icons.Default.Add, contentDescription = "Add goal", modifier = Modifier.size(26.dp))
+                Icon(Icons.Default.Add, contentDescription = s.goalsTitle, modifier = Modifier.size(26.dp))
             }
         },
         containerColor = MaterialTheme.colorScheme.background
@@ -109,7 +112,7 @@ fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
                 if (state.activeGoals.isNotEmpty()) {
                     item(key = "active_header") {
                         Text(
-                            "Active",
+                            s.goalsActiveSection,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.primary,
@@ -128,7 +131,7 @@ fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
                 if (state.completedGoals.isNotEmpty()) {
                     item(key = "done_header") {
                         Text(
-                            "Completed",
+                            s.goalsCompletedSection,
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
@@ -170,6 +173,7 @@ fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
 
 @Composable
 private fun GoalsSummaryBanner(state: GoalsState) {
+    val s = LocalStrings.current
     val completionRate = if (state.goals.isEmpty()) 0f
                         else state.completedGoals.size.toFloat() / state.goals.size
     val animRate by animateFloatAsState(
@@ -203,17 +207,17 @@ private fun GoalsSummaryBanner(state: GoalsState) {
             ) {
                 Text(
                     when {
-                        completionRate >= 1f   -> "All goals done! 🌟"
-                        completionRate >= 0.5f -> "Halfway there! 🚀"
-                        completionRate > 0f    -> "Keep pushing! 💪"
-                        else                   -> "Set your goals! 🎯"
+                        completionRate >= 1f   -> s.goalsCompletionAll
+                        completionRate >= 0.5f -> s.goalsCompletionHalfway
+                        completionRate > 0f    -> s.goalsCompletionKeepPushing
+                        else                   -> s.goalsCompletionSet
                     },
                     style = MaterialTheme.typography.titleLarge,
                     fontWeight = FontWeight.ExtraBold,
                     color = Color.White
                 )
                 Text(
-                    "${state.completedGoals.size} of ${state.goals.size} goals achieved",
+                    s.goalsAchieved(state.completedGoals.size, state.goals.size),
                     style = MaterialTheme.typography.bodyMedium,
                     color = Color.White.copy(alpha = 0.8f)
                 )
@@ -226,7 +230,7 @@ private fun GoalsSummaryBanner(state: GoalsState) {
                             .padding(horizontal = 10.dp, vertical = 5.dp)
                     ) {
                         Text(
-                            "🔥 ${state.activeGoals.size} active",
+                            s.goalsActiveCount(state.activeGoals.size),
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = Color.White
@@ -265,7 +269,7 @@ private fun GoalsSummaryBanner(state: GoalsState) {
                         color = Color.White
                     )
                     Text(
-                        "done",
+                        s.plannerDoneLabel,
                         style = MaterialTheme.typography.labelSmall,
                         color = Color.White.copy(alpha = 0.75f)
                     )
@@ -284,6 +288,7 @@ private fun GoalCard(
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val s = LocalStrings.current
     val goalColor = parseHabitColor(goal.color)
     val animProgress by animateFloatAsState(
         targetValue = goal.progressFraction,
@@ -369,7 +374,7 @@ private fun GoalCard(
                     IconButton(onClick = onDelete, modifier = Modifier.size(34.dp)) {
                         Icon(
                             Icons.Default.Delete,
-                            contentDescription = "Delete",
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.4f),
                             modifier = Modifier.size(17.dp)
                         )
@@ -408,7 +413,7 @@ private fun GoalCard(
                             .padding(horizontal = 14.dp, vertical = 7.dp)
                     ) {
                         Text(
-                            "＋ Update progress",
+                            s.goalsUpdateProgress,
                             style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = goalColor
@@ -428,6 +433,7 @@ private fun AddGoalSheet(
     onDismiss: () -> Unit,
     onConfirm: (GoalsIntent) -> Unit
 ) {
+    val s = LocalStrings.current
     var title         by remember { mutableStateOf("") }
     var description   by remember { mutableStateOf("") }
     var selectedIcon  by remember { mutableStateOf(GoalIcons.first()) }
@@ -478,13 +484,13 @@ private fun AddGoalSheet(
                 ) {
                     Column {
                         Text(
-                            "🎯 New Goal",
+                            s.addGoalSheetTitle,
                             style = MaterialTheme.typography.headlineSmall,
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onSecondaryContainer
                         )
                         Text(
-                            "What do you want to achieve?",
+                            s.addGoalSheetSubtitle,
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSecondaryContainer.copy(alpha = 0.7f)
                         )
@@ -498,7 +504,7 @@ private fun AddGoalSheet(
                     ) {
                         Icon(
                             Icons.Default.Close,
-                            contentDescription = "Close",
+                            contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
                             modifier = Modifier.size(18.dp)
                         )
@@ -512,16 +518,16 @@ private fun AddGoalSheet(
 
                 // Title
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Goal title", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(s.addGoalFieldTitle, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it; titleError = false },
                         modifier = Modifier.fillMaxWidth(),
-                        placeholder = { Text("e.g. Run 100km", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+                        placeholder = { Text(s.addGoalPlaceholderTitle, color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
                         isError = titleError,
                         singleLine = true,
                         shape = RoundedCornerShape(16.dp),
-                        supportingText = if (titleError) ({ Text("Title can't be empty", color = MaterialTheme.colorScheme.error) }) else null,
+                        supportingText = if (titleError) ({ Text(s.addGoalErrorTitleEmpty, color = MaterialTheme.colorScheme.error) }) else null,
                         colors = OutlinedTextFieldDefaults.colors(
                             focusedBorderColor = MaterialTheme.colorScheme.primary,
                             unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
@@ -534,7 +540,7 @@ private fun AddGoalSheet(
                 // Target + Unit
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(modifier = Modifier.weight(1.5f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Target", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(s.addGoalFieldTarget, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         OutlinedTextField(
                             value = targetText,
                             onValueChange = { targetText = it; targetError = false },
@@ -553,7 +559,7 @@ private fun AddGoalSheet(
                         )
                     }
                     Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        Text("Unit", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        Text(s.addGoalFieldUnit, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                         OutlinedTextField(
                             value = unit,
                             onValueChange = { unit = it },
@@ -573,7 +579,7 @@ private fun AddGoalSheet(
 
                 // Icon picker
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Icon", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(s.addHabitPickIcon, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
@@ -607,7 +613,7 @@ private fun AddGoalSheet(
 
                 // Color picker
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Text("Color", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Text(s.addHabitColorLabel, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(10.dp)
@@ -670,7 +676,7 @@ private fun AddGoalSheet(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    "Create Goal →",
+                    s.addGoalCreateButton,
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = Color.White
@@ -688,6 +694,7 @@ private fun UpdateProgressDialog(
     onDismiss: () -> Unit,
     onConfirm: (Double) -> Unit
 ) {
+    val s = LocalStrings.current
     val goalColor = parseHabitColor(goal.color)
     var valueText by remember { mutableStateOf(goal.currentValue.let { if (it == 0.0) "" else formatGoalValue(it) }) }
     var isError   by remember { mutableStateOf(false) }
@@ -700,7 +707,7 @@ private fun UpdateProgressDialog(
             Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                 Text(goal.icon + " " + goal.title, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
                 Text(
-                    "Current: ${formatGoalValue(goal.currentValue)} / ${formatGoalValue(goal.targetValue)} ${goal.unit}",
+                    s.updateGoalCurrentProgress(formatGoalValue(goal.currentValue), formatGoalValue(goal.targetValue), goal.unit),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -724,7 +731,7 @@ private fun UpdateProgressDialog(
                     )
                 }
                 Text(
-                    "New progress value:",
+                    s.updateGoalProgressLabel,
                     style = MaterialTheme.typography.labelLarge,
                     fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -758,12 +765,12 @@ private fun UpdateProgressDialog(
                     }
                     .padding(horizontal = 20.dp, vertical = 10.dp)
             ) {
-                Text("Update", color = Color.White, fontWeight = FontWeight.SemiBold)
+                Text(s.updateGoalButton, color = Color.White, fontWeight = FontWeight.SemiBold)
             }
         },
         dismissButton = {
             TextButton(onClick = onDismiss) {
-                Text("Cancel", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(s.cancelButton, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
     )
@@ -773,6 +780,7 @@ private fun UpdateProgressDialog(
 
 @Composable
 private fun GoalsEmptyState(modifier: Modifier = Modifier) {
+    val s = LocalStrings.current
     Column(
         modifier = modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -780,10 +788,10 @@ private fun GoalsEmptyState(modifier: Modifier = Modifier) {
     ) {
         Text("🎯", fontSize = 72.sp)
         Spacer(Modifier.height(20.dp))
-        Text("No goals yet", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
+        Text(s.goalsEmptyTitle, style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
         Spacer(Modifier.height(8.dp))
         Text(
-            "Set a goal and track your progress",
+            s.goalsEmptySubtitle,
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
@@ -794,4 +802,4 @@ private fun GoalsEmptyState(modifier: Modifier = Modifier) {
 
 private fun formatGoalValue(value: Double): String =
     if (value == value.toLong().toDouble()) value.toLong().toString()
-    else "%.1f".format(value)
+    else value.roundTo(1)

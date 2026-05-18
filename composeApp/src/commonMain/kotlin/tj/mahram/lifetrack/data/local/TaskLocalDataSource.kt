@@ -3,11 +3,12 @@ package tj.mahram.lifetrack.data.local
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlin.time.Clock
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import tj.mahram.lifetrack.core.util.endOfDay
 import tj.mahram.lifetrack.core.util.startOfDay
 import tj.mahram.lifetrack.data.local.db.AppDatabase
@@ -19,31 +20,31 @@ import tj.mahram.lifetrack.domain.model.TaskPriority
 class TaskLocalDataSource(private val db: AppDatabase) {
 
     fun getAllTasks(): Flow<List<Task>> =
-        db.taskQueries.selectAllTasks().asFlow().mapToList(Dispatchers.IO).map { list ->
+        db.taskQueries.selectAllTasks().asFlow().mapToList(Dispatchers.Default).map { list ->
             list.map { it.toDomain() }
         }
 
     fun getTodayTasks(): Flow<List<Task>> {
         val start = startOfDay().toEpochMilliseconds()
         val end = endOfDay().toEpochMilliseconds()
-        return db.taskQueries.selectTasksForToday(start, end).asFlow().mapToList(Dispatchers.IO)
+        return db.taskQueries.selectTasksForToday(start, end).asFlow().mapToList(Dispatchers.Default)
             .map { list -> list.map { it.toDomain() } }
     }
 
     fun getTasksByCategory(categoryId: String): Flow<List<Task>> =
-        db.taskQueries.selectTasksByCategory(categoryId).asFlow().mapToList(Dispatchers.IO)
+        db.taskQueries.selectTasksByCategory(categoryId).asFlow().mapToList(Dispatchers.Default)
             .map { it.map { t -> t.toDomain() } }
 
     fun searchTasks(query: String): Flow<List<Task>> =
-        db.taskQueries.searchTasks(query).asFlow().mapToList(Dispatchers.IO)
+        db.taskQueries.searchTasks(query).asFlow().mapToList(Dispatchers.Default)
             .map { it.map { t -> t.toDomain() } }
 
-    suspend fun getTaskById(id: String): Task? = withContext(Dispatchers.IO) {
+    suspend fun getTaskById(id: String): Task? = withContext(Dispatchers.Default) {
         db.taskQueries.selectTaskById(id).executeAsOneOrNull()?.toDomain()
     }
 
     suspend fun insert(task: Task) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.taskQueries.insertTask(
                 id = task.id,
                 title = task.title,
@@ -62,7 +63,7 @@ class TaskLocalDataSource(private val db: AppDatabase) {
     }
 
     suspend fun update(task: Task) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.taskQueries.updateTask(
                 title = task.title,
                 description = task.description,
@@ -79,7 +80,7 @@ class TaskLocalDataSource(private val db: AppDatabase) {
     }
 
     suspend fun toggleCompletion(id: String, isCompleted: Boolean) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.taskQueries.updateTaskCompletion(
                 isCompleted = if (isCompleted) 1L else 0L,
                 updatedAt = Clock.System.now().toEpochMilliseconds(),
@@ -89,19 +90,19 @@ class TaskLocalDataSource(private val db: AppDatabase) {
     }
 
     suspend fun delete(id: String) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.taskQueries.deleteSubtasks(id)
             db.taskQueries.deleteTask(id)
         }
     }
 
-    suspend fun getCompletedCountToday(): Int = withContext(Dispatchers.IO) {
+    suspend fun getCompletedCountToday(): Int = withContext(Dispatchers.Default) {
         val start = startOfDay().toEpochMilliseconds()
         val end = endOfDay().toEpochMilliseconds()
         db.taskQueries.countCompletedToday(start, end).executeAsOne().toInt()
     }
 
-    suspend fun getTotalCountToday(): Int = withContext(Dispatchers.IO) {
+    suspend fun getTotalCountToday(): Int = withContext(Dispatchers.Default) {
         val start = startOfDay().toEpochMilliseconds()
         val end = endOfDay().toEpochMilliseconds()
         db.taskQueries.countTotalToday(start, end).executeAsOne().toInt()

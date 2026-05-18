@@ -2,7 +2,9 @@ package tj.mahram.lifetrack.core.i18n
 
 import androidx.compose.runtime.compositionLocalOf
 import tj.mahram.lifetrack.domain.model.AppLanguage
+import tj.mahram.lifetrack.domain.model.HabitFrequency
 import tj.mahram.lifetrack.domain.model.TaskPriority
+import tj.mahram.lifetrack.domain.model.TransactionType
 
 data class AppStrings(
     // Navigation tabs
@@ -33,6 +35,9 @@ data class AppStrings(
     val labelFinanceAlertsSub: String,
     val sectionAbout: String,
     val aboutVersion: String,
+    val settingsAppTagline: String,
+    val settingsPremium: String,
+    val settingsVersionLabel: String,
 
     // Planner screen — header
     val plannerProgressReady: String,
@@ -44,7 +49,7 @@ data class AppStrings(
     val plannerAllTasksDone: String,
     val plannerAddFirstTask: String,
     val plannerTasksRemaining: (Int) -> String,
-    val plannerDoneLabel: String,     // label inside the ring: "done"
+    val plannerDoneLabel: String,
     val plannerLabelTotal: String,
     val plannerLabelDone: String,
     val plannerLabelLeft: String,
@@ -94,12 +99,149 @@ data class AppStrings(
     val dashboardIncome: String,
     val dashboardExpense: String,
     val dashboardBalance: String,
+    val dashboardHabitsDoneLabel: String,
+    val dashboardPomodorosLabel: String,
+    val dashboardFocusTime: String,
+    val dashboardBreakTime: String,
+    val dashboardSession: (count: Int) -> String,
+    val dashboardIdleMessage: String,
+    val dashboardModeWork: String,
+    val dashboardModeRest: String,
+    val dashboardPause: String,
+    val dashboardStartFocus: String,
+    val dashboardTodaysHabits: String,
+    val dashboardHabitsDoneCount: (done: Int, total: Int) -> String,
+
+    // Habits
+    val habitsTitle: String,
+    val habitsSubtitle: (done: Int, total: Int) -> String,
+    val habitsCompletionPerfect: String,
+    val habitsCompletionGreat: String,
+    val habitsCompletionKeepGoing: String,
+    val habitsCompletionStart: String,
+    val habitsBestStreak: (days: Int) -> String,
+    val habitsDayStreak: (days: Int) -> String,
+    val habitsEmptyTitle: String,
+    val habitsEmptySubtitle: String,
+    val habitFreqDaily: String,
+    val habitFreqWeekdays: String,
+    val habitFreqWeekends: String,
+
+    // AddHabit
+    val addHabitTitle: String,
+    val addHabitFieldName: String,
+    val addHabitErrorEmpty: String,
+    val addHabitPickIcon: String,
+    val addHabitColorLabel: String,
+    val addHabitFrequencyLabel: String,
+    val addHabitCreateButton: String,
+
+    // Goals
+    val goalsTitle: String,
+    val goalsSubtitle: (completed: Int, total: Int) -> String,
+    val goalsActiveSection: String,
+    val goalsCompletedSection: String,
+    val goalsCompletionAll: String,
+    val goalsCompletionHalfway: String,
+    val goalsCompletionKeepPushing: String,
+    val goalsCompletionSet: String,
+    val goalsAchieved: (completed: Int, total: Int) -> String,
+    val goalsActiveCount: (active: Int) -> String,
+    val goalsUpdateProgress: String,
+    val addGoalSheetTitle: String,
+    val addGoalSheetSubtitle: String,
+    val addGoalFieldTitle: String,
+    val addGoalPlaceholderTitle: String,
+    val addGoalErrorTitleEmpty: String,
+    val addGoalFieldTarget: String,
+    val addGoalFieldUnit: String,
+    val addGoalCreateButton: String,
+    val updateGoalProgressLabel: String,
+    val updateGoalCurrentProgress: (current: String, target: String, unit: String) -> String,
+    val updateGoalButton: String,
+    val cancelButton: String,
+    val goalsEmptyTitle: String,
+    val goalsEmptySubtitle: String,
+
+    // Finance
+    val financeTitle: String,
+    val financeSubtitle: String,
+    val financeTotalBalance: String,
+    val financeIncomeLabel: String,
+    val financeExpensesLabel: String,
+    val financeTabAll: String,
+    val financeTabExpenses: String,
+    val financeTabIncome: String,
+    val financeExpenseBreakdown: String,
+    val financeTotalLabel: String,
+    val financeExpenseTrend: String,
+    val financeRecords: (count: Int) -> String,
+    val financeEmptyTitle: String,
+    val financeEmptySubtitle: String,
+    val financeAmountLabel: String,
+    val financeAmountError: String,
+    val financeCategoryLabel: String,
+    val financeNoteLabel: String,
+    val financeAddTitleIncome: String,
+    val financeAddTitleExpense: String,
+
+    // Planner screen title & view switcher
+    val plannerScreenTitle: String,
+    val plannerViewYear: String,
+    val plannerViewMonth: String,
+    val plannerViewDay: String,
+
+    // Planner calendar cells & day view
+    val plannerNoTasksMonth: String,
+    val plannerTasksCountMonth: (Int) -> String,
+    val plannerTasksDoneOf: (Int, Int) -> String,
+    val plannerEmptyDayTitle: String,
+    val plannerEmptyDaySubtitle: String,
+    val plannerDoneTabSubtitle: String,
+    val plannerMonthAbbrevs: List<String>,
+    val plannerMonthFullNames: List<String>,
+    val plannerWeekDayHeaders: List<String>,
+    val plannerDayOfWeekNames: List<String>,
+
+    // Crypto
+    val cryptoTitle: String,
+    val cryptoSearchPlaceholder: String,
+    val cryptoMarketEmpty: String,
+    val cryptoMarketEmptySubtitle: String,
+    val cryptoPortfolioEmpty: String,
+    val cryptoPortfolioEmptySubtitle: String,
+    val cryptoWatchlistEmpty: String,
+    val cryptoWatchlistEmptySubtitle: String,
+    val cryptoRemove: String,
+    val cryptoChart1D: String,
+    val cryptoChart7D: String,
+    val cryptoChart1M: String,
+    val cryptoChart1Y: String,
+    val cryptoAddToPortfolioButton: String,
+    val cryptoWatchlistButton: String,
+    val cryptoAddToPortfolioDialog: (coinName: String) -> String,
+    val cryptoAmountLabel: String,
+    val cryptoPurchasePriceLabel: String,
+    val cryptoAddButton: String,
+    val cryptoCancelButton: String,
 ) {
     fun priorityLabel(priority: TaskPriority): String = when (priority) {
         TaskPriority.LOW      -> priorityLow
         TaskPriority.MEDIUM   -> priorityMedium
         TaskPriority.HIGH     -> priorityHigh
         TaskPriority.CRITICAL -> priorityCritical
+    }
+
+    fun habitFrequencyLabel(frequency: HabitFrequency): String = when (frequency) {
+        HabitFrequency.DAILY    -> habitFreqDaily
+        HabitFrequency.WEEKDAYS -> habitFreqWeekdays
+        HabitFrequency.WEEKENDS -> habitFreqWeekends
+        HabitFrequency.CUSTOM   -> habitFreqDaily
+    }
+
+    fun transactionTypeLabel(type: TransactionType): String = when (type) {
+        TransactionType.INCOME  -> financeAddTitleIncome
+        TransactionType.EXPENSE -> financeAddTitleExpense
     }
 }
 
@@ -130,6 +272,9 @@ val EnglishStrings = AppStrings(
     labelFinanceAlertsSub = "Budget and spending notifications",
     sectionAbout = "ℹ️  About",
     aboutVersion = "Version 1.0.0 · Kotlin Multiplatform",
+    settingsAppTagline = "Your personal life manager",
+    settingsPremium = "✨ Premium",
+    settingsVersionLabel = "v1.0",
 
     plannerProgressReady = "Ready to start! 🚀",
     plannerProgressDone = "All done! 🎉",
@@ -180,12 +325,130 @@ val EnglishStrings = AppStrings(
     dashboardGreetingAfternoon = "Good afternoon",
     dashboardGreetingEvening = "Good evening",
     dashboardGreetingNight = "Good night",
-    dashboardTasksToday = "Today's Tasks",
+    dashboardTasksToday = "Tasks Today",
     dashboardNoTasks = "No tasks for today",
     dashboardFinanceMonth = "This Month",
     dashboardIncome = "Income",
-    dashboardExpense = "Expense",
+    dashboardExpense = "Expenses",
     dashboardBalance = "Balance",
+    dashboardHabitsDoneLabel = "Habits Done",
+    dashboardPomodorosLabel = "Pomodoros",
+    dashboardFocusTime = "Focus Time 🎯",
+    dashboardBreakTime = "Break Time ☕",
+    dashboardSession = { n -> "🍅 $n session${if (n > 1) "s" else ""}" },
+    dashboardIdleMessage = "Build momentum, stay focused",
+    dashboardModeWork = "WORK",
+    dashboardModeRest = "REST",
+    dashboardPause = "Pause",
+    dashboardStartFocus = "Start Focus",
+    dashboardTodaysHabits = "Today's Habits",
+    dashboardHabitsDoneCount = { done, total -> "$done/$total done" },
+
+    habitsTitle = "Habits",
+    habitsSubtitle = { done, total -> "$done/$total done today" },
+    habitsCompletionPerfect = "Perfect day! 🌟",
+    habitsCompletionGreat = "Great progress! 🔥",
+    habitsCompletionKeepGoing = "Keep going! 💪",
+    habitsCompletionStart = "Start your day! ✨",
+    habitsBestStreak = { n -> "🔥 Best streak: $n days" },
+    habitsDayStreak = { n -> "🔥 $n day streak" },
+    habitsEmptyTitle = "No habits yet",
+    habitsEmptySubtitle = "Build positive routines one day at a time",
+    habitFreqDaily = "Daily",
+    habitFreqWeekdays = "Weekdays",
+    habitFreqWeekends = "Weekends",
+
+    addHabitTitle = "New Habit ✨",
+    addHabitFieldName = "Habit name",
+    addHabitErrorEmpty = "Please enter a name",
+    addHabitPickIcon = "Pick an icon",
+    addHabitColorLabel = "Color",
+    addHabitFrequencyLabel = "Frequency",
+    addHabitCreateButton = "Create Habit",
+
+    goalsTitle = "Goals",
+    goalsSubtitle = { completed, total -> "$completed/$total completed" },
+    goalsActiveSection = "Active",
+    goalsCompletedSection = "Completed",
+    goalsCompletionAll = "All goals done! 🌟",
+    goalsCompletionHalfway = "Halfway there! 🚀",
+    goalsCompletionKeepPushing = "Keep pushing! 💪",
+    goalsCompletionSet = "Set your goals! 🎯",
+    goalsAchieved = { completed, total -> "$completed of $total goals achieved" },
+    goalsActiveCount = { n -> "🔥 $n active" },
+    goalsUpdateProgress = "＋ Update progress",
+    addGoalSheetTitle = "🎯 New Goal",
+    addGoalSheetSubtitle = "What do you want to achieve?",
+    addGoalFieldTitle = "Goal title",
+    addGoalPlaceholderTitle = "e.g. Run 100km",
+    addGoalErrorTitleEmpty = "Title can't be empty",
+    addGoalFieldTarget = "Target",
+    addGoalFieldUnit = "Unit",
+    addGoalCreateButton = "Create Goal →",
+    updateGoalProgressLabel = "New progress value:",
+    updateGoalCurrentProgress = { current, target, unit -> "Current: $current / $target $unit" },
+    updateGoalButton = "Update",
+    cancelButton = "Cancel",
+    goalsEmptyTitle = "No goals yet",
+    goalsEmptySubtitle = "Set a goal and track your progress",
+
+    financeTitle = "Finance",
+    financeSubtitle = "Track your money",
+    financeTotalBalance = "Total Balance",
+    financeIncomeLabel = "Income",
+    financeExpensesLabel = "Expenses",
+    financeTabAll = "All",
+    financeTabExpenses = "Expenses",
+    financeTabIncome = "Income",
+    financeExpenseBreakdown = "Expense Breakdown",
+    financeTotalLabel = "total",
+    financeExpenseTrend = "Expense Trend",
+    financeRecords = { n -> "$n records" },
+    financeEmptyTitle = "No transactions",
+    financeEmptySubtitle = "Tap + to add your first transaction",
+    financeAmountLabel = "Amount *",
+    financeAmountError = "Enter a valid amount",
+    financeCategoryLabel = "Category *",
+    financeNoteLabel = "Note (optional)",
+    financeAddTitleIncome = "Income",
+    financeAddTitleExpense = "Expense",
+
+    plannerScreenTitle = "Planner",
+    plannerViewYear = "Year",
+    plannerViewMonth = "Month",
+    plannerViewDay = "Day",
+
+    plannerNoTasksMonth = "No tasks",
+    plannerTasksCountMonth = { n -> if (n == 1) "1 task" else "$n tasks" },
+    plannerTasksDoneOf = { done, total -> "$done of $total tasks done" },
+    plannerEmptyDayTitle = "No tasks for this day",
+    plannerEmptyDaySubtitle = "Tap + to schedule a task here",
+    plannerDoneTabSubtitle = "Complete some tasks first",
+    plannerMonthAbbrevs = listOf("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"),
+    plannerMonthFullNames = listOf("January","February","March","April","May","June","July","August","September","October","November","December"),
+    plannerWeekDayHeaders = listOf("Mo","Tu","We","Th","Fr","Sa","Su"),
+    plannerDayOfWeekNames = listOf("Monday","Tuesday","Wednesday","Thursday","Friday","Saturday","Sunday"),
+
+    cryptoTitle = "Crypto",
+    cryptoSearchPlaceholder = "Search coins...",
+    cryptoMarketEmpty = "No coins found",
+    cryptoMarketEmptySubtitle = "Try a different search",
+    cryptoPortfolioEmpty = "Portfolio is empty",
+    cryptoPortfolioEmptySubtitle = "Go to Market tab and add coins to your portfolio",
+    cryptoWatchlistEmpty = "Watchlist is empty",
+    cryptoWatchlistEmptySubtitle = "Tap a coin in the Market tab to add to watchlist",
+    cryptoRemove = "Remove",
+    cryptoChart1D = "1D",
+    cryptoChart7D = "7D",
+    cryptoChart1M = "1M",
+    cryptoChart1Y = "1Y",
+    cryptoAddToPortfolioButton = "Add to Portfolio",
+    cryptoWatchlistButton = "Watchlist",
+    cryptoAddToPortfolioDialog = { coinName -> "Add $coinName to Portfolio" },
+    cryptoAmountLabel = "Amount",
+    cryptoPurchasePriceLabel = "Purchase Price",
+    cryptoAddButton = "Add",
+    cryptoCancelButton = "Cancel",
 )
 
 val RussianStrings = AppStrings(
@@ -215,6 +478,9 @@ val RussianStrings = AppStrings(
     labelFinanceAlertsSub = "Уведомления о бюджете и расходах",
     sectionAbout = "ℹ️  О приложении",
     aboutVersion = "Версия 1.0.0 · Kotlin Multiplatform",
+    settingsAppTagline = "Ваш персональный помощник",
+    settingsPremium = "✨ Премиум",
+    settingsVersionLabel = "v1.0",
 
     plannerProgressReady = "Готов начать! 🚀",
     plannerProgressDone = "Всё выполнено! 🎉",
@@ -228,10 +494,10 @@ val RussianStrings = AppStrings(
         val mod10 = n % 10
         val mod100 = n % 100
         when {
-            mod100 in 11..19          -> "Осталось $n задач"
-            mod10 == 1                -> "Осталась $n задача"
-            mod10 in 2..4             -> "Осталось $n задачи"
-            else                      -> "Осталось $n задач"
+            mod100 in 11..19 -> "Осталось $n задач"
+            mod10 == 1       -> "Осталась $n задача"
+            mod10 in 2..4    -> "Осталось $n задачи"
+            else             -> "Осталось $n задач"
         }
     },
     plannerDoneLabel = "готово",
@@ -274,12 +540,189 @@ val RussianStrings = AppStrings(
     dashboardGreetingAfternoon = "Добрый день",
     dashboardGreetingEvening = "Добрый вечер",
     dashboardGreetingNight = "Доброй ночи",
-    dashboardTasksToday = "Задачи на сегодня",
+    dashboardTasksToday = "Задачи сегодня",
     dashboardNoTasks = "Нет задач на сегодня",
     dashboardFinanceMonth = "Этот месяц",
     dashboardIncome = "Доходы",
     dashboardExpense = "Расходы",
     dashboardBalance = "Баланс",
+    dashboardHabitsDoneLabel = "Привычки",
+    dashboardPomodorosLabel = "Помодоро",
+    dashboardFocusTime = "Фокус 🎯",
+    dashboardBreakTime = "Перерыв ☕",
+    dashboardSession = { n ->
+        val mod10 = n % 10
+        val mod100 = n % 100
+        val word = when {
+            mod100 in 11..19 -> "сессий"
+            mod10 == 1       -> "сессия"
+            mod10 in 2..4    -> "сессии"
+            else             -> "сессий"
+        }
+        "🍅 $n $word"
+    },
+    dashboardIdleMessage = "Сосредоточься и начни работу",
+    dashboardModeWork = "РАБОТА",
+    dashboardModeRest = "ОТДЫХ",
+    dashboardPause = "Пауза",
+    dashboardStartFocus = "Начать фокус",
+    dashboardTodaysHabits = "Привычки на сегодня",
+    dashboardHabitsDoneCount = { done, total -> "$done/$total готово" },
+
+    habitsTitle = "Привычки",
+    habitsSubtitle = { done, total -> "$done/$total сделано сегодня" },
+    habitsCompletionPerfect = "Идеальный день! 🌟",
+    habitsCompletionGreat = "Отличный прогресс! 🔥",
+    habitsCompletionKeepGoing = "Продолжай! 💪",
+    habitsCompletionStart = "Начни свой день! ✨",
+    habitsBestStreak = { n ->
+        val mod10 = n % 10
+        val mod100 = n % 100
+        val word = when {
+            mod100 in 11..19 -> "дней"
+            mod10 == 1       -> "день"
+            mod10 in 2..4    -> "дня"
+            else             -> "дней"
+        }
+        "🔥 Лучшая серия: $n $word"
+    },
+    habitsDayStreak = { n ->
+        val mod10 = n % 10
+        val mod100 = n % 100
+        val word = when {
+            mod100 in 11..19 -> "дней"
+            mod10 == 1       -> "день"
+            mod10 in 2..4    -> "дня"
+            else             -> "дней"
+        }
+        "🔥 $n $word подряд"
+    },
+    habitsEmptyTitle = "Нет привычек",
+    habitsEmptySubtitle = "Формируй полезные привычки каждый день",
+    habitFreqDaily = "Каждый день",
+    habitFreqWeekdays = "Будни",
+    habitFreqWeekends = "Выходные",
+
+    addHabitTitle = "Новая привычка ✨",
+    addHabitFieldName = "Название привычки",
+    addHabitErrorEmpty = "Введите название",
+    addHabitPickIcon = "Выберите иконку",
+    addHabitColorLabel = "Цвет",
+    addHabitFrequencyLabel = "Частота",
+    addHabitCreateButton = "Создать привычку",
+
+    goalsTitle = "Цели",
+    goalsSubtitle = { completed, total -> "$completed/$total выполнено" },
+    goalsActiveSection = "Активные",
+    goalsCompletedSection = "Выполненные",
+    goalsCompletionAll = "Все цели достигнуты! 🌟",
+    goalsCompletionHalfway = "Половина пути! 🚀",
+    goalsCompletionKeepPushing = "Не останавливайся! 💪",
+    goalsCompletionSet = "Поставь цели! 🎯",
+    goalsAchieved = { completed, total -> "$completed из $total целей достигнуто" },
+    goalsActiveCount = { n ->
+        val mod10 = n % 10
+        val mod100 = n % 100
+        val word = when {
+            mod100 in 11..19 -> "активных"
+            mod10 == 1       -> "активная"
+            mod10 in 2..4    -> "активные"
+            else             -> "активных"
+        }
+        "🔥 $n $word"
+    },
+    goalsUpdateProgress = "＋ Обновить прогресс",
+    addGoalSheetTitle = "🎯 Новая цель",
+    addGoalSheetSubtitle = "Чего вы хотите достичь?",
+    addGoalFieldTitle = "Название цели",
+    addGoalPlaceholderTitle = "например, Пробежать 100 км",
+    addGoalErrorTitleEmpty = "Название не может быть пустым",
+    addGoalFieldTarget = "Цель",
+    addGoalFieldUnit = "Единица",
+    addGoalCreateButton = "Создать цель →",
+    updateGoalProgressLabel = "Новое значение прогресса:",
+    updateGoalCurrentProgress = { current, target, unit -> "Текущий: $current / $target $unit" },
+    updateGoalButton = "Обновить",
+    cancelButton = "Отмена",
+    goalsEmptyTitle = "Нет целей",
+    goalsEmptySubtitle = "Поставь цель и отслеживай прогресс",
+
+    financeTitle = "Финансы",
+    financeSubtitle = "Управляйте деньгами",
+    financeTotalBalance = "Общий баланс",
+    financeIncomeLabel = "Доходы",
+    financeExpensesLabel = "Расходы",
+    financeTabAll = "Все",
+    financeTabExpenses = "Расходы",
+    financeTabIncome = "Доходы",
+    financeExpenseBreakdown = "Разбивка расходов",
+    financeTotalLabel = "итого",
+    financeExpenseTrend = "Динамика расходов",
+    financeRecords = { n ->
+        val mod10 = n % 10
+        val mod100 = n % 100
+        val word = when {
+            mod100 in 11..19 -> "записей"
+            mod10 == 1       -> "запись"
+            mod10 in 2..4    -> "записи"
+            else             -> "записей"
+        }
+        "$n $word"
+    },
+    financeEmptyTitle = "Нет транзакций",
+    financeEmptySubtitle = "Нажмите + чтобы добавить первую транзакцию",
+    financeAmountLabel = "Сумма *",
+    financeAmountError = "Введите корректную сумму",
+    financeCategoryLabel = "Категория *",
+    financeNoteLabel = "Заметка (необязательно)",
+    financeAddTitleIncome = "Доход",
+    financeAddTitleExpense = "Расход",
+
+    plannerScreenTitle = "Планировщик",
+    plannerViewYear = "Год",
+    plannerViewMonth = "Месяц",
+    plannerViewDay = "День",
+
+    plannerNoTasksMonth = "Нет задач",
+    plannerTasksCountMonth = { n ->
+        val mod10 = n % 10; val mod100 = n % 100
+        val word = when {
+            mod100 in 11..19 -> "задач"
+            mod10 == 1       -> "задача"
+            mod10 in 2..4    -> "задачи"
+            else             -> "задач"
+        }
+        "$n $word"
+    },
+    plannerTasksDoneOf = { done, total -> "$done из $total задач выполнено" },
+    plannerEmptyDayTitle = "Нет задач на этот день",
+    plannerEmptyDaySubtitle = "Нажмите + чтобы добавить задачу",
+    plannerDoneTabSubtitle = "Сначала выполните задачи",
+    plannerMonthAbbrevs = listOf("Янв","Фев","Мар","Апр","Май","Июн","Июл","Авг","Сен","Окт","Ноя","Дек"),
+    plannerMonthFullNames = listOf("Январь","Февраль","Март","Апрель","Май","Июнь","Июль","Август","Сентябрь","Октябрь","Ноябрь","Декабрь"),
+    plannerWeekDayHeaders = listOf("Пн","Вт","Ср","Чт","Пт","Сб","Вс"),
+    plannerDayOfWeekNames = listOf("Понедельник","Вторник","Среда","Четверг","Пятница","Суббота","Воскресенье"),
+
+    cryptoTitle = "Крипто",
+    cryptoSearchPlaceholder = "Поиск монет...",
+    cryptoMarketEmpty = "Монеты не найдены",
+    cryptoMarketEmptySubtitle = "Попробуйте другой запрос",
+    cryptoPortfolioEmpty = "Портфель пуст",
+    cryptoPortfolioEmptySubtitle = "Перейдите в Рынок и добавьте монеты в портфель",
+    cryptoWatchlistEmpty = "Список наблюдения пуст",
+    cryptoWatchlistEmptySubtitle = "Нажмите на монету на вкладке Рынок, чтобы добавить",
+    cryptoRemove = "Удалить",
+    cryptoChart1D = "1Д",
+    cryptoChart7D = "7Д",
+    cryptoChart1M = "1М",
+    cryptoChart1Y = "1Г",
+    cryptoAddToPortfolioButton = "В портфель",
+    cryptoWatchlistButton = "Наблюдение",
+    cryptoAddToPortfolioDialog = { coinName -> "Добавить $coinName в портфель" },
+    cryptoAmountLabel = "Количество",
+    cryptoPurchasePriceLabel = "Цена покупки",
+    cryptoAddButton = "Добавить",
+    cryptoCancelButton = "Отмена",
 )
 
 val LocalStrings = compositionLocalOf<AppStrings> { EnglishStrings }

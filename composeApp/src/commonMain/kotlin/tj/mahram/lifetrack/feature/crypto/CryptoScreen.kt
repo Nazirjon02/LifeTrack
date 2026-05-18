@@ -16,6 +16,7 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.core.util.formatPercent
 import tj.mahram.lifetrack.ui.components.*
@@ -35,14 +36,15 @@ class CryptoScreen : Screen {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CryptoContent(state: CryptoState, onIntent: (CryptoIntent) -> Unit) {
+    val s = LocalStrings.current
     Scaffold(
         topBar = {
             Column {
                 TopAppBar(
-                    title = { Text("Crypto") },
+                    title = { Text(s.cryptoTitle) },
                     actions = {
                         IconButton(onClick = { onIntent(CryptoIntent.Refresh) }) {
-                            Icon(Icons.Default.Search, contentDescription = "Search")
+                            Icon(Icons.Default.Search, contentDescription = null)
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(containerColor = MaterialTheme.colorScheme.background)
@@ -51,14 +53,13 @@ fun CryptoContent(state: CryptoState, onIntent: (CryptoIntent) -> Unit) {
                     value = state.searchQuery,
                     onValueChange = { onIntent(CryptoIntent.Search(it)) },
                     modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp),
-                    placeholder = { Text("Search coins...") },
+                    placeholder = { Text(s.cryptoSearchPlaceholder) },
                     leadingIcon = { Icon(Icons.Default.Search, contentDescription = null) },
                     singleLine = true
                 )
-                TabRow(
+                PrimaryTabRow(
                     selectedTabIndex = state.selectedTab.ordinal,
-                    containerColor = MaterialTheme.colorScheme.background,
-                    divider = {}
+                    containerColor = MaterialTheme.colorScheme.background
                 ) {
                     CryptoTab.entries.forEach { tab ->
                         Tab(
@@ -107,6 +108,7 @@ fun CryptoContent(state: CryptoState, onIntent: (CryptoIntent) -> Unit) {
 
 @Composable
 fun MarketTab(state: CryptoState, onIntent: (CryptoIntent) -> Unit, padding: PaddingValues) {
+    val s = LocalStrings.current
     if (state.isLoadingCoins && state.topCoins.isEmpty()) {
         LazyColumn(contentPadding = padding) {
             items(8) { CryptoCardSkeleton() }
@@ -114,7 +116,7 @@ fun MarketTab(state: CryptoState, onIntent: (CryptoIntent) -> Unit, padding: Pad
         return
     }
     if (state.displayedCoins.isEmpty()) {
-        EmptyState(emoji = "₿", title = "No coins found", subtitle = "Try a different search")
+        EmptyState(emoji = "₿", title = s.cryptoMarketEmpty, subtitle = s.cryptoMarketEmptySubtitle)
         return
     }
     LazyColumn(
@@ -135,11 +137,12 @@ fun MarketTab(state: CryptoState, onIntent: (CryptoIntent) -> Unit, padding: Pad
 
 @Composable
 fun PortfolioTab(state: CryptoState, onIntent: (CryptoIntent) -> Unit, padding: PaddingValues) {
+    val s = LocalStrings.current
     if (state.portfolioItems.isEmpty()) {
         EmptyState(
             emoji = "📊",
-            title = "Portfolio is empty",
-            subtitle = "Go to Market tab and add coins to your portfolio",
+            title = s.cryptoPortfolioEmpty,
+            subtitle = s.cryptoPortfolioEmptySubtitle,
             modifier = Modifier.padding(padding)
         )
         return
@@ -169,11 +172,12 @@ fun PortfolioTab(state: CryptoState, onIntent: (CryptoIntent) -> Unit, padding: 
 
 @Composable
 fun WatchlistTab(state: CryptoState, onIntent: (CryptoIntent) -> Unit, padding: PaddingValues) {
+    val s = LocalStrings.current
     if (state.watchlist.isEmpty()) {
         EmptyState(
             emoji = "⭐",
-            title = "Watchlist is empty",
-            subtitle = "Tap a coin in the Market tab to add to watchlist",
+            title = s.cryptoWatchlistEmpty,
+            subtitle = s.cryptoWatchlistEmptySubtitle,
             modifier = Modifier.padding(padding)
         )
         return
@@ -217,7 +221,7 @@ fun PortfolioItemCard(
             IconButton(onClick = onRemove) {
                 Icon(
                     Icons.Default.Delete,
-                    contentDescription = "Remove",
+                    contentDescription = null,
                     tint = MaterialTheme.colorScheme.error.copy(alpha = 0.7f),
                     modifier = Modifier.size(18.dp)
                 )
@@ -268,6 +272,7 @@ fun CoinDetailSheet(
     onToggleWatchlist: () -> Unit,
     onSelectDays: (Int) -> Unit
 ) {
+    val s = LocalStrings.current
     val isPositive = coin.priceChangePercent24h >= 0
     ModalBottomSheet(onDismissRequest = onDismiss, containerColor = MaterialTheme.colorScheme.surface) {
         Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp).padding(bottom = 32.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
@@ -289,7 +294,7 @@ fun CoinDetailSheet(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     listOf(1, 7, 30, 365).forEach { days ->
                         FilterChip(selected = selectedDays == days, onClick = { onSelectDays(days) }, label = {
-                            Text(when(days) { 1 -> "1D"; 7 -> "7D"; 30 -> "1M"; else -> "1Y" })
+                            Text(when(days) { 1 -> s.cryptoChart1D; 7 -> s.cryptoChart7D; 30 -> s.cryptoChart1M; else -> s.cryptoChart1Y })
                         })
                     }
                 }
@@ -300,8 +305,8 @@ fun CoinDetailSheet(
                 )
             }
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                Button(onClick = onAddToPortfolio, modifier = Modifier.weight(1f)) { Text("Add to Portfolio") }
-                OutlinedButton(onClick = onToggleWatchlist, modifier = Modifier.weight(1f)) { Text("Watchlist") }
+                Button(onClick = onAddToPortfolio, modifier = Modifier.weight(1f)) { Text(s.cryptoAddToPortfolioButton) }
+                OutlinedButton(onClick = onToggleWatchlist, modifier = Modifier.weight(1f)) { Text(s.cryptoWatchlistButton) }
             }
         }
     }
@@ -317,13 +322,14 @@ fun AddToPortfolioDialog(
     var amountText by remember { mutableStateOf("") }
     var priceText by remember { mutableStateOf(coin.currentPrice.toString()) }
 
+    val s = LocalStrings.current
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Add ${coin.name} to Portfolio") },
+        title = { Text(s.cryptoAddToPortfolioDialog(coin.name)) },
         text = {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedTextField(value = amountText, onValueChange = { amountText = it }, label = { Text("Amount") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
-                OutlinedTextField(value = priceText, onValueChange = { priceText = it }, label = { Text("Purchase Price") }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
+                OutlinedTextField(value = amountText, onValueChange = { amountText = it }, label = { Text(s.cryptoAmountLabel) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
+                OutlinedTextField(value = priceText, onValueChange = { priceText = it }, label = { Text(s.cryptoPurchasePriceLabel) }, keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal), singleLine = true)
             }
         },
         confirmButton = {
@@ -331,8 +337,8 @@ fun AddToPortfolioDialog(
                 val amount = amountText.toDoubleOrNull() ?: return@TextButton
                 val price = priceText.toDoubleOrNull() ?: return@TextButton
                 onConfirm(amount, price)
-            }) { Text("Add") }
+            }) { Text(s.cryptoAddButton) }
         },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
+        dismissButton = { TextButton(onClick = onDismiss) { Text(s.cryptoCancelButton) } }
     )
 }

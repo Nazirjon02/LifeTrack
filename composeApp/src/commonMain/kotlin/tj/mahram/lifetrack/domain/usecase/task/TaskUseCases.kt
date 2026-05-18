@@ -2,7 +2,7 @@ package tj.mahram.lifetrack.domain.usecase.task
 
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Clock
-import kotlinx.datetime.Instant
+import kotlin.time.Instant
 import tj.mahram.lifetrack.domain.model.Task
 import tj.mahram.lifetrack.domain.model.TaskPriority
 import tj.mahram.lifetrack.domain.repository.TaskRepository

@@ -3,6 +3,7 @@ package tj.mahram.lifetrack.data.local
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -15,7 +16,7 @@ import tj.mahram.lifetrack.domain.model.CryptoWatchlistItem
 class CryptoLocalDataSource(private val db: AppDatabase) {
 
     fun getPortfolioItems(): Flow<List<CryptoPortfolioItem>> =
-        db.cryptoPortfolioQueries.selectAllPortfolioItems().asFlow().mapToList(Dispatchers.IO)
+        db.cryptoPortfolioQueries.selectAllPortfolioItems().asFlow().mapToList(Dispatchers.Default)
             .map { list ->
                 list.map { item ->
                     CryptoPortfolioItem(
@@ -30,7 +31,7 @@ class CryptoLocalDataSource(private val db: AppDatabase) {
             }
 
     suspend fun insertPortfolioItem(item: CryptoPortfolioItem) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.cryptoPortfolioQueries.insertPortfolioItem(
                 id = item.id,
                 coinId = item.coinId,
@@ -44,19 +45,19 @@ class CryptoLocalDataSource(private val db: AppDatabase) {
     }
 
     suspend fun updatePortfolioItemAmount(id: String, amount: Double) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.cryptoPortfolioQueries.updatePortfolioItemAmount(amount = amount, id = id)
         }
     }
 
     suspend fun deletePortfolioItem(id: String) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.cryptoPortfolioQueries.deletePortfolioItem(id)
         }
     }
 
     fun getWatchlist(): Flow<List<CryptoWatchlistItem>> =
-        db.cryptoPortfolioQueries.selectAllWatchlistItems().asFlow().mapToList(Dispatchers.IO)
+        db.cryptoPortfolioQueries.selectAllWatchlistItems().asFlow().mapToList(Dispatchers.Default)
             .map { list ->
                 list.map { item ->
                     CryptoWatchlistItem(
@@ -68,7 +69,7 @@ class CryptoLocalDataSource(private val db: AppDatabase) {
             }
 
     suspend fun insertWatchlistItem(item: CryptoWatchlistItem) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.cryptoPortfolioQueries.insertWatchlistItem(
                 coinId = item.coinId,
                 coinSymbol = item.coinSymbol,
@@ -79,17 +80,17 @@ class CryptoLocalDataSource(private val db: AppDatabase) {
     }
 
     suspend fun deleteWatchlistItem(coinId: String) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.cryptoPortfolioQueries.deleteWatchlistItem(coinId)
         }
     }
 
-    suspend fun isInWatchlist(coinId: String): Boolean = withContext(Dispatchers.IO) {
+    suspend fun isInWatchlist(coinId: String): Boolean = withContext(Dispatchers.Default) {
         db.cryptoPortfolioQueries.isInWatchlist(coinId).executeAsOne() > 0
     }
 
     fun getPriceAlerts(): Flow<List<CryptoPriceAlert>> =
-        db.cryptoPortfolioQueries.selectAllPriceAlerts().asFlow().mapToList(Dispatchers.IO)
+        db.cryptoPortfolioQueries.selectAllPriceAlerts().asFlow().mapToList(Dispatchers.Default)
             .map { list ->
                 list.map { alert ->
                     CryptoPriceAlert(
@@ -104,7 +105,7 @@ class CryptoLocalDataSource(private val db: AppDatabase) {
             }
 
     suspend fun insertPriceAlert(alert: CryptoPriceAlert) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.cryptoPortfolioQueries.insertPriceAlert(
                 id = alert.id,
                 coinId = alert.coinId,
@@ -118,12 +119,12 @@ class CryptoLocalDataSource(private val db: AppDatabase) {
     }
 
     suspend fun deletePriceAlert(id: String) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.cryptoPortfolioQueries.deletePriceAlert(id)
         }
     }
 
-    suspend fun getPortfolioItemByCoinId(coinId: String): CryptoPortfolioItem? = withContext(Dispatchers.IO) {
+    suspend fun getPortfolioItemByCoinId(coinId: String): CryptoPortfolioItem? = withContext(Dispatchers.Default) {
         db.cryptoPortfolioQueries.selectPortfolioItemByCoinId(coinId).executeAsOneOrNull()?.let { item ->
             CryptoPortfolioItem(
                 id = item.id,

@@ -3,6 +3,7 @@ package tj.mahram.lifetrack.data.local
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.IO
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.withContext
@@ -15,15 +16,15 @@ import tj.mahram.lifetrack.domain.model.DefaultCategories
 class CategoryLocalDataSource(private val db: AppDatabase) {
 
     fun getAllCategories(): Flow<List<Category>> =
-        db.categoryQueries.selectAllCategories().asFlow().mapToList(Dispatchers.IO)
+        db.categoryQueries.selectAllCategories().asFlow().mapToList(Dispatchers.Default)
             .map { it.map { c -> c.toDomain() } }
 
     fun getCategoriesByType(type: CategoryType): Flow<List<Category>> =
-        db.categoryQueries.selectCategoriesByType(type.name).asFlow().mapToList(Dispatchers.IO)
+        db.categoryQueries.selectCategoriesByType(type.name).asFlow().mapToList(Dispatchers.Default)
             .map { it.map { c -> c.toDomain() } }
 
     suspend fun insert(category: Category) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.categoryQueries.insertCategory(
                 id = category.id,
                 name = category.name,
@@ -36,12 +37,12 @@ class CategoryLocalDataSource(private val db: AppDatabase) {
     }
 
     suspend fun delete(id: String) {
-        withContext(Dispatchers.IO) {
+        withContext(Dispatchers.Default) {
             db.categoryQueries.deleteCategory(id)
         }
     }
 
-    suspend fun initDefaultsIfEmpty() = withContext(Dispatchers.IO) {
+    suspend fun initDefaultsIfEmpty() = withContext(Dispatchers.Default) {
         val count = db.categoryQueries.countCategories().executeAsOne()
         if (count == 0L) {
             DefaultCategories.all.forEach { category ->

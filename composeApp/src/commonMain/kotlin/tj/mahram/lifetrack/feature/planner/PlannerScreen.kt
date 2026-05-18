@@ -9,6 +9,8 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowLeft
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -35,11 +37,9 @@ import tj.mahram.lifetrack.ui.components.EmptyState
 import tj.mahram.lifetrack.ui.components.TaskCard
 import tj.mahram.lifetrack.ui.components.TaskCardSkeleton
 import tj.mahram.lifetrack.ui.components.color
+import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.ui.theme.SuccessColor
 
-private val MonthAbbrevs = listOf("Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec")
-private val MonthFullNames = listOf("January","February","March","April","May","June","July","August","September","October","November","December")
-private val WeekDayHeaders = listOf("Mo","Tu","We","Th","Fr","Sa","Su")
 
 class PlannerScreen : Screen {
     @Composable
@@ -119,6 +119,7 @@ fun PlannerContent(state: PlannerState, onIntent: (PlannerIntent) -> Unit) {
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun PlannerTopBar(state: PlannerState, onIntent: (PlannerIntent) -> Unit) {
+    val s = LocalStrings.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -127,7 +128,7 @@ private fun PlannerTopBar(state: PlannerState, onIntent: (PlannerIntent) -> Unit
         TopAppBar(
             title = {
                 Text(
-                    "Planner",
+                    s.plannerScreenTitle,
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold
                 )
@@ -153,7 +154,8 @@ private fun PlannerViewSwitcher(
     onViewChange: (PlannerView) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val views = listOf(PlannerView.YEAR to "Year", PlannerView.MONTH to "Month", PlannerView.DAY to "Day")
+    val s = LocalStrings.current
+    val views = listOf(PlannerView.YEAR to s.plannerViewYear, PlannerView.MONTH to s.plannerViewMonth, PlannerView.DAY to s.plannerViewDay)
 
     Box(
         modifier = modifier
@@ -229,7 +231,7 @@ private fun PlannerYearView(
                         month = month,
                         tasks = state.tasksForMonth(state.selectedYear, month),
                         isCurrentMonth = state.todayDate.year == state.selectedYear &&
-                                         state.todayDate.monthNumber == month,
+                                         state.todayDate.month.number == month,
                         onClick = { onIntent(PlannerIntent.SelectMonth(state.selectedYear, month)) },
                         modifier = Modifier.weight(1f)
                     )
@@ -248,6 +250,7 @@ private fun MonthCard(
     onClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    val s = LocalStrings.current
     val completion = if (tasks.isEmpty()) 0f
                      else tasks.count { it.isCompleted }.toFloat() / tasks.size
     val animatedCompletion by animateFloatAsState(
@@ -256,10 +259,8 @@ private fun MonthCard(
         label = "monthCompletion_$month"
     )
 
-    val cardBg = if (isCurrentMonth) MaterialTheme.colorScheme.primaryContainer
-                 else MaterialTheme.colorScheme.surface
-    val onCard  = if (isCurrentMonth) MaterialTheme.colorScheme.onPrimaryContainer
-                  else MaterialTheme.colorScheme.onSurface
+    val cardBg    = if (isCurrentMonth) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+    val onCard    = if (isCurrentMonth) MaterialTheme.colorScheme.onPrimaryContainer else MaterialTheme.colorScheme.onSurface
     val ringColor = if (isCurrentMonth) MaterialTheme.colorScheme.primary else SuccessColor
 
     Card(
@@ -280,15 +281,14 @@ private fun MonthCard(
         Box(modifier = Modifier.fillMaxSize().padding(12.dp)) {
             Column {
                 Text(
-                    MonthAbbrevs[month - 1],
+                    s.plannerMonthAbbrevs[month - 1],
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.Bold,
                     color = onCard
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    if (tasks.isEmpty()) "No tasks"
-                    else "${tasks.size} task${if (tasks.size > 1) "s" else ""}",
+                    if (tasks.isEmpty()) s.plannerNoTasksMonth else s.plannerTasksCountMonth(tasks.size),
                     style = MaterialTheme.typography.labelSmall,
                     color = onCard.copy(alpha = 0.65f)
                 )
@@ -321,13 +321,14 @@ private fun PlannerMonthView(
     onIntent: (PlannerIntent) -> Unit,
     bottomPadding: Dp
 ) {
+    val s     = LocalStrings.current
     val year  = state.selectedYear
     val month = state.selectedMonth
 
     val firstDay    = remember(year, month) { LocalDate(year, month, 1) }
     val offset      = remember(firstDay) { firstDay.dayOfWeek.isoDayNumber - 1 }
     val daysInMonth = remember(year, month) {
-        LocalDate(year, month, 1).plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY).dayOfMonth
+        LocalDate(year, month, 1).plus(1, DateTimeUnit.MONTH).minus(1, DateTimeUnit.DAY).day
     }
 
     Column(
@@ -337,14 +338,14 @@ private fun PlannerMonthView(
             .padding(bottom = bottomPadding + 96.dp)
     ) {
         PlannerNavigator(
-            title = "${MonthFullNames[month - 1]} $year",
+            title = "${s.plannerMonthFullNames[month - 1]} $year",
             onPrev = {
                 val prev = LocalDate(year, month, 1).minus(1, DateTimeUnit.MONTH)
-                onIntent(PlannerIntent.NavigateMonth(prev.year, prev.monthNumber))
+                onIntent(PlannerIntent.NavigateMonth(prev.year, prev.month.number))
             },
             onNext = {
                 val next = LocalDate(year, month, 1).plus(1, DateTimeUnit.MONTH)
-                onIntent(PlannerIntent.NavigateMonth(next.year, next.monthNumber))
+                onIntent(PlannerIntent.NavigateMonth(next.year, next.month.number))
             }
         )
 
@@ -355,7 +356,7 @@ private fun PlannerMonthView(
                 .padding(horizontal = 16.dp),
             horizontalArrangement = Arrangement.SpaceBetween
         ) {
-            WeekDayHeaders.forEach { day ->
+            s.plannerWeekDayHeaders.forEach { day ->
                 Text(
                     day,
                     modifier = Modifier.weight(1f),
@@ -386,8 +387,8 @@ private fun PlannerMonthView(
                         Box(modifier = Modifier.weight(1f).height(52.dp))
                     } else {
                         val isToday    = state.todayDate.year == year &&
-                                         state.todayDate.monthNumber == month &&
-                                         state.todayDate.dayOfMonth == day
+                                         state.todayDate.month.number == month &&
+                                         state.todayDate.day == day
                         val isSelected = state.selectedDay == day &&
                                          state.selectedMonth == month &&
                                          state.selectedYear == year
@@ -473,6 +474,7 @@ private fun PlannerDayView(
     onIntent: (PlannerIntent) -> Unit,
     bottomPadding: Dp
 ) {
+    val s = LocalStrings.current
     var selectedTab by remember { mutableStateOf(0) }
     val date = state.selectedDate
 
@@ -482,20 +484,19 @@ private fun PlannerDayView(
         item {
             PlannerNavigator(
                 title = buildString {
-                    val dow = date.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
-                    append(dow)
+                    append(s.plannerDayOfWeekNames[date.dayOfWeek.isoDayNumber - 1])
                     append(", ")
-                    append(date.dayOfMonth)
+                    append(date.day)
                     append(" ")
-                    append(MonthAbbrevs[date.monthNumber - 1])
+                    append(s.plannerMonthAbbrevs[date.month.number - 1])
                 },
                 onPrev = {
                     val prev = date.minus(1, DateTimeUnit.DAY)
-                    onIntent(PlannerIntent.NavigateDay(prev.year, prev.monthNumber, prev.dayOfMonth))
+                    onIntent(PlannerIntent.NavigateDay(prev.year, prev.month.number, prev.day))
                 },
                 onNext = {
                     val next = date.plus(1, DateTimeUnit.DAY)
-                    onIntent(PlannerIntent.NavigateDay(next.year, next.monthNumber, next.dayOfMonth))
+                    onIntent(PlannerIntent.NavigateDay(next.year, next.month.number, next.day))
                 }
             )
         }
@@ -506,19 +507,14 @@ private fun PlannerDayView(
 
         stickyHeader {
             Surface(color = MaterialTheme.colorScheme.background) {
-                TabRow(
+                PrimaryTabRow(
                     selectedTabIndex = selectedTab,
                     containerColor = Color.Transparent,
-                    contentColor = MaterialTheme.colorScheme.primary,
-                    divider = {
-                        HorizontalDivider(
-                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.2f)
-                        )
-                    }
+                    contentColor = MaterialTheme.colorScheme.primary
                 ) {
                     listOf(
-                        "Pending" to state.dayPendingTasks.size,
-                        "Done"    to state.dayCompletedTasks.size
+                        s.plannerTabPending to state.dayPendingTasks.size,
+                        s.plannerTabDone    to state.dayCompletedTasks.size
                     ).forEachIndexed { idx, (label, count) ->
                         Tab(
                             selected = selectedTab == idx,
@@ -541,9 +537,9 @@ private fun PlannerDayView(
             item {
                 EmptyState(
                     emoji    = if (selectedTab == 0) "✅" else "📋",
-                    title    = if (selectedTab == 0) "No tasks for this day" else "No completed tasks",
-                    subtitle = if (selectedTab == 0) "Tap + to schedule a task here" else "Complete some tasks first",
-                    actionLabel = if (selectedTab == 0) "Add Task" else null,
+                    title    = if (selectedTab == 0) s.plannerEmptyDayTitle else s.plannerEmptyDoneTitle,
+                    subtitle = if (selectedTab == 0) s.plannerEmptyDaySubtitle else s.plannerDoneTabSubtitle,
+                    actionLabel = if (selectedTab == 0) s.plannerAddTaskAction else null,
                     onAction    = if (selectedTab == 0) ({ onIntent(PlannerIntent.ShowAddTask) }) else null,
                     modifier = Modifier.padding(top = 16.dp)
                 )
@@ -564,6 +560,7 @@ private fun PlannerDayView(
 
 @Composable
 private fun DayProgressCard(state: PlannerState) {
+    val s = LocalStrings.current
     val progress = if (state.dayTasks.isEmpty()) 0f
                    else state.dayCompletedTasks.size.toFloat() / state.dayTasks.size
     val animated by animateFloatAsState(
@@ -590,10 +587,10 @@ private fun DayProgressCard(state: PlannerState) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(
                     when {
-                        progress >= 1f    -> "All done! 🎉"
-                        progress >= 0.5f  -> "Halfway there 💪"
-                        progress > 0f     -> "Keep going 🚀"
-                        else              -> "Ready to start? ⚡"
+                        progress >= 1f    -> s.plannerProgressDone
+                        progress >= 0.5f  -> s.plannerProgressHalfway
+                        progress > 0f     -> s.plannerProgressKeepGoing
+                        else              -> s.plannerProgressReady
                     },
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
@@ -601,7 +598,7 @@ private fun DayProgressCard(state: PlannerState) {
                 )
                 Spacer(Modifier.height(4.dp))
                 Text(
-                    "${state.dayCompletedTasks.size} of ${state.dayTasks.size} tasks done",
+                    s.plannerTasksDoneOf(state.dayCompletedTasks.size, state.dayTasks.size),
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.7f)
                 )
@@ -639,7 +636,7 @@ private fun PlannerNavigator(title: String, onPrev: () -> Unit, onNext: () -> Un
     ) {
         IconButton(onClick = onPrev) {
             Icon(
-                Icons.Default.KeyboardArrowLeft,
+                Icons.AutoMirrored.Filled.KeyboardArrowLeft,
                 contentDescription = "Previous",
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(28.dp)
@@ -653,7 +650,7 @@ private fun PlannerNavigator(title: String, onPrev: () -> Unit, onNext: () -> Un
         )
         IconButton(onClick = onNext) {
             Icon(
-                Icons.Default.KeyboardArrowRight,
+                Icons.AutoMirrored.Filled.KeyboardArrowRight,
                 contentDescription = "Next",
                 tint = MaterialTheme.colorScheme.onSurface,
                 modifier = Modifier.size(28.dp)
