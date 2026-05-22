@@ -59,3 +59,49 @@ val PriorityLow = Color(0xFF6B7280)
 val PriorityMedium = Color(0xFF3B82F6)
 val PriorityHigh = Color(0xFFF59E0B)
 val PriorityCritical = Color(0xFFEF4444)
+
+// ════════════════════════════════════════════════════════════════
+//  AURORA GLASS palette  (adaptive light + dark, violet/indigo)
+// ════════════════════════════════════════════════════════════════
+
+// ── Brand spectrum (shared across themes) ───────────────────────
+val BrandViolet      = Color(0xFF8B5CF6)
+val BrandVioletDeep  = Color(0xFF7C3AED)
+val BrandIndigo      = Color(0xFF6366F1)
+val BrandIndigoDeep  = Color(0xFF4F46E5)
+val BrandFuchsia     = Color(0xFFD946EF)
+val BrandSky         = Color(0xFF38BDF8)
+val BrandCyan        = Color(0xFF22D3EE)
+
+// ── Dark scene ──────────────────────────────────────────────────
+val SceneDarkBg        = Color(0xFF08070F) // deep indigo-black canvas
+val SceneDarkSurface   = Color(0xFF14121F) // opaque fallback surface
+val SceneDarkSurfaceHi = Color(0xFF1C1930)
+val OnDarkHi  = Color(0xFFF4F2FB)
+val OnDarkMid = Color(0xFFC7C3D6)
+val OnDarkLow = Color(0xFF8C8799)
+
+// ── Light scene ─────────────────────────────────────────────────
+val SceneLightBg        = Color(0xFFF1EFFB) // soft lavender white
+val SceneLightSurface   = Color(0xFFFFFFFF)
+val SceneLightSurfaceHi = Color(0xFFFFFFFF)
+val OnLightHi  = Color(0xFF15121F)
+val OnLightMid = Color(0xFF49445C)
+val OnLightLow = Color(0xFF7C7791)
+
+// ── Semantic (refined, shared) ──────────────────────────────────
+val SuccessV2 = Color(0xFF34D399)
+val WarningV2 = Color(0xFFFBBF24)
+val InfoV2    = Color(0xFF38BDF8)
+val DangerV2  = Color(0xFFFB7185)
+
+// ── Chart spectrum (vivid, harmonised) ──────────────────────────
+val ChartColorsV2 = listOf(
+    Color(0xFF8B5CF6),
+    Color(0xFF6366F1),
+    Color(0xFF22D3EE),
+    Color(0xFF34D399),
+    Color(0xFFFBBF24),
+    Color(0xFFFB7185),
+    Color(0xFFD946EF)
+)

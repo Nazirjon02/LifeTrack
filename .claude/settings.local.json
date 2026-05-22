@@ -31,7 +31,9 @@
       "Read(//Users/qurbonjonkhalilov/.gradle/**)",
       "Bash(chmod +x /Users/qurbonjonkhalilov/AndroidStudioProjects/LifeTrack/gradlew)",
       "Bash(xattr -l /Users/qurbonjonkhalilov/AndroidStudioProjects/LifeTrack/gradlew)",
-      "Bash(/Users/qurbonjonkhalilov/AndroidStudioProjects/LifeTrack/gradlew --version)"
+      "Bash(/Users/qurbonjonkhalilov/AndroidStudioProjects/LifeTrack/gradlew --version)",
+      "Bash(./gradlew :composeApp:compileKotlinJvm --console=plain)",
+      "Bash(./gradlew :composeApp:compileDebugKotlinAndroid --console=plain)"
     ]
   }
 }

@@ -32,6 +32,8 @@ import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.AppTheme
 import tj.mahram.lifetrack.domain.model.SupportedCurrencies
+import tj.mahram.lifetrack.ui.components.brandVividGradient
+import tj.mahram.lifetrack.ui.components.glassSurface
 
 class SettingsScreen : Screen {
     @Composable
@@ -48,7 +50,7 @@ class SettingsScreen : Screen {
 fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
     val s = LocalStrings.current
 
-    Scaffold(containerColor = MaterialTheme.colorScheme.background) { padding ->
+    Scaffold(containerColor = Color.Transparent) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(
                 top = padding.calculateTopPadding(),
@@ -253,14 +255,7 @@ fun SettingsContent(state: SettingsState, onIntent: (SettingsIntent) -> Unit) {
                             modifier = Modifier
                                 .size(48.dp)
                                 .clip(RoundedCornerShape(14.dp))
-                                .background(
-                                    Brush.linearGradient(
-                                        listOf(
-                                            MaterialTheme.colorScheme.primary,
-                                            MaterialTheme.colorScheme.secondary
-                                        )
-                                    )
-                                ),
+                                .background(brandVividGradient()),
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
@@ -313,14 +308,7 @@ private fun AppProfileBanner() {
         modifier = Modifier
             .fillMaxWidth()
             .clip(RoundedCornerShape(28.dp))
-            .background(
-                Brush.linearGradient(
-                    colors = listOf(
-                        MaterialTheme.colorScheme.primary,
-                        MaterialTheme.colorScheme.secondary.copy(alpha = 0.9f)
-                    )
-                )
-            )
+            .background(brandVividGradient())
             .padding(22.dp)
     ) {
         Row(
@@ -402,12 +390,7 @@ private fun SettingsSectionHeader(label: String, icon: ImageVector) {
 
 @Composable
 private fun ModernSettingsCard(content: @Composable () -> Unit) {
-    Card(
-        shape = RoundedCornerShape(20.dp),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
-        elevation = CardDefaults.cardElevation(defaultElevation = 0.dp),
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    Column(modifier = Modifier.fillMaxWidth().glassSurface(shape = RoundedCornerShape(20.dp))) {
         content()
     }
 }

@@ -7,8 +7,10 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -17,8 +19,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.domain.model.HabitFrequency
+import tj.mahram.lifetrack.ui.components.FieldLabel
+import tj.mahram.lifetrack.ui.components.GradientButton
+import tj.mahram.lifetrack.ui.components.SheetHandle
+import tj.mahram.lifetrack.ui.components.SheetHeader
+import tj.mahram.lifetrack.ui.components.SheetTextField
+import tj.mahram.lifetrack.ui.components.brandHorizontalGradient
+import tj.mahram.lifetrack.ui.components.glassSurface
 
 private val HabitIcons = listOf("🏃", "💪", "📚", "🧘", "💧", "🥗", "😴", "🧠", "✍️", "🎯", "🎵", "🌿", "☀️", "🚴", "🏊")
 private val HabitColorPairs = listOf(
@@ -48,114 +58,102 @@ fun AddHabitSheet(
     ModalBottomSheet(
         onDismissRequest = onDismiss,
         containerColor = MaterialTheme.colorScheme.surface,
-        shape = RoundedCornerShape(topStart = 28.dp, topEnd = 28.dp)
+        shape = RoundedCornerShape(topStart = 32.dp, topEnd = 32.dp),
+        dragHandle = { SheetHandle() }
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 24.dp)
-                .padding(bottom = 32.dp),
-            verticalArrangement = Arrangement.spacedBy(20.dp)
-        ) {
-            Text(
-                s.addHabitTitle,
-                style = MaterialTheme.typography.headlineSmall,
-                fontWeight = FontWeight.Bold
-            )
+        Column(modifier = Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(bottom = 32.dp)) {
+            SheetHeader(title = s.addHabitTitle, onClose = onDismiss)
 
-            OutlinedTextField(
-                value = name,
-                onValueChange = { name = it; nameError = false },
-                label = { Text(s.addHabitFieldName) },
-                isError = nameError,
-                supportingText = if (nameError) { { Text(s.addHabitErrorEmpty) } } else null,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                singleLine = true,
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                )
-            )
+            Spacer(Modifier.height(20.dp))
 
-            // Icon picker
-            Text(s.addHabitPickIcon, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            LazyVerticalGrid(
-                columns = GridCells.Fixed(5),
-                modifier = Modifier.height(120.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp)
-            ) {
-                items(HabitIcons) { icon ->
-                    val isSelected = selectedIcon == icon
-                    Box(
-                        modifier = Modifier
-                            .size(48.dp)
-                            .clip(RoundedCornerShape(12.dp))
-                            .background(
-                                if (isSelected) MaterialTheme.colorScheme.primaryContainer
-                                else MaterialTheme.colorScheme.surfaceVariant
-                            )
-                            .border(
-                                width = if (isSelected) 2.dp else 0.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent,
-                                shape = RoundedCornerShape(12.dp)
-                            )
-                            .clickable { selectedIcon = icon },
-                        contentAlignment = Alignment.Center
+            Column(modifier = Modifier.padding(horizontal = 24.dp), verticalArrangement = Arrangement.spacedBy(20.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                    FieldLabel(s.addHabitFieldName)
+                    SheetTextField(value = name, onValueChange = { name = it; nameError = false }, placeholder = s.addHabitFieldName, isError = nameError, errorText = if (nameError) s.addHabitErrorEmpty else null)
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FieldLabel(s.addHabitPickIcon)
+                    LazyVerticalGrid(
+                        columns = GridCells.Fixed(5),
+                        modifier = Modifier.height(124.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                        userScrollEnabled = false
                     ) {
-                        Text(icon, style = MaterialTheme.typography.titleMedium)
+                        items(HabitIcons) { icon ->
+                            val isSelected = selectedIcon == icon
+                            Box(
+                                modifier = Modifier
+                                    .size(48.dp)
+                                    .clip(RoundedCornerShape(14.dp))
+                                    .then(if (isSelected) Modifier.background(brandHorizontalGradient()) else Modifier.glassSurface(shape = RoundedCornerShape(14.dp)))
+                                    .clickable { selectedIcon = icon },
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(icon, fontSize = 20.sp)
+                            }
+                        }
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FieldLabel(s.addHabitColorLabel)
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        HabitColorPairs.forEach { (hex, color) ->
+                            val isSelected = selectedColor == hex
+                            Box(
+                                modifier = Modifier
+                                    .size(34.dp)
+                                    .clip(CircleShape)
+                                    .background(color)
+                                    .border(width = if (isSelected) 3.dp else 0.dp, color = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Transparent, shape = CircleShape)
+                                    .clickable { selectedColor = hex }
+                            )
+                        }
+                    }
+                }
+
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    FieldLabel(s.addHabitFrequencyLabel)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        listOf(HabitFrequency.DAILY, HabitFrequency.WEEKDAYS, HabitFrequency.WEEKENDS).forEach { freq ->
+                            val isSelected = selectedFrequency == freq
+                            Box(
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .clip(RoundedCornerShape(12.dp))
+                                    .then(if (isSelected) Modifier.background(brandHorizontalGradient()) else Modifier.glassSurface(shape = RoundedCornerShape(12.dp)))
+                                    .clickable { selectedFrequency = freq }
+                                    .padding(vertical = 10.dp),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Text(
+                                    s.habitFrequencyLabel(freq),
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                    color = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
                     }
                 }
             }
 
-            // Color picker
-            Text(s.addHabitColorLabel, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                HabitColorPairs.forEach { (hex, color) ->
-                    val isSelected = selectedColor == hex
-                    Box(
-                        modifier = Modifier
-                            .size(32.dp)
-                            .clip(CircleShape)
-                            .background(color)
-                            .border(
-                                width = if (isSelected) 3.dp else 0.dp,
-                                color = if (isSelected) MaterialTheme.colorScheme.onBackground else Color.Transparent,
-                                shape = CircleShape
-                            )
-                            .clickable { selectedColor = hex }
-                    )
-                }
-            }
+            Spacer(Modifier.height(28.dp))
 
-            // Frequency
-            Text(s.addHabitFrequencyLabel, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf(HabitFrequency.DAILY, HabitFrequency.WEEKDAYS, HabitFrequency.WEEKENDS).forEach { freq ->
-                    val isSelected = selectedFrequency == freq
-                    FilterChip(
-                        selected = isSelected,
-                        onClick = { selectedFrequency = freq },
-                        label = { Text(s.habitFrequencyLabel(freq), style = MaterialTheme.typography.labelMedium) },
-                        colors = FilterChipDefaults.filterChipColors(
-                            selectedContainerColor = MaterialTheme.colorScheme.primaryContainer,
-                            selectedLabelColor = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                    )
-                }
-            }
-
-            Button(
+            GradientButton(
+                text = s.addHabitCreateButton,
                 onClick = {
-                    if (name.isBlank()) { nameError = true; return@Button }
-                    onConfirm(HabitsIntent.CreateHabit(name.trim(), selectedIcon, selectedColor, selectedFrequency))
+                    if (name.isBlank()) {
+                        nameError = true
+                    } else {
+                        onConfirm(HabitsIntent.CreateHabit(name.trim(), selectedIcon, selectedColor, selectedFrequency))
+                    }
                 },
-                modifier = Modifier.fillMaxWidth().height(52.dp),
-                shape = RoundedCornerShape(16.dp)
-            ) {
-                Text(s.addHabitCreateButton, fontWeight = FontWeight.SemiBold)
-            }
+                modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),
+                height = 56.dp
+            )
         }
     }
 }

@@ -2,10 +2,12 @@ package tj.mahram.lifetrack
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.spring
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -15,11 +17,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.scale
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.tab.*
+import tj.mahram.lifetrack.ui.components.AuroraBackground
+import tj.mahram.lifetrack.ui.components.brandHorizontalGradient
+import tj.mahram.lifetrack.ui.components.glassSurface
 import org.koin.compose.KoinApplication
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
@@ -68,15 +77,15 @@ fun App(driverFactory: tj.mahram.lifetrack.data.local.DatabaseDriverFactory) {
 
         CompositionLocalProvider(LocalStrings provides stringsFor(settings.language)) {
             LifeTrackTheme(appTheme = settings.theme) {
-                TabNavigator(tab = DashboardTab) { navigator ->
-                    Scaffold(
-                        containerColor = MaterialTheme.colorScheme.background,
-                        bottomBar = {
-                            LifeTrackNavBar(navigator = navigator)
-                        }
-                    ) { padding ->
-                        Box(modifier = Modifier.padding(padding)) {
-                            CurrentTab()
+                AuroraBackground {
+                    TabNavigator(tab = DashboardTab) { navigator ->
+                        Scaffold(
+                            containerColor = Color.Transparent,
+                            bottomBar = { LifeTrackNavBar(navigator = navigator) }
+                        ) { padding ->
+                            Box(modifier = Modifier.fillMaxSize().padding(padding)) {
+                                CurrentTab()
+                            }
                         }
                     }
                 }
@@ -89,25 +98,26 @@ fun App(driverFactory: tj.mahram.lifetrack.data.local.DatabaseDriverFactory) {
 private fun LifeTrackNavBar(navigator: TabNavigator) {
     val tabs = listOf(DashboardTab, PlannerTab, HabitsTab, GoalsTab, FinanceTab, SettingsTab)
 
-    Surface(
-        modifier = Modifier.fillMaxWidth(),
-        color = MaterialTheme.colorScheme.surface,
-        shadowElevation = 16.dp,
-        tonalElevation = 2.dp
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .navigationBarsPadding()
+            .padding(horizontal = 14.dp, vertical = 10.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .height(68.dp)
-                .padding(horizontal = 8.dp),
-            horizontalArrangement = Arrangement.SpaceEvenly,
+                .glassSurface(shape = RoundedCornerShape(28.dp), elevated = true)
+                .padding(horizontal = 6.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             tabs.forEach { tab ->
                 NavPillItem(
                     tab        = tab,
                     isSelected = navigator.current == tab,
-                    onClick    = { navigator.current = tab }
+                    onClick    = { navigator.current = tab },
+                    modifier   = Modifier.weight(1f)
                 )
             }
         }
@@ -115,59 +125,69 @@ private fun LifeTrackNavBar(navigator: TabNavigator) {
 }
 
 @Composable
-private fun NavPillItem(tab: AppTab, isSelected: Boolean, onClick: () -> Unit) {
-    val opts  = tab.options
-    val title = opts.title
-    val idx   = opts.index.toString()
-
-    val pillColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primaryContainer else Color.Transparent,
+private fun NavPillItem(
+    tab: AppTab,
+    isSelected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val idx = tab.options.index.toString()
+    val sel by animateFloatAsState(
+        targetValue = if (isSelected) 1f else 0f,
         animationSpec = spring(stiffness = Spring.StiffnessMediumLow, dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "navPill_$idx"
+        label = "navSel_$idx"
     )
-    val iconColor by animateColorAsState(
-        targetValue = if (isSelected) MaterialTheme.colorScheme.primary
-                      else MaterialTheme.colorScheme.onSurfaceVariant,
-        animationSpec = spring(stiffness = Spring.StiffnessMedium),
-        label = "navIcon_$idx"
-    )
+    val brand = brandHorizontalGradient()
+    val glow = MaterialTheme.colorScheme.primary
 
     Box(
-        modifier = Modifier
-            .clip(RoundedCornerShape(20.dp))
-            .background(pillColor)
-            .clickable(onClick = onClick)
-            .padding(horizontal = if (isSelected) 14.dp else 10.dp, vertical = 8.dp),
+        modifier = modifier
+            .clickable(
+                interactionSource = remember { MutableInteractionSource() },
+                indication = null,
+                onClick = onClick
+            )
+            .padding(vertical = 4.dp),
         contentAlignment = Alignment.Center
     ) {
-        Row(
-            verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(5.dp)
+        Box(
+            modifier = Modifier
+                .scale(0.9f + 0.1f * sel)
+                .drawBehind {
+                    if (sel > 0.05f) {
+                        drawCircle(
+                            brush = Brush.radialGradient(
+                                listOf(glow.copy(alpha = 0.45f * sel), Color.Transparent),
+                                radius = size.maxDimension * 0.75f
+                            ),
+                            radius = size.maxDimension * 0.75f
+                        )
+                    }
+                }
+                .size(46.dp)
+                .clip(RoundedCornerShape(16.dp))
+                .then(
+                    if (sel > 0.05f) Modifier.background(brand, RoundedCornerShape(16.dp))
+                    else Modifier
+                ),
+            contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = tab.tabIcon,
-                contentDescription = null,
-                tint = iconColor,
-                modifier = Modifier.size(20.dp)
+                contentDescription = tab.options.title,
+                tint = lerpColor(MaterialTheme.colorScheme.onSurfaceVariant, Color.White, sel),
+                modifier = Modifier.size(22.dp)
             )
-            AnimatedVisibility(
-                visible = isSelected,
-                enter = expandHorizontally(animationSpec = spring(stiffness = Spring.StiffnessMediumLow)) +
-                        fadeIn(animationSpec = tween(180)),
-                exit  = shrinkHorizontally(animationSpec = tween(150)) +
-                        fadeOut(animationSpec = tween(100))
-            ) {
-                Text(
-                    title,
-                    style = MaterialTheme.typography.labelMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = iconColor,
-                    maxLines = 1
-                )
-            }
         }
     }
 }
+
+private fun lerpColor(a: Color, b: Color, t: Float): Color = Color(
+    red   = a.red   + (b.red   - a.red)   * t,
+    green = a.green + (b.green - a.green) * t,
+    blue  = a.blue  + (b.blue  - a.blue)  * t,
+    alpha = a.alpha + (b.alpha - a.alpha) * t,
+)
 
 interface AppTab : Tab {
     val tabIcon: ImageVector
