@@ -19,12 +19,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.StrokeCap
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -42,7 +37,6 @@ import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.domain.model.Habit
 import tj.mahram.lifetrack.feature.habits.parseHabitColor
 import tj.mahram.lifetrack.ui.components.GlassCard
-import tj.mahram.lifetrack.ui.components.brandGradient
 import tj.mahram.lifetrack.ui.components.glassSurface
 import tj.mahram.lifetrack.ui.theme.appColors
 import kotlin.time.Clock
@@ -132,12 +126,6 @@ fun DashboardContent(
                 }
                 DashStatGrid(state = state, habitsDone = habitsDone)
 
-                PomodoroCard(
-                    pomodoro = state.pomodoro,
-                    onToggle = { onIntent(DashboardIntent.PomodoroToggle) },
-                    onReset = { onIntent(DashboardIntent.PomodoroReset) }
-                )
-
                 state.monthlyFinance?.let { finance ->
                     FinanceMonthCard(finance = finance, currency = state.currency)
                 }
@@ -184,22 +172,13 @@ private fun DashStatGrid(state: DashboardState, habitsDone: Int) {
                 accent = c.success
             )
         }
-        Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            StatTile(
-                modifier = Modifier.weight(1f),
-                icon = if (balancePositive) Icons.AutoMirrored.Outlined.TrendingUp else Icons.AutoMirrored.Outlined.TrendingDown,
-                label = s.dashboardBalance,
-                value = balance?.formatCurrency(state.currency) ?: "—",
-                accent = if (balancePositive) c.success else c.danger
-            )
-            StatTile(
-                modifier = Modifier.weight(1f),
-                icon = Icons.Outlined.Timer,
-                label = s.dashboardPomodorosLabel,
-                value = if (state.pomodoro.completedPomodoros == 0) "—" else "${state.pomodoro.completedPomodoros}",
-                accent = c.info
-            )
-        }
+        StatTile(
+            modifier = Modifier.fillMaxWidth(),
+            icon = if (balancePositive) Icons.AutoMirrored.Outlined.TrendingUp else Icons.AutoMirrored.Outlined.TrendingDown,
+            label = s.dashboardBalance,
+            value = balance?.formatCurrency(state.currency) ?: "—",
+            accent = if (balancePositive) c.success else c.danger
+        )
     }
 }
 
@@ -237,145 +216,6 @@ private fun StatTile(
             style = MaterialTheme.typography.labelSmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-    }
-}
-
-// ═══════════════════════════════════════════════════════════
-// POMODORO CARD
-// ═══════════════════════════════════════════════════════════
-@Composable
-private fun PomodoroCard(
-    pomodoro: PomodoroState,
-    onToggle: () -> Unit,
-    onReset: () -> Unit
-) {
-    val s = LocalStrings.current
-    val c = MaterialTheme.appColors
-    val timerColor = if (pomodoro.mode == PomodoroMode.WORK) MaterialTheme.colorScheme.primary else c.success
-    val brandBrush = brandGradient()
-
-    val pulse = rememberInfiniteTransition(label = "pulse")
-    val pulseScale by pulse.animateFloat(
-        initialValue = 1f,
-        targetValue = if (pomodoro.isRunning) 1.02f else 1f,
-        animationSpec = infiniteRepeatable(tween(900, easing = FastOutSlowInEasing), RepeatMode.Reverse),
-        label = "pulseScale"
-    )
-    val animProgress by animateFloatAsState(
-        targetValue = pomodoro.progressFraction,
-        animationSpec = tween(300, easing = LinearEasing),
-        label = "pomodoroProgress"
-    )
-
-    GlassCard(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(28.dp),
-        glow = timerColor,
-        contentPadding = PaddingValues(24.dp)
-    ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    if (pomodoro.mode == PomodoroMode.WORK) s.dashboardFocusTime else s.dashboardBreakTime,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onSurface
-                )
-                Text(
-                    if (pomodoro.completedPomodoros > 0) s.dashboardSession(pomodoro.completedPomodoros)
-                    else s.dashboardIdleMessage,
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
-            Box(
-                modifier = Modifier.size(40.dp).glassSurface(shape = CircleShape).clickable(onClick = onReset),
-                contentAlignment = Alignment.Center
-            ) {
-                Icon(Icons.Default.Refresh, contentDescription = "Reset", modifier = Modifier.size(18.dp),
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-
-        Spacer(Modifier.height(22.dp))
-
-        Box(
-            modifier = Modifier.fillMaxWidth().scale(pulseScale),
-            contentAlignment = Alignment.Center
-        ) {
-            Box(modifier = Modifier.size(170.dp), contentAlignment = Alignment.Center) {
-                Canvas(modifier = Modifier.fillMaxSize()) {
-                    val sw = 12.dp.toPx()
-                    val stroke = Stroke(width = sw, cap = StrokeCap.Round)
-                    val inset = sw / 2f
-                    val arc = Size(size.width - inset * 2, size.height - inset * 2)
-                    val tl = Offset(inset, inset)
-                    drawArc(
-                        color = timerColor.copy(alpha = 0.12f),
-                        startAngle = -90f, sweepAngle = 360f,
-                        useCenter = false, style = stroke, topLeft = tl, size = arc
-                    )
-                    if (animProgress > 0f) {
-                        drawArc(
-                            brush = Brush.sweepGradient(listOf(timerColor.copy(alpha = 0.5f), timerColor)),
-                            startAngle = -90f, sweepAngle = 360f * animProgress,
-                            useCenter = false, style = stroke, topLeft = tl, size = arc
-                        )
-                    }
-                }
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Text(
-                        pomodoro.timeString,
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.ExtraBold,
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-                    Text(
-                        if (pomodoro.mode == PomodoroMode.WORK) s.dashboardModeWork else s.dashboardModeRest,
-                        style = MaterialTheme.typography.labelSmall,
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 2.sp,
-                        color = timerColor
-                    )
-                }
-            }
-        }
-
-        Spacer(Modifier.height(22.dp))
-
-        Box(
-            modifier = Modifier
-                .fillMaxWidth()
-                .height(54.dp)
-                .clip(RoundedCornerShape(18.dp))
-                .then(
-                    if (pomodoro.isRunning)
-                        Modifier.glassSurface(shape = RoundedCornerShape(18.dp))
-                    else
-                        Modifier.background(brandBrush, RoundedCornerShape(18.dp))
-                )
-                .clickable(onClick = onToggle),
-            contentAlignment = Alignment.Center
-        ) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                Icon(
-                    if (pomodoro.isRunning) Icons.Default.Pause else Icons.Default.PlayArrow,
-                    contentDescription = null,
-                    tint = if (pomodoro.isRunning) MaterialTheme.colorScheme.onSurface else Color.White,
-                    modifier = Modifier.size(22.dp)
-                )
-                Text(
-                    if (pomodoro.isRunning) s.dashboardPause else s.dashboardStartFocus,
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.Bold,
-                    color = if (pomodoro.isRunning) MaterialTheme.colorScheme.onSurface else Color.White
-                )
-            }
-        }
     }
 }
 

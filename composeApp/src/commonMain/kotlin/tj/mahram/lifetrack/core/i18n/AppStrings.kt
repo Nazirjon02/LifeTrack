@@ -100,15 +100,6 @@ data class AppStrings(
     val dashboardExpense: String,
     val dashboardBalance: String,
     val dashboardHabitsDoneLabel: String,
-    val dashboardPomodorosLabel: String,
-    val dashboardFocusTime: String,
-    val dashboardBreakTime: String,
-    val dashboardSession: (count: Int) -> String,
-    val dashboardIdleMessage: String,
-    val dashboardModeWork: String,
-    val dashboardModeRest: String,
-    val dashboardPause: String,
-    val dashboardStartFocus: String,
     val dashboardTodaysHabits: String,
     val dashboardHabitsDoneCount: (done: Int, total: Int) -> String,
 
@@ -332,15 +323,6 @@ val EnglishStrings = AppStrings(
     dashboardExpense = "Expenses",
     dashboardBalance = "Balance",
     dashboardHabitsDoneLabel = "Habits Done",
-    dashboardPomodorosLabel = "Pomodoros",
-    dashboardFocusTime = "Focus Time 🎯",
-    dashboardBreakTime = "Break Time ☕",
-    dashboardSession = { n -> "🍅 $n session${if (n > 1) "s" else ""}" },
-    dashboardIdleMessage = "Build momentum, stay focused",
-    dashboardModeWork = "WORK",
-    dashboardModeRest = "REST",
-    dashboardPause = "Pause",
-    dashboardStartFocus = "Start Focus",
     dashboardTodaysHabits = "Today's Habits",
     dashboardHabitsDoneCount = { done, total -> "$done/$total done" },
 
@@ -547,25 +529,6 @@ val RussianStrings = AppStrings(
     dashboardExpense = "Расходы",
     dashboardBalance = "Баланс",
     dashboardHabitsDoneLabel = "Привычки",
-    dashboardPomodorosLabel = "Помодоро",
-    dashboardFocusTime = "Фокус 🎯",
-    dashboardBreakTime = "Перерыв ☕",
-    dashboardSession = { n ->
-        val mod10 = n % 10
-        val mod100 = n % 100
-        val word = when {
-            mod100 in 11..19 -> "сессий"
-            mod10 == 1       -> "сессия"
-            mod10 in 2..4    -> "сессии"
-            else             -> "сессий"
-        }
-        "🍅 $n $word"
-    },
-    dashboardIdleMessage = "Сосредоточься и начни работу",
-    dashboardModeWork = "РАБОТА",
-    dashboardModeRest = "ОТДЫХ",
-    dashboardPause = "Пауза",
-    dashboardStartFocus = "Начать фокус",
     dashboardTodaysHabits = "Привычки на сегодня",
     dashboardHabitsDoneCount = { done, total -> "$done/$total готово" },
 
