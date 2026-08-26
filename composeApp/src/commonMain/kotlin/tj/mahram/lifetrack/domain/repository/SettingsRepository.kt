@@ -15,6 +15,8 @@ interface SettingsRepository {
     suspend fun setTaskNotificationsEnabled(enabled: Boolean)
     suspend fun setFinanceNotificationsEnabled(enabled: Boolean)
     suspend fun setCryptoNotificationsEnabled(enabled: Boolean)
+    suspend fun setDisplayName(name: String)
+    suspend fun setAvatarEmoji(emoji: String)
     suspend fun isFirstLaunch(): Boolean
     suspend fun setFirstLaunchDone()
 }

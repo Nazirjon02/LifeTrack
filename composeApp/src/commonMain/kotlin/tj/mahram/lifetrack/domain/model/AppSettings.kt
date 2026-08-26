@@ -9,7 +9,11 @@ data class AppSettings(
     val financeNotificationsEnabled: Boolean,
     val cryptoNotificationsEnabled: Boolean,
     /** Money the user already had before tracking anything in the app. */
-    val openingBalance: Double = 0.0
+    val openingBalance: Double = 0.0,
+    /** Name shown on the profile. Empty until the user sets one. */
+    val displayName: String = "",
+    /** Emoji used as the profile avatar. */
+    val avatarEmoji: String = "🚀"
 )
 
 enum class AppTheme(val label: String) {

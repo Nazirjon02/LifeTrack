@@ -53,7 +53,7 @@ import tj.mahram.lifetrack.feature.finance.FinanceScreenModel
 import tj.mahram.lifetrack.feature.goals.GoalsScreenModel
 import tj.mahram.lifetrack.feature.habits.HabitsScreenModel
 import tj.mahram.lifetrack.feature.planner.PlannerScreenModel
-import tj.mahram.lifetrack.feature.settings.SettingsScreenModel
+import tj.mahram.lifetrack.feature.profile.ProfileScreenModel
 
 val appModule = module {
     // Database
@@ -114,7 +114,7 @@ val appModule = module {
     factoryOf(::DashboardScreenModel)
     factoryOf(::PlannerScreenModel)
     factoryOf(::FinanceScreenModel)
-    factoryOf(::SettingsScreenModel)
+    factoryOf(::ProfileScreenModel)
     factoryOf(::HabitsScreenModel)
     factoryOf(::GoalsScreenModel)
 }

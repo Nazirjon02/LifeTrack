@@ -44,7 +44,7 @@ import tj.mahram.lifetrack.feature.finance.FinanceScreen
 import tj.mahram.lifetrack.feature.goals.GoalsScreen
 import tj.mahram.lifetrack.feature.habits.HabitsScreen
 import tj.mahram.lifetrack.feature.planner.PlannerScreen
-import tj.mahram.lifetrack.feature.settings.SettingsScreen
+import tj.mahram.lifetrack.feature.profile.ProfileScreen
 import tj.mahram.lifetrack.ui.theme.LifeTrackTheme
 
 private val DefaultSettings = AppSettings(
@@ -96,7 +96,7 @@ fun App(driverFactory: tj.mahram.lifetrack.data.local.DatabaseDriverFactory) {
 
 @Composable
 private fun LifeTrackNavBar(navigator: TabNavigator) {
-    val tabs = listOf(DashboardTab, PlannerTab, HabitsTab, GoalsTab, FinanceTab, SettingsTab)
+    val tabs = listOf(DashboardTab, PlannerTab, HabitsTab, GoalsTab, FinanceTab, ProfileTab)
 
     Box(
         modifier = Modifier
@@ -244,13 +244,13 @@ object FinanceTab : AppTab {
     override val tabIcon: ImageVector get() = Icons.Default.AccountBalance
 }
 
-object SettingsTab : AppTab {
+object ProfileTab : AppTab {
     @Composable
-    override fun Content() = SettingsScreen().Content()
+    override fun Content() = ProfileScreen().Content()
     override val options: TabOptions
         @Composable get() {
             val s = LocalStrings.current
-            return remember(s) { TabOptions(index = 5u, title = s.tabSettings) }
+            return remember(s) { TabOptions(index = 5u, title = s.tabProfile) }
         }
-    override val tabIcon: ImageVector get() = Icons.Default.Settings
+    override val tabIcon: ImageVector get() = Icons.Default.Person
 }

@@ -21,6 +21,8 @@ class SettingsRepositoryImpl(private val settings: Settings) : SettingsRepositor
         private const val KEY_CRYPTO_NOTIF = "crypto_notifications"
         private const val KEY_FIRST_LAUNCH = "first_launch"
         private const val KEY_OPENING_BALANCE = "opening_balance"
+        private const val KEY_DISPLAY_NAME = "display_name"
+        private const val KEY_AVATAR_EMOJI = "avatar_emoji"
     }
 
     private val _settingsFlow = MutableStateFlow(loadCurrent())
@@ -39,7 +41,9 @@ class SettingsRepositoryImpl(private val settings: Settings) : SettingsRepositor
         taskNotificationsEnabled = settings.getBoolean(KEY_TASK_NOTIF, true),
         financeNotificationsEnabled = settings.getBoolean(KEY_FINANCE_NOTIF, true),
         cryptoNotificationsEnabled = settings.getBoolean(KEY_CRYPTO_NOTIF, true),
-        openingBalance = settings.getDouble(KEY_OPENING_BALANCE, 0.0)
+        openingBalance = settings.getDouble(KEY_OPENING_BALANCE, 0.0),
+        displayName = settings.getStringOrNull(KEY_DISPLAY_NAME) ?: "",
+        avatarEmoji = settings.getStringOrNull(KEY_AVATAR_EMOJI) ?: "🚀"
     )
 
     private fun refresh() {
@@ -83,6 +87,16 @@ class SettingsRepositoryImpl(private val settings: Settings) : SettingsRepositor
 
     override suspend fun setCryptoNotificationsEnabled(enabled: Boolean) {
         settings.putBoolean(KEY_CRYPTO_NOTIF, enabled)
+        refresh()
+    }
+
+    override suspend fun setDisplayName(name: String) {
+        settings.putString(KEY_DISPLAY_NAME, name)
+        refresh()
+    }
+
+    override suspend fun setAvatarEmoji(emoji: String) {
+        settings.putString(KEY_AVATAR_EMOJI, emoji)
         refresh()
     }
 
