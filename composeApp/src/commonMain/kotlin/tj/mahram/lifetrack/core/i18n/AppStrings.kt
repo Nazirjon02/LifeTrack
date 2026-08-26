@@ -176,6 +176,20 @@ data class AppStrings(
     val financeAddTitleIncome: String,
     val financeAddTitleExpense: String,
 
+    // Central balance
+    val financeAdjustTitle: String,
+    val financeAdjustHint: String,
+    val saveButton: String,
+
+    // Purchase goals (goals linked to the central balance)
+    val goalAffectsBalanceBadge: String,
+    val goalPurchasedBadge: String,
+    val goalUndoPurchase: String,
+    val goalMarkPurchased: String,
+    val goalPurchaseToggle: String,
+    val goalPurchaseToggleHint: String,
+    val goalPriceLabel: String,
+
     // Planner screen title & view switcher
     val plannerScreenTitle: String,
     val plannerViewYear: String,
@@ -394,6 +408,18 @@ val EnglishStrings = AppStrings(
     financeNoteLabel = "Note (optional)",
     financeAddTitleIncome = "Income",
     financeAddTitleExpense = "Expense",
+
+    financeAdjustTitle = "Set your balance",
+    financeAdjustHint = "Enter how much money you have right now — it stays in sync with your income and expenses.",
+    saveButton = "Save",
+
+    goalAffectsBalanceBadge = "Affects balance",
+    goalPurchasedBadge = "Purchased",
+    goalUndoPurchase = "Undo",
+    goalMarkPurchased = "Mark as bought",
+    goalPurchaseToggle = "Purchase goal",
+    goalPurchaseToggleHint = "Deducts the price from your balance when bought",
+    goalPriceLabel = "Price",
 
     plannerScreenTitle = "Planner",
     plannerViewYear = "Year",
@@ -640,6 +666,18 @@ val RussianStrings = AppStrings(
     financeNoteLabel = "Заметка (необязательно)",
     financeAddTitleIncome = "Доход",
     financeAddTitleExpense = "Расход",
+
+    financeAdjustTitle = "Укажите баланс",
+    financeAdjustHint = "Введите, сколько у вас сейчас денег — баланс будет учитывать доходы и расходы.",
+    saveButton = "Сохранить",
+
+    goalAffectsBalanceBadge = "Влияет на баланс",
+    goalPurchasedBadge = "Куплено",
+    goalUndoPurchase = "Отменить",
+    goalMarkPurchased = "Отметить купленным",
+    goalPurchaseToggle = "Цель-покупка",
+    goalPurchaseToggleHint = "Спишет цену с баланса при покупке",
+    goalPriceLabel = "Цена",
 
     plannerScreenTitle = "Планировщик",
     plannerViewYear = "Год",

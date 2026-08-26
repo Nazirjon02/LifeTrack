@@ -13,6 +13,22 @@ enum class CategoryType {
     TASK, EXPENSE, INCOME
 }
 
+/**
+ * Category used for expenses that are generated automatically when a
+ * "purchase" goal is completed. Shared so both the seeded defaults and the
+ * runtime "ensure category exists" path reference the same id.
+ */
+const val GOAL_PURCHASE_CATEGORY_ID = "exp_goal_purchase"
+
+val GoalPurchaseCategory = Category(
+    id = GOAL_PURCHASE_CATEGORY_ID,
+    name = "Purchases",
+    type = CategoryType.EXPENSE,
+    icon = "🛒",
+    color = "#7C3AED",
+    isCustom = false
+)
+
 object DefaultCategories {
     val taskCategories = listOf(
         Category("task_work", "Work", CategoryType.TASK, "💼", "#4F46E5", false),
@@ -28,6 +44,7 @@ object DefaultCategories {
         Category("exp_health", "Health", CategoryType.EXPENSE, "💊", "#10B981", false),
         Category("exp_entertainment", "Entertainment", CategoryType.EXPENSE, "🎮", "#8B5CF6", false),
         Category("exp_clothing", "Clothing", CategoryType.EXPENSE, "👗", "#EC4899", false),
+        Category(GOAL_PURCHASE_CATEGORY_ID, "Purchases", CategoryType.EXPENSE, "🛒", "#7C3AED", false),
         Category("exp_other", "Other", CategoryType.EXPENSE, "📦", "#6B7280", false)
     )
 

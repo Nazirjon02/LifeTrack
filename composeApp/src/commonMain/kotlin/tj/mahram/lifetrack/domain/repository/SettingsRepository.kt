@@ -9,6 +9,7 @@ interface SettingsRepository {
     fun getSettings(): Flow<AppSettings>
     suspend fun setTheme(theme: AppTheme)
     suspend fun setCurrency(currency: String)
+    suspend fun setOpeningBalance(amount: Double)
     suspend fun setLanguage(language: AppLanguage)
     suspend fun setNotificationsEnabled(enabled: Boolean)
     suspend fun setTaskNotificationsEnabled(enabled: Boolean)

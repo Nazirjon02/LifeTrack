@@ -1,0 +1,4 @@
+-- Migration 3 → 4: link goals to the central balance.
+-- A goal flagged as `affectsBalance` behaves as a purchase: completing it
+-- writes an expense into the ledger, which lowers the central balance.
+ALTER TABLE goal ADD COLUMN affectsBalance INTEGER NOT NULL DEFAULT 0;

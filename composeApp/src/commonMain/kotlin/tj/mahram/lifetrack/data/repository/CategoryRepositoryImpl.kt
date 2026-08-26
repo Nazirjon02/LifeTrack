@@ -23,4 +23,6 @@ class CategoryRepositoryImpl(private val local: CategoryLocalDataSource) : Categ
     override suspend fun deleteCategory(id: String) = local.delete(id)
 
     override suspend fun initDefaultCategories() = local.initDefaultsIfEmpty()
+
+    override suspend fun ensureCategory(category: Category) = local.ensure(category)
 }

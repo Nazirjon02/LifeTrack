@@ -32,6 +32,7 @@ import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
+import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.core.util.roundTo
 import tj.mahram.lifetrack.domain.model.Goal
 import tj.mahram.lifetrack.feature.habits.parseHabitColor
@@ -116,7 +117,7 @@ fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
                         Text(s.goalsActiveSection, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp))
                     }
                     items(state.activeGoals, key = { it.id }) { goal ->
-                        GoalCard(goal = goal, onUpdate = { onIntent(GoalsIntent.ShowUpdate(goal)) }, onDelete = { onIntent(GoalsIntent.Delete(goal.id)) }, modifier = Modifier.animateItem())
+                        GoalCard(goal = goal, currency = state.currency, onUpdate = { onIntent(GoalsIntent.ShowUpdate(goal)) }, onSetPurchased = { onIntent(GoalsIntent.SetPurchased(goal, it)) }, onDelete = { onIntent(GoalsIntent.Delete(goal.id)) }, modifier = Modifier.animateItem())
                     }
                 }
                 if (state.completedGoals.isNotEmpty()) {
@@ -124,14 +125,14 @@ fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
                         Text(s.goalsCompletedSection, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp))
                     }
                     items(state.completedGoals, key = { it.id }) { goal ->
-                        GoalCard(goal = goal, onUpdate = { onIntent(GoalsIntent.ShowUpdate(goal)) }, onDelete = { onIntent(GoalsIntent.Delete(goal.id)) }, modifier = Modifier.animateItem())
+                        GoalCard(goal = goal, currency = state.currency, onUpdate = { onIntent(GoalsIntent.ShowUpdate(goal)) }, onSetPurchased = { onIntent(GoalsIntent.SetPurchased(goal, it)) }, onDelete = { onIntent(GoalsIntent.Delete(goal.id)) }, modifier = Modifier.animateItem())
                     }
                 }
             }
         }
 
         if (state.showAddSheet) {
-            AddGoalSheet(onDismiss = { onIntent(GoalsIntent.HideAddSheet) }, onConfirm = onIntent)
+            AddGoalSheet(currency = state.currency, onDismiss = { onIntent(GoalsIntent.HideAddSheet) }, onConfirm = onIntent)
         }
         state.editingGoal?.let { goal ->
             UpdateProgressDialog(goal = goal, onDismiss = { onIntent(GoalsIntent.HideUpdate) }, onConfirm = { newValue -> onIntent(GoalsIntent.UpdateProgress(goal.id, newValue)) })
@@ -190,9 +191,17 @@ private fun GoalsSummaryBanner(state: GoalsState) {
 
 // ─── Goal Card ─────────────────────────────────────────────────────────────────
 @Composable
-private fun GoalCard(goal: Goal, onUpdate: () -> Unit, onDelete: () -> Unit, modifier: Modifier = Modifier) {
+private fun GoalCard(
+    goal: Goal,
+    currency: String,
+    onUpdate: () -> Unit,
+    onSetPurchased: (Boolean) -> Unit,
+    onDelete: () -> Unit,
+    modifier: Modifier = Modifier
+) {
     val s = LocalStrings.current
     val goalColor = parseHabitColor(goal.color)
+    val isPurchase = goal.affectsBalance
     val animProgress by animateFloatAsState(targetValue = goal.progressFraction, animationSpec = tween(900, easing = FastOutSlowInEasing), label = "goalProgress_${goal.id}")
 
     Column(
@@ -202,20 +211,32 @@ private fun GoalCard(goal: Goal, onUpdate: () -> Unit, onDelete: () -> Unit, mod
             Box(modifier = Modifier.size(48.dp).clip(RoundedCornerShape(15.dp)).background(goalColor.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
                 Text(goal.icon, fontSize = 22.sp)
             }
-            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                 Text(
                     goal.title,
                     style = MaterialTheme.typography.bodyLarge, fontWeight = FontWeight.SemiBold,
                     color = if (goal.isCompleted) MaterialTheme.colorScheme.onSurface.copy(alpha = 0.55f) else MaterialTheme.colorScheme.onSurface
                 )
-                Text(
-                    "${formatGoalValue(goal.currentValue)} / ${formatGoalValue(goal.targetValue)} ${goal.unit}",
-                    style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
+                if (isPurchase) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+                        Text(
+                            goal.targetValue.formatCurrency(currency),
+                            style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = goalColor
+                        )
+                        Box(modifier = Modifier.clip(RoundedCornerShape(6.dp)).background(goalColor.copy(alpha = 0.14f)).padding(horizontal = 6.dp, vertical = 2.dp)) {
+                            Text("💳 ${s.goalAffectsBalanceBadge}", style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, color = goalColor)
+                        }
+                    }
+                } else {
+                    Text(
+                        "${formatGoalValue(goal.currentValue)} / ${formatGoalValue(goal.targetValue)} ${goal.unit}",
+                        style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
             if (goal.isCompleted) {
-                Text("✅", fontSize = 22.sp)
-            } else {
+                Text(if (isPurchase) "🛍️" else "✅", fontSize = 22.sp)
+            } else if (!isPurchase) {
                 Box(
                     modifier = Modifier.size(44.dp).clip(CircleShape).background(Brush.radialGradient(listOf(goalColor, goalColor.copy(alpha = 0.6f)))),
                     contentAlignment = Alignment.Center
@@ -228,18 +249,43 @@ private fun GoalCard(goal: Goal, onUpdate: () -> Unit, onDelete: () -> Unit, mod
             }
         }
 
-        Spacer(Modifier.height(14.dp))
-
-        Box(modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(goalColor.copy(alpha = 0.15f))) {
-            Box(modifier = Modifier.fillMaxWidth(animProgress).fillMaxHeight().clip(RoundedCornerShape(4.dp)).background(Brush.horizontalGradient(listOf(goalColor, goalColor.copy(alpha = 0.65f)))))
+        // Progress bar (skip for not-yet-bought purchase goals — they are binary).
+        if (!isPurchase) {
+            Spacer(Modifier.height(14.dp))
+            Box(modifier = Modifier.fillMaxWidth().height(8.dp).clip(RoundedCornerShape(4.dp)).background(goalColor.copy(alpha = 0.15f))) {
+                Box(modifier = Modifier.fillMaxWidth(animProgress).fillMaxHeight().clip(RoundedCornerShape(4.dp)).background(Brush.horizontalGradient(listOf(goalColor, goalColor.copy(alpha = 0.65f)))))
+            }
         }
 
-        if (!goal.isCompleted) {
-            Spacer(Modifier.height(12.dp))
-            Box(
-                modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(goalColor.copy(alpha = 0.15f)).clickable(onClick = onUpdate).padding(horizontal = 16.dp, vertical = 8.dp)
-            ) {
-                Text(s.goalsUpdateProgress, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = goalColor)
+        // Action row.
+        when {
+            isPurchase && goal.isCompleted -> {
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.SpaceBetween, modifier = Modifier.fillMaxWidth()) {
+                    Text("✓ ${s.goalPurchasedBadge}", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    Box(
+                        modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)).clickable { onSetPurchased(false) }.padding(horizontal = 14.dp, vertical = 7.dp)
+                    ) {
+                        Text(s.goalUndoPurchase, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                }
+            }
+            isPurchase && !goal.isCompleted -> {
+                Spacer(Modifier.height(14.dp))
+                Box(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(brandHorizontalGradient()).clickable { onSetPurchased(true) }.padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text("🛒 ${s.goalMarkPurchased}", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Color.White)
+                }
+            }
+            !goal.isCompleted -> {
+                Spacer(Modifier.height(12.dp))
+                Box(
+                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(goalColor.copy(alpha = 0.15f)).clickable(onClick = onUpdate).padding(horizontal = 16.dp, vertical = 8.dp)
+                ) {
+                    Text(s.goalsUpdateProgress, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = goalColor)
+                }
             }
         }
     }
@@ -248,7 +294,7 @@ private fun GoalCard(goal: Goal, onUpdate: () -> Unit, onDelete: () -> Unit, mod
 // ─── Add Goal Sheet ────────────────────────────────────────────────────────────
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-private fun AddGoalSheet(onDismiss: () -> Unit, onConfirm: (GoalsIntent) -> Unit) {
+private fun AddGoalSheet(currency: String, onDismiss: () -> Unit, onConfirm: (GoalsIntent) -> Unit) {
     val s = LocalStrings.current
     var title by remember { mutableStateOf("") }
     var description by remember { mutableStateOf("") }
@@ -256,6 +302,7 @@ private fun AddGoalSheet(onDismiss: () -> Unit, onConfirm: (GoalsIntent) -> Unit
     var selectedColor by remember { mutableStateOf(GoalColors.first()) }
     var targetText by remember { mutableStateOf("") }
     var unit by remember { mutableStateOf("") }
+    var isPurchase by remember { mutableStateOf(false) }
     var titleError by remember { mutableStateOf(false) }
     var targetError by remember { mutableStateOf(false) }
 
@@ -274,14 +321,44 @@ private fun AddGoalSheet(onDismiss: () -> Unit, onConfirm: (GoalsIntent) -> Unit
                 FieldLabel(s.addGoalFieldTitle)
                 SheetTextField(value = title, onValueChange = { title = it; titleError = false }, placeholder = s.addGoalPlaceholderTitle, isError = titleError, errorText = if (titleError) s.addGoalErrorTitleEmpty else null)
 
+                // Purchase toggle — links the goal to the central balance.
+                val purchaseColor = parseHabitColor(GoalColors.first())
+                Row(
+                    modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
+                        .background(if (isPurchase) purchaseColor.copy(alpha = 0.12f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
+                        .clickable {
+                            isPurchase = !isPurchase
+                            if (isPurchase && selectedIcon == GoalIcons.first()) selectedIcon = "🛒"
+                        }
+                        .padding(horizontal = 14.dp, vertical = 12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text("💳", fontSize = 22.sp)
+                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                        Text(s.goalPurchaseToggle, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                        Text(s.goalPurchaseToggleHint, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    }
+                    Switch(
+                        checked = isPurchase,
+                        onCheckedChange = {
+                            isPurchase = it
+                            if (it && selectedIcon == GoalIcons.first()) selectedIcon = "🛒"
+                        },
+                        colors = SwitchDefaults.colors(checkedThumbColor = Color.White, checkedTrackColor = purchaseColor)
+                    )
+                }
+
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(modifier = Modifier.weight(1.5f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FieldLabel(s.addGoalFieldTarget)
-                        SheetTextField(value = targetText, onValueChange = { targetText = it; targetError = false }, placeholder = "100", isError = targetError, keyboardType = KeyboardType.Decimal)
+                        FieldLabel(if (isPurchase) "${s.goalPriceLabel} · ${tj.mahram.lifetrack.core.util.currencySymbol(currency)}" else s.addGoalFieldTarget)
+                        SheetTextField(value = targetText, onValueChange = { targetText = it; targetError = false }, placeholder = if (isPurchase) "1000" else "100", isError = targetError, keyboardType = KeyboardType.Decimal)
                     }
-                    Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                        FieldLabel(s.addGoalFieldUnit)
-                        SheetTextField(value = unit, onValueChange = { unit = it }, placeholder = "km")
+                    if (!isPurchase) {
+                        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                            FieldLabel(s.addGoalFieldUnit)
+                            SheetTextField(value = unit, onValueChange = { unit = it }, placeholder = "km")
+                        }
                     }
                 }
 
@@ -322,11 +399,21 @@ private fun AddGoalSheet(onDismiss: () -> Unit, onConfirm: (GoalsIntent) -> Unit
             GradientButton(
                 text = s.addGoalCreateButton,
                 onClick = {
-                    val target = targetText.toDoubleOrNull()
+                    val target = targetText.replace(',', '.').toDoubleOrNull()
                     when {
                         title.isBlank() -> titleError = true
                         target == null || target <= 0 -> targetError = true
-                        else -> onConfirm(GoalsIntent.Create(title = title.trim(), description = description.trim().ifBlank { null }, icon = selectedIcon, targetValue = target, unit = unit.trim().ifBlank { "units" }, color = selectedColor))
+                        else -> onConfirm(
+                            GoalsIntent.Create(
+                                title = title.trim(),
+                                description = description.trim().ifBlank { null },
+                                icon = selectedIcon,
+                                targetValue = target,
+                                unit = if (isPurchase) currency else unit.trim().ifBlank { "units" },
+                                color = selectedColor,
+                                affectsBalance = isPurchase
+                            )
+                        )
                     }
                 },
                 modifier = Modifier.fillMaxWidth().padding(horizontal = 24.dp),

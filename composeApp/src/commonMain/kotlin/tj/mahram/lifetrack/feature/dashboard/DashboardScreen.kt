@@ -149,7 +149,7 @@ fun DashboardContent(
 private fun DashStatGrid(state: DashboardState, habitsDone: Int) {
     val s = LocalStrings.current
     val c = MaterialTheme.appColors
-    val balance = state.monthlyFinance?.balance
+    val balance = state.balance?.currentBalance
     val balancePositive = (balance ?: 0.0) >= 0
 
     Column(

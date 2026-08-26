@@ -8,9 +8,11 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -18,8 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.*
-import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
@@ -27,8 +30,9 @@ import cafe.adriel.voyager.core.screen.Screen
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.formatCurrency
+import tj.mahram.lifetrack.core.util.roundTo
+import tj.mahram.lifetrack.domain.model.BalanceOverview
 import tj.mahram.lifetrack.domain.model.Category
-import tj.mahram.lifetrack.domain.model.FinanceSummary
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
 import tj.mahram.lifetrack.feature.habits.parseHabitColor
@@ -80,7 +84,13 @@ fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit) {
             }
 
             item(key = "balance") {
-                state.summary?.let { summary -> FinanceBalanceHero(summary = summary, currency = state.currency) }
+                state.balance?.let { balance ->
+                    FinanceBalanceHero(
+                        balance = balance,
+                        currency = state.currency,
+                        onAdjust = { onIntent(FinanceIntent.ShowAdjustBalance) }
+                    )
+                }
             }
 
             if (state.transactions.size >= 2) {
@@ -127,12 +137,21 @@ fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit) {
                 onConfirm = onIntent
             )
         }
+
+        if (state.showAdjustBalance) {
+            AdjustBalanceDialog(
+                current = state.balance?.currentBalance ?: 0.0,
+                currency = state.currency,
+                onDismiss = { onIntent(FinanceIntent.HideAdjustBalance) },
+                onConfirm = { onIntent(FinanceIntent.SetCurrentBalance(it)) }
+            )
+        }
     }
 }
 
 // ─── Balance Hero ──────────────────────────────────────────────────────────────
 @Composable
-private fun FinanceBalanceHero(summary: FinanceSummary, currency: String) {
+private fun FinanceBalanceHero(balance: BalanceOverview, currency: String, onAdjust: () -> Unit) {
     val s = LocalStrings.current
     val c = MaterialTheme.appColors
     Box(
@@ -144,22 +163,81 @@ private fun FinanceBalanceHero(summary: FinanceSummary, currency: String) {
             .padding(24.dp)
     ) {
         Column {
-            Text(s.financeTotalBalance, style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.75f), fontWeight = FontWeight.Medium)
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(s.financeTotalBalance, style = MaterialTheme.typography.labelLarge, color = Color.White.copy(alpha = 0.75f), fontWeight = FontWeight.Medium)
+                Spacer(Modifier.weight(1f))
+                Box(
+                    modifier = Modifier.size(32.dp).clip(CircleShape).background(Color.White.copy(alpha = 0.18f)).clickable(onClick = onAdjust),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Icon(Icons.Outlined.Edit, contentDescription = s.financeAdjustTitle, tint = Color.White, modifier = Modifier.size(16.dp))
+                }
+            }
             Spacer(Modifier.height(6.dp))
             Text(
-                summary.balance.formatCurrency(currency),
+                balance.currentBalance.formatCurrency(currency),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.ExtraBold,
-                color = if (summary.balance >= 0) Color.White else Color(0xFFFFD7DE),
+                color = if (balance.currentBalance >= 0) Color.White else Color(0xFFFFD7DE),
                 letterSpacing = (-0.5).sp
+            )
+            Spacer(Modifier.height(4.dp))
+            Text(
+                s.dashboardFinanceMonth + " · " + balance.monthNet.formatCurrency(currency, showSign = true),
+                style = MaterialTheme.typography.bodySmall,
+                color = Color.White.copy(alpha = 0.8f)
             )
             Spacer(Modifier.height(20.dp))
             Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                HeroStatPill(modifier = Modifier.weight(1f), label = s.financeIncomeLabel, amount = summary.totalIncome, currency = currency, color = c.success, arrowUp = true)
-                HeroStatPill(modifier = Modifier.weight(1f), label = s.financeExpensesLabel, amount = summary.totalExpense, currency = currency, color = Color(0xFFFFB4C0), arrowUp = false)
+                HeroStatPill(modifier = Modifier.weight(1f), label = s.financeIncomeLabel, amount = balance.monthIncome, currency = currency, color = c.success, arrowUp = true)
+                HeroStatPill(modifier = Modifier.weight(1f), label = s.financeExpensesLabel, amount = balance.monthExpense, currency = currency, color = Color(0xFFFFB4C0), arrowUp = false)
             }
         }
     }
+}
+
+// ─── Adjust Balance Dialog ──────────────────────────────────────────────────────
+@Composable
+private fun AdjustBalanceDialog(current: Double, currency: String, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
+    val s = LocalStrings.current
+    var text by remember { mutableStateOf(if (current == 0.0) "" else current.roundTo(2)) }
+    var isError by remember { mutableStateOf(false) }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        containerColor = MaterialTheme.colorScheme.surface,
+        shape = RoundedCornerShape(28.dp),
+        title = { Text(s.financeAdjustTitle, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold) },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                Text(s.financeAdjustHint, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                OutlinedTextField(
+                    value = text,
+                    onValueChange = { text = it; isError = false },
+                    modifier = Modifier.fillMaxWidth(),
+                    placeholder = { Text("0.00", color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f)) },
+                    prefix = { Text(tj.mahram.lifetrack.core.util.currencySymbol(currency), color = MaterialTheme.colorScheme.onSurfaceVariant) },
+                    isError = isError,
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = OutlinedTextFieldDefaults.colors(focusedBorderColor = MaterialTheme.colorScheme.primary, unfocusedBorderColor = MaterialTheme.colorScheme.outline)
+                )
+            }
+        },
+        confirmButton = {
+            Box(
+                modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(brandHorizontalGradient()).clickable {
+                    val v = text.replace(',', '.').toDoubleOrNull()
+                    if (v == null) { isError = true; return@clickable }
+                    onConfirm(v)
+                }.padding(horizontal = 22.dp, vertical = 11.dp)
+            ) {
+                Text(s.saveButton, color = Color.White, fontWeight = FontWeight.SemiBold)
+            }
+        },
+        dismissButton = { TextButton(onClick = onDismiss) { Text(s.cancelButton, color = MaterialTheme.colorScheme.onSurfaceVariant) } }
+    )
 }
 
 @Composable

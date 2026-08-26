@@ -20,6 +20,7 @@ class SettingsRepositoryImpl(private val settings: Settings) : SettingsRepositor
         private const val KEY_FINANCE_NOTIF = "finance_notifications"
         private const val KEY_CRYPTO_NOTIF = "crypto_notifications"
         private const val KEY_FIRST_LAUNCH = "first_launch"
+        private const val KEY_OPENING_BALANCE = "opening_balance"
     }
 
     private val _settingsFlow = MutableStateFlow(loadCurrent())
@@ -37,7 +38,8 @@ class SettingsRepositoryImpl(private val settings: Settings) : SettingsRepositor
         notificationsEnabled = settings.getBoolean(KEY_NOTIFICATIONS, true),
         taskNotificationsEnabled = settings.getBoolean(KEY_TASK_NOTIF, true),
         financeNotificationsEnabled = settings.getBoolean(KEY_FINANCE_NOTIF, true),
-        cryptoNotificationsEnabled = settings.getBoolean(KEY_CRYPTO_NOTIF, true)
+        cryptoNotificationsEnabled = settings.getBoolean(KEY_CRYPTO_NOTIF, true),
+        openingBalance = settings.getDouble(KEY_OPENING_BALANCE, 0.0)
     )
 
     private fun refresh() {
@@ -51,6 +53,11 @@ class SettingsRepositoryImpl(private val settings: Settings) : SettingsRepositor
 
     override suspend fun setCurrency(currency: String) {
         settings.putString(KEY_CURRENCY, currency)
+        refresh()
+    }
+
+    override suspend fun setOpeningBalance(amount: Double) {
+        settings.putDouble(KEY_OPENING_BALANCE, amount)
         refresh()
     }
 

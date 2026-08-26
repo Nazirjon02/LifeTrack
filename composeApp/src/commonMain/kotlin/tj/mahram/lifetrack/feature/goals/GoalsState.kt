@@ -5,6 +5,7 @@ import tj.mahram.lifetrack.domain.model.Goal
 data class GoalsState(
     val isLoading: Boolean = true,
     val goals: List<Goal> = emptyList(),
+    val currency: String = "USD",
     val showAddSheet: Boolean = false,
     val editingGoal: Goal? = null
 ) {
@@ -23,8 +24,11 @@ sealed class GoalsIntent {
         val icon: String,
         val targetValue: Double,
         val unit: String,
-        val color: String
+        val color: String,
+        val affectsBalance: Boolean
     ) : GoalsIntent()
     data class UpdateProgress(val goalId: String, val newValue: Double) : GoalsIntent()
+    /** Buy / un-buy a purchase goal (books or reverses the linked expense). */
+    data class SetPurchased(val goal: Goal, val purchased: Boolean) : GoalsIntent()
     data class Delete(val goalId: String) : GoalsIntent()
 }

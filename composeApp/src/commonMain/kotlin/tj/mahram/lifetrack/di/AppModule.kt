@@ -30,9 +30,11 @@ import tj.mahram.lifetrack.domain.usecase.finance.GetAllTransactionsUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetFinanceSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetRecentTransactionsUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetTransactionsByDateRangeUseCase
+import tj.mahram.lifetrack.domain.usecase.finance.ObserveBalanceUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.CreateGoalUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.DeleteGoalUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.GetAllGoalsUseCase
+import tj.mahram.lifetrack.domain.usecase.goal.SetGoalPurchasedUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.UpdateGoalProgressUseCase
 import tj.mahram.lifetrack.domain.usecase.habit.CreateHabitUseCase
 import tj.mahram.lifetrack.domain.usecase.habit.DeleteHabitUseCase
@@ -93,6 +95,7 @@ val appModule = module {
     factoryOf(::AddTransactionUseCase)
     factoryOf(::DeleteTransactionUseCase)
     factoryOf(::GetFinanceSummaryUseCase)
+    factoryOf(::ObserveBalanceUseCase)
 
     // Habit use cases
     factoryOf(::GetAllHabitsUseCase)
@@ -105,6 +108,7 @@ val appModule = module {
     factoryOf(::CreateGoalUseCase)
     factoryOf(::UpdateGoalProgressUseCase)
     factoryOf(::DeleteGoalUseCase)
+    factoryOf(::SetGoalPurchasedUseCase)
 
     // Screen models
     factoryOf(::DashboardScreenModel)

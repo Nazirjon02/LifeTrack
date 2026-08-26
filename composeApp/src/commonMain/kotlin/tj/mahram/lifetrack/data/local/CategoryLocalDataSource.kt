@@ -42,6 +42,19 @@ class CategoryLocalDataSource(private val db: AppDatabase) {
         }
     }
 
+    suspend fun ensure(category: Category) {
+        withContext(Dispatchers.Default) {
+            db.categoryQueries.insertCategoryOrIgnore(
+                id = category.id,
+                name = category.name,
+                type = category.type.name,
+                icon = category.icon,
+                color = category.color,
+                isCustom = if (category.isCustom) 1L else 0L
+            )
+        }
+    }
+
     suspend fun initDefaultsIfEmpty() = withContext(Dispatchers.Default) {
         val count = db.categoryQueries.countCategories().executeAsOne()
         if (count == 0L) {

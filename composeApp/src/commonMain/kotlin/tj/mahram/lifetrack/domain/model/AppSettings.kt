@@ -7,7 +7,9 @@ data class AppSettings(
     val notificationsEnabled: Boolean,
     val taskNotificationsEnabled: Boolean,
     val financeNotificationsEnabled: Boolean,
-    val cryptoNotificationsEnabled: Boolean
+    val cryptoNotificationsEnabled: Boolean,
+    /** Money the user already had before tracking anything in the app. */
+    val openingBalance: Double = 0.0
 )
 
 enum class AppTheme(val label: String) {

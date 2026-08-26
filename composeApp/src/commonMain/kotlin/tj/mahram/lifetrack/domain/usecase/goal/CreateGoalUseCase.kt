@@ -11,7 +11,8 @@ class CreateGoalUseCase(private val repository: GoalRepository) {
         icon: String,
         targetValue: Double,
         unit: String,
-        color: String
+        color: String,
+        affectsBalance: Boolean = false
     ) {
         val now = Clock.System.now()
         val goal = Goal(
@@ -26,7 +27,8 @@ class CreateGoalUseCase(private val repository: GoalRepository) {
             deadline = null,
             isCompleted = false,
             createdAt = now,
-            updatedAt = now
+            updatedAt = now,
+            affectsBalance = affectsBalance
         )
         repository.createGoal(goal)
     }

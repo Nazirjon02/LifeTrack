@@ -1,7 +1,7 @@
 package tj.mahram.lifetrack.feature.finance
 
+import tj.mahram.lifetrack.domain.model.BalanceOverview
 import tj.mahram.lifetrack.domain.model.Category
-import tj.mahram.lifetrack.domain.model.FinanceSummary
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
 
@@ -9,11 +9,12 @@ data class FinanceState(
     val isLoading: Boolean = true,
     val transactions: List<Transaction> = emptyList(),
     val categories: List<Category> = emptyList(),
-    val summary: FinanceSummary? = null,
+    val balance: BalanceOverview? = null,
     val currency: String = "USD",
     val selectedType: TransactionType? = null,
     val showAddSheet: Boolean = false,
     val addSheetType: TransactionType = TransactionType.EXPENSE,
+    val showAdjustBalance: Boolean = false,
     val error: String? = null
 ) {
     val filteredTransactions: List<Transaction>
@@ -28,6 +29,10 @@ sealed class FinanceIntent {
     data object ShowAddExpense : FinanceIntent()
     data object ShowAddIncome : FinanceIntent()
     data object HideAddSheet : FinanceIntent()
+    data object ShowAdjustBalance : FinanceIntent()
+    data object HideAdjustBalance : FinanceIntent()
+    /** The balance the user says they actually have right now. */
+    data class SetCurrentBalance(val amount: Double) : FinanceIntent()
     data class AddTransaction(
         val amount: Double,
         val type: TransactionType,

@@ -35,7 +35,8 @@ class GoalLocalDataSource(private val db: AppDatabase) {
             deadline = goal.deadline?.toEpochMilliseconds(),
             isCompleted = if (goal.isCompleted) 1L else 0L,
             createdAt = goal.createdAt.toEpochMilliseconds(),
-            updatedAt = goal.updatedAt.toEpochMilliseconds()
+            updatedAt = goal.updatedAt.toEpochMilliseconds(),
+            affectsBalance = if (goal.affectsBalance) 1L else 0L
         )
         Unit
     }
@@ -69,6 +70,7 @@ class GoalLocalDataSource(private val db: AppDatabase) {
         deadline = deadline?.let { Instant.fromEpochMilliseconds(it) },
         isCompleted = isCompleted == 1L,
         createdAt = Instant.fromEpochMilliseconds(createdAt),
-        updatedAt = Instant.fromEpochMilliseconds(updatedAt)
+        updatedAt = Instant.fromEpochMilliseconds(updatedAt),
+        affectsBalance = affectsBalance == 1L
     )
 }

@@ -11,4 +11,6 @@ interface CategoryRepository {
     suspend fun updateCategory(category: Category)
     suspend fun deleteCategory(id: String)
     suspend fun initDefaultCategories()
+    /** Insert [category] only if a row with its id does not already exist. */
+    suspend fun ensureCategory(category: Category)
 }

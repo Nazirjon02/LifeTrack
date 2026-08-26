@@ -12,6 +12,7 @@ import tj.mahram.lifetrack.core.util.startOfMonth
 import tj.mahram.lifetrack.domain.repository.HabitRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.domain.usecase.finance.GetFinanceSummaryUseCase
+import tj.mahram.lifetrack.domain.usecase.finance.ObserveBalanceUseCase
 import tj.mahram.lifetrack.domain.usecase.habit.GetAllHabitsUseCase
 import tj.mahram.lifetrack.domain.usecase.habit.ToggleHabitEntryUseCase
 import tj.mahram.lifetrack.domain.usecase.task.GetTaskStatsUseCase
@@ -21,6 +22,7 @@ class DashboardScreenModel(
     private val getTodayTasks: GetTodayTasksUseCase,
     private val getTaskStats: GetTaskStatsUseCase,
     private val getFinanceSummary: GetFinanceSummaryUseCase,
+    private val observeBalance: ObserveBalanceUseCase,
     private val settingsRepository: SettingsRepository,
     private val getAllHabits: GetAllHabitsUseCase,
     private val toggleHabit: ToggleHabitEntryUseCase,
@@ -33,6 +35,15 @@ class DashboardScreenModel(
     init {
         load()
         observeHabits()
+        observeCentralBalance()
+    }
+
+    private fun observeCentralBalance() {
+        screenModelScope.launch {
+            observeBalance().collect { overview ->
+                _state.update { it.copy(balance = overview) }
+            }
+        }
     }
 
     private fun load() {

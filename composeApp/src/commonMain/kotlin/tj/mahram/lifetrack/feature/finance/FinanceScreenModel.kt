@@ -4,7 +4,7 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import tj.mahram.lifetrack.domain.model.CategoryType
+import tj.mahram.lifetrack.domain.model.TransactionType
 import tj.mahram.lifetrack.domain.repository.CategoryRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.domain.usecase.finance.*
@@ -13,7 +13,7 @@ class FinanceScreenModel(
     private val getAllTransactions: GetAllTransactionsUseCase,
     private val addTransaction: AddTransactionUseCase,
     private val deleteTransaction: DeleteTransactionUseCase,
-    private val getFinanceSummary: GetFinanceSummaryUseCase,
+    private val observeBalance: ObserveBalanceUseCase,
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository
 ) : ScreenModel {
@@ -32,12 +32,22 @@ class FinanceScreenModel(
             }
             is FinanceIntent.SelectType -> _state.update { it.copy(selectedType = intent.type) }
             FinanceIntent.ShowAddExpense -> _state.update {
-                it.copy(showAddSheet = true, addSheetType = tj.mahram.lifetrack.domain.model.TransactionType.EXPENSE)
+                it.copy(showAddSheet = true, addSheetType = TransactionType.EXPENSE)
             }
             FinanceIntent.ShowAddIncome -> _state.update {
-                it.copy(showAddSheet = true, addSheetType = tj.mahram.lifetrack.domain.model.TransactionType.INCOME)
+                it.copy(showAddSheet = true, addSheetType = TransactionType.INCOME)
             }
             FinanceIntent.HideAddSheet -> _state.update { it.copy(showAddSheet = false) }
+            FinanceIntent.ShowAdjustBalance -> _state.update { it.copy(showAdjustBalance = true) }
+            FinanceIntent.HideAdjustBalance -> _state.update { it.copy(showAdjustBalance = false) }
+            is FinanceIntent.SetCurrentBalance -> screenModelScope.launch {
+                // Store the opening balance so that current balance == the value
+                // the user entered, given the existing ledger net.
+                val overview = _state.value.balance
+                val ledgerNet = if (overview != null) overview.totalIncome - overview.totalExpense else 0.0
+                settingsRepository.setOpeningBalance(intent.amount - ledgerNet)
+                _state.update { it.copy(showAdjustBalance = false) }
+            }
             is FinanceIntent.AddTransaction -> screenModelScope.launch {
                 try {
                     addTransaction(
@@ -68,10 +78,12 @@ class FinanceScreenModel(
         }
         screenModelScope.launch {
             getAllTransactions().collectLatest { txns ->
-                val start = tj.mahram.lifetrack.core.util.startOfMonth()
-                val end = tj.mahram.lifetrack.core.util.endOfMonth()
-                val summary = try { getFinanceSummary(start, end) } catch (e: Exception) { null }
-                _state.update { it.copy(isLoading = false, transactions = txns, summary = summary) }
+                _state.update { it.copy(isLoading = false, transactions = txns) }
+            }
+        }
+        screenModelScope.launch {
+            observeBalance().collectLatest { overview ->
+                _state.update { it.copy(balance = overview) }
             }
         }
     }
