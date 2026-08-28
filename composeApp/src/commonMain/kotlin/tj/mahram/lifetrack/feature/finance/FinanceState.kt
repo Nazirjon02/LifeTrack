@@ -2,6 +2,7 @@ package tj.mahram.lifetrack.feature.finance
 
 import tj.mahram.lifetrack.domain.model.BalanceOverview
 import tj.mahram.lifetrack.domain.model.Category
+import tj.mahram.lifetrack.domain.model.DebtSummary
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
 
@@ -15,6 +16,7 @@ data class FinanceState(
     val showAddSheet: Boolean = false,
     val addSheetType: TransactionType = TransactionType.EXPENSE,
     val showAdjustBalance: Boolean = false,
+    val debtSummary: DebtSummary = DebtSummary(),
     val error: String? = null
 ) {
     val filteredTransactions: List<Transaction>

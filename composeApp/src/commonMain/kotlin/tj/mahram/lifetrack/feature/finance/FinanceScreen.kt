@@ -10,6 +10,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.outlined.Edit
@@ -27,14 +28,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.core.util.roundTo
 import tj.mahram.lifetrack.domain.model.BalanceOverview
 import tj.mahram.lifetrack.domain.model.Category
+import tj.mahram.lifetrack.domain.model.DebtSummary
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
+import tj.mahram.lifetrack.feature.debts.DebtsScreen
 import tj.mahram.lifetrack.feature.habits.parseHabitColor
 import tj.mahram.lifetrack.ui.components.EmptyState
 import tj.mahram.lifetrack.ui.components.TransactionCard
@@ -47,15 +52,20 @@ class FinanceScreen : Screen {
     @Composable
     override fun Content() {
         val koin = getKoin()
+        val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel<FinanceScreenModel> { koin.get() }
         val state by screenModel.state.collectAsState()
-        FinanceContent(state = state, onIntent = screenModel::handleIntent)
+        FinanceContent(
+            state = state,
+            onIntent = screenModel::handleIntent,
+            onOpenDebts = { navigator.push(DebtsScreen()) }
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit) {
+fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit, onOpenDebts: () -> Unit = {}) {
     val s = LocalStrings.current
     val c = MaterialTheme.appColors
     Scaffold(
@@ -91,6 +101,10 @@ fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit) {
                         onAdjust = { onIntent(FinanceIntent.ShowAdjustBalance) }
                     )
                 }
+            }
+
+            item(key = "debts") {
+                DebtsEntryCard(summary = state.debtSummary, currency = state.currency, onClick = onOpenDebts)
             }
 
             if (state.transactions.size >= 2) {
@@ -193,6 +207,49 @@ private fun FinanceBalanceHero(balance: BalanceOverview, currency: String, onAdj
                 HeroStatPill(modifier = Modifier.weight(1f), label = s.financeExpensesLabel, amount = balance.monthExpense, currency = currency, color = Color(0xFFFFB4C0), arrowUp = false)
             }
         }
+    }
+}
+
+// ─── Debts entry card ───────────────────────────────────────────────────────────
+@Composable
+private fun DebtsEntryCard(summary: DebtSummary, currency: String, onClick: () -> Unit) {
+    val s = LocalStrings.current
+    val c = MaterialTheme.appColors
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .glassSurface(shape = RoundedCornerShape(22.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(46.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center
+        ) { Text("🤝", fontSize = 22.sp) }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(s.debtsTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.height(4.dp))
+            if (summary.hasAny) {
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+                    DebtMiniStat(color = c.success, up = true, amount = summary.totalLent, currency = currency)
+                    DebtMiniStat(color = c.danger, up = false, amount = summary.totalBorrowed, currency = currency)
+                }
+            } else {
+                Text(s.debtEmptySubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+    }
+}
+
+@Composable
+private fun DebtMiniStat(color: Color, up: Boolean, amount: Double, currency: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+        Icon(if (up) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward, contentDescription = null, tint = color, modifier = Modifier.size(13.dp))
+        Text(amount.formatCurrency(currency), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
     }
 }
 

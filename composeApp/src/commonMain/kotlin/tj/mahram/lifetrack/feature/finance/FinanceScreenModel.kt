@@ -7,6 +7,7 @@ import kotlinx.coroutines.launch
 import tj.mahram.lifetrack.domain.model.TransactionType
 import tj.mahram.lifetrack.domain.repository.CategoryRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
+import tj.mahram.lifetrack.domain.usecase.debt.ObserveDebtSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.*
 
 class FinanceScreenModel(
@@ -14,6 +15,7 @@ class FinanceScreenModel(
     private val addTransaction: AddTransactionUseCase,
     private val deleteTransaction: DeleteTransactionUseCase,
     private val observeBalance: ObserveBalanceUseCase,
+    private val observeDebtSummary: ObserveDebtSummaryUseCase,
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository
 ) : ScreenModel {
@@ -84,6 +86,11 @@ class FinanceScreenModel(
         screenModelScope.launch {
             observeBalance().collectLatest { overview ->
                 _state.update { it.copy(balance = overview) }
+            }
+        }
+        screenModelScope.launch {
+            observeDebtSummary().collectLatest { summary ->
+                _state.update { it.copy(debtSummary = summary) }
             }
         }
     }

@@ -1,0 +1,17 @@
+-- Migration 4 → 5: track personal debts (money lent out and money borrowed).
+-- Debts are a self-contained tracker with their own outstanding totals; they do
+-- NOT write into the transaction ledger, so income/expense analytics stay clean.
+CREATE TABLE IF NOT EXISTS debt (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL,
+    counterparty TEXT NOT NULL,
+    amount REAL NOT NULL,
+    paidAmount REAL NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    note TEXT,
+    dueDate INTEGER,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    isSettled INTEGER NOT NULL DEFAULT 0,
+    color TEXT NOT NULL DEFAULT '#7C3AED'
+);

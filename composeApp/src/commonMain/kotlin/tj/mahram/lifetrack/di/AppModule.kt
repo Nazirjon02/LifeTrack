@@ -7,18 +7,21 @@ import org.koin.dsl.bind
 import org.koin.dsl.module
 import tj.mahram.lifetrack.data.local.CategoryLocalDataSource
 import tj.mahram.lifetrack.data.local.DatabaseDriverFactory
+import tj.mahram.lifetrack.data.local.DebtLocalDataSource
 import tj.mahram.lifetrack.data.local.GoalLocalDataSource
 import tj.mahram.lifetrack.data.local.HabitLocalDataSource
 import tj.mahram.lifetrack.data.local.TaskLocalDataSource
 import tj.mahram.lifetrack.data.local.TransactionLocalDataSource
 import tj.mahram.lifetrack.data.local.db.AppDatabase
 import tj.mahram.lifetrack.data.repository.CategoryRepositoryImpl
+import tj.mahram.lifetrack.data.repository.DebtRepositoryImpl
 import tj.mahram.lifetrack.data.repository.GoalRepositoryImpl
 import tj.mahram.lifetrack.data.repository.HabitRepositoryImpl
 import tj.mahram.lifetrack.data.repository.SettingsRepositoryImpl
 import tj.mahram.lifetrack.data.repository.TaskRepositoryImpl
 import tj.mahram.lifetrack.data.repository.TransactionRepositoryImpl
 import tj.mahram.lifetrack.domain.repository.CategoryRepository
+import tj.mahram.lifetrack.domain.repository.DebtRepository
 import tj.mahram.lifetrack.domain.repository.GoalRepository
 import tj.mahram.lifetrack.domain.repository.HabitRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
@@ -31,6 +34,12 @@ import tj.mahram.lifetrack.domain.usecase.finance.GetFinanceSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetRecentTransactionsUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetTransactionsByDateRangeUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.ObserveBalanceUseCase
+import tj.mahram.lifetrack.domain.usecase.debt.CreateDebtUseCase
+import tj.mahram.lifetrack.domain.usecase.debt.DeleteDebtUseCase
+import tj.mahram.lifetrack.domain.usecase.debt.GetAllDebtsUseCase
+import tj.mahram.lifetrack.domain.usecase.debt.ObserveDebtSummaryUseCase
+import tj.mahram.lifetrack.domain.usecase.debt.RecordDebtPaymentUseCase
+import tj.mahram.lifetrack.domain.usecase.debt.SetDebtSettledUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.CreateGoalUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.DeleteGoalUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.GetAllGoalsUseCase
@@ -49,6 +58,7 @@ import tj.mahram.lifetrack.domain.usecase.task.SearchTasksUseCase
 import tj.mahram.lifetrack.domain.usecase.task.ToggleTaskCompletionUseCase
 import tj.mahram.lifetrack.domain.usecase.task.UpdateTaskUseCase
 import tj.mahram.lifetrack.feature.dashboard.DashboardScreenModel
+import tj.mahram.lifetrack.feature.debts.DebtsScreenModel
 import tj.mahram.lifetrack.feature.finance.FinanceScreenModel
 import tj.mahram.lifetrack.feature.goals.GoalsScreenModel
 import tj.mahram.lifetrack.feature.habits.HabitsScreenModel
@@ -70,6 +80,7 @@ val appModule = module {
     singleOf(::CategoryLocalDataSource)
     singleOf(::HabitLocalDataSource)
     singleOf(::GoalLocalDataSource)
+    singleOf(::DebtLocalDataSource)
 
     // Repositories
     single<TaskRepository> { TaskRepositoryImpl(get()) }
@@ -77,6 +88,7 @@ val appModule = module {
     single<CategoryRepository> { CategoryRepositoryImpl(get()) }
     single<HabitRepository> { HabitRepositoryImpl(get()) }
     single<GoalRepository> { GoalRepositoryImpl(get()) }
+    single<DebtRepository> { DebtRepositoryImpl(get()) }
 
     // Task use cases
     factoryOf(::GetAllTasksUseCase)
@@ -110,6 +122,14 @@ val appModule = module {
     factoryOf(::DeleteGoalUseCase)
     factoryOf(::SetGoalPurchasedUseCase)
 
+    // Debt use cases
+    factoryOf(::GetAllDebtsUseCase)
+    factoryOf(::ObserveDebtSummaryUseCase)
+    factoryOf(::CreateDebtUseCase)
+    factoryOf(::RecordDebtPaymentUseCase)
+    factoryOf(::SetDebtSettledUseCase)
+    factoryOf(::DeleteDebtUseCase)
+
     // Screen models
     factoryOf(::DashboardScreenModel)
     factoryOf(::PlannerScreenModel)
@@ -117,4 +137,5 @@ val appModule = module {
     factoryOf(::ProfileScreenModel)
     factoryOf(::HabitsScreenModel)
     factoryOf(::GoalsScreenModel)
+    factoryOf(::DebtsScreenModel)
 }

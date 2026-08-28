@@ -1,0 +1,35 @@
+CREATE TABLE debt (
+    id TEXT NOT NULL PRIMARY KEY,
+    type TEXT NOT NULL,
+    counterparty TEXT NOT NULL,
+    amount REAL NOT NULL,
+    paidAmount REAL NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    note TEXT,
+    dueDate INTEGER,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    isSettled INTEGER NOT NULL DEFAULT 0,
+    color TEXT NOT NULL DEFAULT '#7C3AED'
+);
+
+insertDebt:
+INSERT INTO debt VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectAllDebts:
+SELECT * FROM debt ORDER BY isSettled ASC, createdAt DESC;
+
+selectDebtById:
+SELECT * FROM debt WHERE id = ?;
+
+updateDebt:
+UPDATE debt SET type = ?, counterparty = ?, amount = ?, currency = ?, note = ?, dueDate = ?, color = ?, updatedAt = ? WHERE id = ?;
+
+updateDebtPayment:
+UPDATE debt SET paidAmount = ?, isSettled = ?, updatedAt = ? WHERE id = ?;
+
+setDebtSettled:
+UPDATE debt SET isSettled = ?, paidAmount = ?, updatedAt = ? WHERE id = ?;
+
+deleteDebt:
+DELETE FROM debt WHERE id = ?;

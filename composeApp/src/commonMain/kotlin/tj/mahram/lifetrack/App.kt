@@ -25,7 +25,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.*
+import cafe.adriel.voyager.transitions.SlideTransition
 import tj.mahram.lifetrack.ui.components.AuroraBackground
 import tj.mahram.lifetrack.ui.components.brandHorizontalGradient
 import tj.mahram.lifetrack.ui.components.glassSurface
@@ -235,7 +237,10 @@ object GoalsTab : AppTab {
 
 object FinanceTab : AppTab {
     @Composable
-    override fun Content() = FinanceScreen().Content()
+    override fun Content() {
+        // Nested navigator so Finance can push a full-screen Debts sub-screen.
+        Navigator(FinanceScreen()) { nav -> SlideTransition(nav) }
+    }
     override val options: TabOptions
         @Composable get() {
             val s = LocalStrings.current
