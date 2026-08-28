@@ -13,10 +13,10 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.Undo
 import androidx.compose.material.icons.filled.ArrowDownward
 import androidx.compose.material.icons.filled.ArrowUpward
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Undo
 import androidx.compose.material.icons.outlined.DeleteOutline
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -317,7 +317,7 @@ private fun DebtCard(
                         Text(s.debtSettledBadge, style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = c.success)
                     }
                 }
-                DebtActionButton(modifier = Modifier.weight(1f), label = s.debtActionReopen, icon = Icons.Default.Undo, filled = false, accent = MaterialTheme.colorScheme.primary, onClick = onToggleSettled)
+                DebtActionButton(modifier = Modifier.weight(1f), label = s.debtActionReopen, icon = Icons.AutoMirrored.Filled.Undo, filled = false, accent = MaterialTheme.colorScheme.primary, onClick = onToggleSettled)
             }
             Box(
                 modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)).clickable(onClick = onDelete),
