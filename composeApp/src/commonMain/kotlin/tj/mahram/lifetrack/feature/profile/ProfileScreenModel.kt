@@ -4,20 +4,19 @@ import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
-import tj.mahram.lifetrack.domain.repository.HabitRepository
+import tj.mahram.lifetrack.domain.model.ProblemStatus
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.domain.usecase.finance.ObserveBalanceUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.GetAllGoalsUseCase
-import tj.mahram.lifetrack.domain.usecase.habit.GetAllHabitsUseCase
+import tj.mahram.lifetrack.domain.usecase.problem.GetAllProblemsUseCase
 import tj.mahram.lifetrack.domain.usecase.task.GetAllTasksUseCase
 
 class ProfileScreenModel(
     private val settingsRepository: SettingsRepository,
     private val observeBalance: ObserveBalanceUseCase,
     private val getAllTasks: GetAllTasksUseCase,
-    private val getAllHabits: GetAllHabitsUseCase,
-    private val getAllGoals: GetAllGoalsUseCase,
-    private val habitRepository: HabitRepository
+    private val getAllProblems: GetAllProblemsUseCase,
+    private val getAllGoals: GetAllGoalsUseCase
 ) : ScreenModel {
 
     private val _state = MutableStateFlow(ProfileState())
@@ -29,20 +28,19 @@ class ProfileScreenModel(
                 settingsRepository.getSettings(),
                 observeBalance(),
                 getAllTasks(),
-                getAllHabits(),
+                getAllProblems(),
                 getAllGoals()
-            ) { settings, balance, tasks, habits, goals ->
-                val bestStreak = habits.maxOfOrNull { habitRepository.getStreakForHabit(it.id) } ?: 0
+            ) { settings, balance, tasks, problems, goals ->
                 ProfileState(
                     isLoading = false,
                     settings = settings,
                     balance = balance,
                     tasksDone = tasks.count { it.isCompleted },
                     tasksTotal = tasks.size,
-                    habitsCount = habits.size,
+                    problemsResolved = problems.count { it.status == ProblemStatus.RESOLVED },
+                    problemsTotal = problems.size,
                     goalsAchieved = goals.count { it.isCompleted },
-                    goalsTotal = goals.size,
-                    bestStreak = bestStreak
+                    goalsTotal = goals.size
                 )
             }.collect { newState ->
                 _state.value = newState

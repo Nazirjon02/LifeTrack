@@ -40,7 +40,7 @@ import tj.mahram.lifetrack.domain.model.DebtSummary
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
 import tj.mahram.lifetrack.feature.debts.DebtsScreen
-import tj.mahram.lifetrack.feature.habits.parseHabitColor
+import tj.mahram.lifetrack.ui.components.parseHexColor
 import tj.mahram.lifetrack.ui.components.EmptyState
 import tj.mahram.lifetrack.ui.components.TransactionCard
 import tj.mahram.lifetrack.ui.components.brandHorizontalGradient
@@ -347,7 +347,7 @@ private fun ExpenseDonutCard(expensesByCategory: Map<String, Double>, categories
     val total = expensesByCategory.values.sum().coerceAtLeast(0.01)
     val entries = expensesByCategory.entries.sortedByDescending { it.value }.take(6).map { (catId, amount) ->
         val cat = categories.find { it.id == catId }
-        Triple(cat?.name ?: "Other", parseHabitColor(cat?.color ?: "#6B7280"), amount)
+        Triple(cat?.name ?: "Other", parseHexColor(cat?.color ?: "#6B7280"), amount)
     }
 
     Column(

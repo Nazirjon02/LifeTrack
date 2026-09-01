@@ -1,11 +1,8 @@
 package tj.mahram.lifetrack.feature.dashboard
 
-import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -18,11 +15,10 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
@@ -34,10 +30,10 @@ import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.MonthNames
 import tj.mahram.lifetrack.core.util.formatCurrency
-import tj.mahram.lifetrack.domain.model.Habit
-import tj.mahram.lifetrack.feature.habits.parseHabitColor
+import tj.mahram.lifetrack.domain.model.Problem
 import tj.mahram.lifetrack.ui.components.GlassCard
 import tj.mahram.lifetrack.ui.components.glassSurface
+import tj.mahram.lifetrack.ui.components.parseHexColor
 import tj.mahram.lifetrack.ui.theme.appColors
 import kotlin.time.Clock
 
@@ -49,19 +45,14 @@ class DashboardScreen : Screen {
         val state by screenModel.state.collectAsState()
         DashboardContent(
             state = state,
-            onRefresh = { screenModel.handleIntent(DashboardIntent.Refresh) },
-            onIntent = screenModel::handleIntent
+            onRefresh = { screenModel.handleIntent(DashboardIntent.Refresh) }
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardContent(
-    state: DashboardState,
-    onRefresh: () -> Unit,
-    onIntent: (DashboardIntent) -> Unit
-) {
+fun DashboardContent(state: DashboardState, onRefresh: () -> Unit) {
     val tz = TimeZone.currentSystemDefault()
     val now = Clock.System.now().toLocalDateTime(tz)
     val dayName = now.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
@@ -78,26 +69,15 @@ fun DashboardContent(
                             fontWeight = FontWeight.ExtraBold,
                             color = MaterialTheme.colorScheme.onBackground
                         )
-                        Text(
-                            dateStr,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
+                        Text(dateStr, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
                     }
                 },
                 actions = {
                     Box(
-                        modifier = Modifier
-                            .padding(end = 12.dp)
-                            .size(42.dp)
-                            .glassSurface(shape = CircleShape)
-                            .clickable(onClick = onRefresh),
+                        modifier = Modifier.padding(end = 12.dp).size(42.dp).glassSurface(shape = CircleShape).clickable(onClick = onRefresh),
                         contentAlignment = Alignment.Center
                     ) {
-                        Icon(
-                            Icons.Default.Refresh, contentDescription = "Refresh",
-                            tint = MaterialTheme.colorScheme.onSurface
-                        )
+                        Icon(Icons.Default.Refresh, contentDescription = "Refresh", tint = MaterialTheme.colorScheme.onSurface)
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(containerColor = Color.Transparent)
@@ -106,36 +86,21 @@ fun DashboardContent(
         containerColor = Color.Transparent
     ) { padding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(padding)
-                .verticalScroll(rememberScrollState())
-                .padding(bottom = 24.dp)
+            modifier = Modifier.fillMaxSize().padding(padding).verticalScroll(rememberScrollState()).padding(bottom = 24.dp)
         ) {
             if (state.isLoading) {
-                Box(
-                    modifier = Modifier.fillMaxWidth().height(280.dp),
-                    contentAlignment = Alignment.Center
-                ) {
+                Box(modifier = Modifier.fillMaxWidth().height(280.dp), contentAlignment = Alignment.Center) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else {
-                val today = now.date
-                val habitsDone = state.habits.count { h ->
-                    h.entries.any { it.completedAt.toLocalDateTime(tz).date == today }
-                }
-                DashStatGrid(state = state, habitsDone = habitsDone)
+                DashStatGrid(state = state)
 
                 state.monthlyFinance?.let { finance ->
                     FinanceMonthCard(finance = finance, currency = state.currency)
                 }
 
-                if (state.habits.isNotEmpty()) {
-                    HabitsQuickWidget(
-                        habits = state.habits,
-                        habitStreaks = state.habitStreaks,
-                        onToggle = { id -> onIntent(DashboardIntent.ToggleHabit(id)) }
-                    )
+                if (state.activeProblems.isNotEmpty()) {
+                    ProblemsQuickWidget(problems = state.activeProblems, total = state.totalProblemsCount)
                 }
             }
         }
@@ -143,10 +108,10 @@ fun DashboardContent(
 }
 
 // ═══════════════════════════════════════════════════════════
-// STAT GRID  (2 × 2 glass tiles)
+// STAT GRID
 // ═══════════════════════════════════════════════════════════
 @Composable
-private fun DashStatGrid(state: DashboardState, habitsDone: Int) {
+private fun DashStatGrid(state: DashboardState) {
     val s = LocalStrings.current
     val c = MaterialTheme.appColors
     val balance = state.balance?.currentBalance
@@ -166,10 +131,10 @@ private fun DashStatGrid(state: DashboardState, habitsDone: Int) {
             )
             StatTile(
                 modifier = Modifier.weight(1f),
-                icon = Icons.Outlined.LocalFireDepartment,
-                label = s.dashboardHabitsDoneLabel,
-                value = if (state.habits.isEmpty()) "—" else "$habitsDone/${state.habits.size}",
-                accent = c.success
+                icon = Icons.Outlined.Lightbulb,
+                label = s.dashboardProblemsLabel,
+                value = if (state.totalProblemsCount == 0) "—" else "${state.activeProblemsCount}",
+                accent = c.danger
             )
         }
         StatTile(
@@ -183,39 +148,14 @@ private fun DashStatGrid(state: DashboardState, habitsDone: Int) {
 }
 
 @Composable
-private fun StatTile(
-    modifier: Modifier = Modifier,
-    icon: ImageVector,
-    label: String,
-    value: String,
-    accent: Color
-) {
-    GlassCard(
-        modifier = modifier.height(116.dp),
-        shape = RoundedCornerShape(24.dp),
-        glow = accent,
-        contentPadding = PaddingValues(16.dp)
-    ) {
-        Box(
-            modifier = Modifier.size(38.dp).clip(RoundedCornerShape(12.dp))
-                .background(accent.copy(alpha = 0.18f)),
-            contentAlignment = Alignment.Center
-        ) {
+private fun StatTile(modifier: Modifier = Modifier, icon: ImageVector, label: String, value: String, accent: Color) {
+    GlassCard(modifier = modifier.height(116.dp), shape = RoundedCornerShape(24.dp), glow = accent, contentPadding = PaddingValues(16.dp)) {
+        Box(modifier = Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(accent.copy(alpha = 0.18f)), contentAlignment = Alignment.Center) {
             Icon(icon, contentDescription = null, tint = accent, modifier = Modifier.size(21.dp))
         }
         Spacer(Modifier.weight(1f))
-        Text(
-            value,
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.ExtraBold,
-            color = MaterialTheme.colorScheme.onSurface,
-            maxLines = 1
-        )
-        Text(
-            label,
-            style = MaterialTheme.typography.labelSmall,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+        Text(value, style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.ExtraBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -223,28 +163,12 @@ private fun StatTile(
 // FINANCE MONTH CARD
 // ═══════════════════════════════════════════════════════════
 @Composable
-private fun FinanceMonthCard(
-    finance: tj.mahram.lifetrack.domain.model.FinanceSummary,
-    currency: String
-) {
+private fun FinanceMonthCard(finance: tj.mahram.lifetrack.domain.model.FinanceSummary, currency: String) {
     val s = LocalStrings.current
-    GlassCard(
-        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp),
-        shape = RoundedCornerShape(24.dp),
-        contentPadding = PaddingValues(20.dp)
-    ) {
-        Text(
-            s.dashboardFinanceMonth,
-            style = MaterialTheme.typography.labelLarge,
-            fontWeight = FontWeight.SemiBold,
-            color = MaterialTheme.colorScheme.onSurfaceVariant
-        )
+    GlassCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), shape = RoundedCornerShape(24.dp), contentPadding = PaddingValues(20.dp)) {
+        Text(s.dashboardFinanceMonth, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
         Spacer(Modifier.height(16.dp))
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceEvenly,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
             FinanceMiniStat(s.dashboardIncome, finance.totalIncome, true, currency)
             Divider34()
             FinanceMiniStat(s.dashboardExpense, finance.totalExpense, false, currency)
@@ -263,122 +187,44 @@ private fun Divider34() {
 private fun FinanceMiniStat(label: String, amount: Double, isPositive: Boolean, currency: String) {
     val c = MaterialTheme.appColors
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(
-            amount.formatCurrency(currency),
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.Bold,
-            color = if (isPositive) c.success else c.danger
-        )
+        Text(amount.formatCurrency(currency), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = if (isPositive) c.success else c.danger)
         Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
 // ═══════════════════════════════════════════════════════════
-// HABITS QUICK WIDGET
+// ACTIVE PROBLEMS QUICK WIDGET
 // ═══════════════════════════════════════════════════════════
 @Composable
-private fun HabitsQuickWidget(
-    habits: List<Habit>,
-    habitStreaks: Map<String, Int>,
-    onToggle: (String) -> Unit
-) {
+private fun ProblemsQuickWidget(problems: List<Problem>, total: Int) {
     val s = LocalStrings.current
-    val c = MaterialTheme.appColors
-    val tz = TimeZone.currentSystemDefault()
-    val today = Clock.System.now().toLocalDateTime(tz).date
-    val doneCount = habits.count { h -> h.entries.any { it.completedAt.toLocalDateTime(tz).date == today } }
-
     Column(
         modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp),
         verticalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                s.dashboardTodaysHabits,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
-            )
-            Text(
-                s.dashboardHabitsDoneCount(doneCount, habits.size),
-                style = MaterialTheme.typography.labelMedium,
-                color = c.success,
-                fontWeight = FontWeight.SemiBold
-            )
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
+            Text(s.dashboardActiveProblems, style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onBackground)
+            Text(s.dashboardProblemsCount(problems.size, total), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant, fontWeight = FontWeight.SemiBold)
         }
-        LazyRow(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            items(habits, key = { it.id }) { habit ->
-                val isDone = habit.entries.any { it.completedAt.toLocalDateTime(tz).date == today }
-                val streak = habitStreaks[habit.id] ?: 0
-                HabitQuickChip(
-                    habit = habit,
-                    isDone = isDone,
-                    streak = streak,
-                    habitColor = parseHabitColor(habit.color),
-                    onToggle = { onToggle(habit.id) }
-                )
-            }
-        }
+        problems.take(4).forEach { problem -> ProblemMiniRow(problem) }
     }
 }
 
 @Composable
-private fun HabitQuickChip(
-    habit: Habit,
-    isDone: Boolean,
-    streak: Int,
-    habitColor: Color,
-    onToggle: () -> Unit
-) {
-    val scale by animateFloatAsState(
-        targetValue = if (isDone) 1f else 0.96f,
-        animationSpec = spring(dampingRatio = Spring.DampingRatioMediumBouncy),
-        label = "chipScale_${habit.id}"
-    )
-
-    Column(
-        modifier = Modifier
-            .scale(scale)
-            .width(82.dp)
-            .glassSurface(
-                shape = RoundedCornerShape(20.dp),
-                glow = if (isDone) habitColor else null
-            )
-            .clickable(onClick = onToggle)
-            .padding(vertical = 14.dp, horizontal = 8.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.spacedBy(6.dp)
+private fun ProblemMiniRow(problem: Problem) {
+    val accent = parseHexColor(problem.color)
+    Row(
+        modifier = Modifier.fillMaxWidth().glassSurface(shape = RoundedCornerShape(16.dp), glow = accent).padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
     ) {
-        Text(habit.icon, fontSize = 26.sp)
-        Text(
-            habit.name,
-            style = MaterialTheme.typography.labelSmall,
-            fontSize = 9.sp,
-            maxLines = 1,
-            textAlign = TextAlign.Center,
-            color = MaterialTheme.colorScheme.onSurface
-        )
-        AnimatedContent(
-            targetState = isDone,
-            transitionSpec = { fadeIn(tween(180)) togetherWith fadeOut(tween(120)) },
-            label = "chipStatus_${habit.id}"
-        ) { done ->
-            if (done) {
-                Box(
-                    modifier = Modifier.size(18.dp).clip(CircleShape).background(habitColor),
-                    contentAlignment = Alignment.Center
-                ) {
-                    Text("✓", style = MaterialTheme.typography.labelSmall, color = Color.White, fontWeight = FontWeight.Bold)
-                }
-            } else if (streak > 0) {
-                Text("🔥$streak", style = MaterialTheme.typography.labelSmall, fontSize = 9.sp, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            } else {
-                Box(Modifier.height(18.dp))
+        Box(modifier = Modifier.size(10.dp).clip(CircleShape).background(accent))
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            Text(problem.title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface, maxLines = 1)
+            Box(modifier = Modifier.fillMaxWidth().height(6.dp).clip(RoundedCornerShape(3.dp)).background(accent.copy(alpha = 0.15f))) {
+                Box(modifier = Modifier.fillMaxWidth(problem.progressFraction).fillMaxHeight().clip(RoundedCornerShape(3.dp)).background(Brush.horizontalGradient(listOf(accent, accent.copy(alpha = 0.6f)))))
             }
         }
+        Text("${problem.progress}%", style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = accent)
     }
 }

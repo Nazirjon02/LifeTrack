@@ -35,16 +35,18 @@ import org.koin.compose.KoinApplication
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.i18n.stringsFor
+import tj.mahram.lifetrack.core.notifications.NotificationScheduler
 import tj.mahram.lifetrack.di.appModule
 import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.AppSettings
 import tj.mahram.lifetrack.domain.model.AppTheme
 import tj.mahram.lifetrack.domain.repository.CategoryRepository
+import tj.mahram.lifetrack.domain.repository.ReminderRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.feature.dashboard.DashboardScreen
 import tj.mahram.lifetrack.feature.finance.FinanceScreen
 import tj.mahram.lifetrack.feature.goals.GoalsScreen
-import tj.mahram.lifetrack.feature.habits.HabitsScreen
+import tj.mahram.lifetrack.feature.problems.ProblemsScreen
 import tj.mahram.lifetrack.feature.planner.PlannerScreen
 import tj.mahram.lifetrack.feature.profile.ProfileScreen
 import tj.mahram.lifetrack.ui.theme.LifeTrackTheme
@@ -60,11 +62,15 @@ private val DefaultSettings = AppSettings(
 )
 
 @Composable
-fun App(driverFactory: tj.mahram.lifetrack.data.local.DatabaseDriverFactory) {
+fun App(
+    driverFactory: tj.mahram.lifetrack.data.local.DatabaseDriverFactory,
+    notificationScheduler: NotificationScheduler
+) {
     KoinApplication(application = {
         modules(
             org.koin.dsl.module {
                 single { driverFactory }
+                single { notificationScheduler }
             },
             appModule
         )
@@ -75,6 +81,12 @@ fun App(driverFactory: tj.mahram.lifetrack.data.local.DatabaseDriverFactory) {
 
         LaunchedEffect(Unit) {
             runCatching { koin.get<CategoryRepository>().initDefaultCategories() }
+            // Re-arm reminder alarms on every launch (covers first launch and
+            // schedules that may have been cleared by the OS).
+            runCatching {
+                val reminders = koin.get<ReminderRepository>().current()
+                koin.get<NotificationScheduler>().sync(reminders)
+            }
         }
 
         CompositionLocalProvider(LocalStrings provides stringsFor(settings.language)) {
@@ -98,7 +110,7 @@ fun App(driverFactory: tj.mahram.lifetrack.data.local.DatabaseDriverFactory) {
 
 @Composable
 private fun LifeTrackNavBar(navigator: TabNavigator) {
-    val tabs = listOf(DashboardTab, PlannerTab, HabitsTab, GoalsTab, FinanceTab, ProfileTab)
+    val tabs = listOf(DashboardTab, PlannerTab, ProblemsTab, GoalsTab, FinanceTab, ProfileTab)
 
     Box(
         modifier = Modifier
@@ -217,14 +229,15 @@ object PlannerTab : AppTab {
     override val tabIcon: ImageVector get() = Icons.Default.CheckCircle
 }
 
-object HabitsTab : AppTab {
+object ProblemsTab : AppTab {
     @Composable
-    override fun Content() = HabitsScreen().Content()
+    override fun Content() = ProblemsScreen().Content()
     override val options: TabOptions
         @Composable get() {
-            return remember { TabOptions(index = 2u, title = "Habits") }
+            val s = LocalStrings.current
+            return remember(s) { TabOptions(index = 2u, title = s.tabProblems) }
         }
-    override val tabIcon: ImageVector get() = Icons.Default.LocalFireDepartment
+    override val tabIcon: ImageVector get() = Icons.Default.Lightbulb
 }
 
 object GoalsTab : AppTab {
@@ -251,7 +264,10 @@ object FinanceTab : AppTab {
 
 object ProfileTab : AppTab {
     @Composable
-    override fun Content() = ProfileScreen().Content()
+    override fun Content() {
+        // Nested navigator so Profile can push the Reminders management screen.
+        Navigator(ProfileScreen()) { nav -> SlideTransition(nav) }
+    }
     override val options: TabOptions
         @Composable get() {
             val s = LocalStrings.current

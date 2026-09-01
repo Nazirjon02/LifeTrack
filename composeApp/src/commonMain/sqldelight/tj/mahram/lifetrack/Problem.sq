@@ -1,0 +1,53 @@
+CREATE TABLE problem (
+    id TEXT NOT NULL PRIMARY KEY,
+    title TEXT NOT NULL,
+    description TEXT,
+    solutions TEXT,
+    actionPlan TEXT,
+    priority TEXT NOT NULL DEFAULT 'MEDIUM',
+    status TEXT NOT NULL DEFAULT 'ACTIVE',
+    category TEXT NOT NULL DEFAULT '',
+    progress INTEGER NOT NULL DEFAULT 0,
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    dueDate INTEGER,
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    resolvedAt INTEGER
+);
+
+CREATE TABLE problem_history (
+    id TEXT NOT NULL PRIMARY KEY,
+    problemId TEXT NOT NULL,
+    message TEXT NOT NULL,
+    createdAt INTEGER NOT NULL
+);
+
+insertProblem:
+INSERT INTO problem VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+selectAllProblems:
+SELECT * FROM problem ORDER BY status ASC, createdAt DESC;
+
+selectProblemById:
+SELECT * FROM problem WHERE id = ?;
+
+updateProblem:
+UPDATE problem SET title = ?, description = ?, solutions = ?, actionPlan = ?, priority = ?, category = ?, color = ?, dueDate = ?, updatedAt = ? WHERE id = ?;
+
+updateProblemStatus:
+UPDATE problem SET status = ?, resolvedAt = ?, updatedAt = ? WHERE id = ?;
+
+updateProblemProgress:
+UPDATE problem SET progress = ?, status = ?, resolvedAt = ?, updatedAt = ? WHERE id = ?;
+
+deleteProblem:
+DELETE FROM problem WHERE id = ?;
+
+insertHistory:
+INSERT INTO problem_history VALUES (?, ?, ?, ?);
+
+selectHistoryForProblem:
+SELECT * FROM problem_history WHERE problemId = ? ORDER BY createdAt DESC;
+
+deleteHistoryForProblem:
+DELETE FROM problem_history WHERE problemId = ?;

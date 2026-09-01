@@ -15,6 +15,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -34,12 +35,15 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.LocalNavigator
+import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.AppTheme
 import tj.mahram.lifetrack.domain.model.SupportedCurrencies
+import tj.mahram.lifetrack.feature.reminders.RemindersScreen
 import tj.mahram.lifetrack.ui.components.GradientButton
 import tj.mahram.lifetrack.ui.components.brandVividGradient
 import tj.mahram.lifetrack.ui.components.glassSurface
@@ -54,15 +58,20 @@ class ProfileScreen : Screen {
     @Composable
     override fun Content() {
         val koin = getKoin()
+        val navigator = LocalNavigator.currentOrThrow
         val screenModel = rememberScreenModel<ProfileScreenModel> { koin.get() }
         val state by screenModel.state.collectAsState()
-        ProfileContent(state = state, onIntent = screenModel::handleIntent)
+        ProfileContent(
+            state = state,
+            onIntent = screenModel::handleIntent,
+            onOpenReminders = { navigator.push(RemindersScreen()) }
+        )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileContent(state: ProfileState, onIntent: (ProfileIntent) -> Unit) {
+fun ProfileContent(state: ProfileState, onIntent: (ProfileIntent) -> Unit, onOpenReminders: () -> Unit = {}) {
     val s = LocalStrings.current
     var editing by remember { mutableStateOf(false) }
 
@@ -236,7 +245,13 @@ fun ProfileContent(state: ProfileState, onIntent: (ProfileIntent) -> Unit) {
                             icon = Icons.Default.AccountBalance,
                             checked = state.settings.financeNotificationsEnabled,
                             onToggle = { onIntent(ProfileIntent.SetFinanceNotifications(it)) },
-                            showDivider = false
+                            showDivider = true
+                        )
+                        NavRow(
+                            title = s.remindersManageEntry,
+                            subtitle = s.remindersEntrySub,
+                            icon = Icons.Default.Alarm,
+                            onClick = onOpenReminders
                         )
                     }
                 }
@@ -396,7 +411,7 @@ private fun ProfileHero(state: ProfileState, onEdit: () -> Unit) {
                     )
                     Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
                         HeroChip(text = "${s.profileLevelLabel(state.level)} · $rank")
-                        if (state.bestStreak > 0) HeroChip(text = "🔥 ${state.bestStreak}")
+                        if (state.problemsResolved > 0) HeroChip(text = "✅ ${state.problemsResolved}")
                     }
                 }
             }
@@ -498,11 +513,11 @@ private fun ProfileStats(state: ProfileState) {
         }
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             StatTile(
-                icon = Icons.Default.LocalFireDepartment,
+                icon = Icons.Default.Lightbulb,
                 accent = c.warning,
-                value = "${state.habitsCount}",
-                label = s.profileStatHabits,
-                sub = if (state.bestStreak > 0) "🔥 ${state.bestStreak}" else null,
+                value = "${state.problemsResolved}",
+                label = s.profileStatProblems,
+                sub = if (state.problemsTotal > 0) "of ${state.problemsTotal}" else null,
                 modifier = Modifier.weight(1f)
             )
             StatTile(
@@ -888,5 +903,26 @@ private fun NotifRow(
             modifier = Modifier.padding(horizontal = 16.dp),
             color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)
         )
+    }
+}
+
+@Composable
+private fun NavRow(title: String, subtitle: String, icon: ImageVector, onClick: () -> Unit) {
+    Row(
+        modifier = Modifier.fillMaxWidth().clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Box(
+            modifier = Modifier.size(38.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(icon, contentDescription = null, tint = MaterialTheme.colorScheme.primary, modifier = Modifier.size(19.dp))
+        }
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(title, style = MaterialTheme.typography.bodyMedium, fontWeight = FontWeight.Medium)
+            Text(subtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }

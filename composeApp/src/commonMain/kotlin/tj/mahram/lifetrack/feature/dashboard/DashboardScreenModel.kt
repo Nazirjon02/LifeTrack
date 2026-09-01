@@ -2,19 +2,17 @@ package tj.mahram.lifetrack.feature.dashboard
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
-import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
 import kotlin.time.Clock
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import tj.mahram.lifetrack.core.util.endOfMonth
 import tj.mahram.lifetrack.core.util.startOfMonth
-import tj.mahram.lifetrack.domain.repository.HabitRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.domain.usecase.finance.GetFinanceSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.ObserveBalanceUseCase
-import tj.mahram.lifetrack.domain.usecase.habit.GetAllHabitsUseCase
-import tj.mahram.lifetrack.domain.usecase.habit.ToggleHabitEntryUseCase
+import tj.mahram.lifetrack.domain.usecase.problem.GetAllProblemsUseCase
 import tj.mahram.lifetrack.domain.usecase.task.GetTaskStatsUseCase
 import tj.mahram.lifetrack.domain.usecase.task.GetTodayTasksUseCase
 
@@ -24,9 +22,7 @@ class DashboardScreenModel(
     private val getFinanceSummary: GetFinanceSummaryUseCase,
     private val observeBalance: ObserveBalanceUseCase,
     private val settingsRepository: SettingsRepository,
-    private val getAllHabits: GetAllHabitsUseCase,
-    private val toggleHabit: ToggleHabitEntryUseCase,
-    private val habitRepository: HabitRepository
+    private val getAllProblems: GetAllProblemsUseCase
 ) : ScreenModel {
 
     private val _state = MutableStateFlow(DashboardState())
@@ -34,7 +30,7 @@ class DashboardScreenModel(
 
     init {
         load()
-        observeHabits()
+        observeProblems()
         observeCentralBalance()
     }
 
@@ -42,6 +38,14 @@ class DashboardScreenModel(
         screenModelScope.launch {
             observeBalance().collect { overview ->
                 _state.update { it.copy(balance = overview) }
+            }
+        }
+    }
+
+    private fun observeProblems() {
+        screenModelScope.launch {
+            getAllProblems().collect { problems ->
+                _state.update { it.copy(problems = problems) }
             }
         }
     }
@@ -83,22 +87,8 @@ class DashboardScreenModel(
         }
     }
 
-    private fun observeHabits() {
-        screenModelScope.launch {
-            getAllHabits().collect { habits ->
-                val streaks = habits.associate { habit ->
-                    habit.id to habitRepository.getStreakForHabit(habit.id)
-                }
-                _state.update { it.copy(habits = habits, habitStreaks = streaks) }
-            }
-        }
-    }
-
     fun handleIntent(intent: DashboardIntent) {
         when (intent) {
-            is DashboardIntent.ToggleHabit -> screenModelScope.launch {
-                toggleHabit(intent.habitId)
-            }
             DashboardIntent.Refresh -> load()
         }
     }

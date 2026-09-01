@@ -2,7 +2,8 @@ package tj.mahram.lifetrack.core.i18n
 
 import androidx.compose.runtime.compositionLocalOf
 import tj.mahram.lifetrack.domain.model.AppLanguage
-import tj.mahram.lifetrack.domain.model.HabitFrequency
+import tj.mahram.lifetrack.domain.model.ProblemPriority
+import tj.mahram.lifetrack.domain.model.ProblemStatus
 import tj.mahram.lifetrack.domain.model.TaskPriority
 import tj.mahram.lifetrack.domain.model.TransactionType
 
@@ -290,6 +291,8 @@ data class AppStrings(
     val cryptoPurchasePriceLabel: String,
     val cryptoAddButton: String,
     val cryptoCancelButton: String,
+
+    val problems: ProblemStrings,
 ) {
     fun priorityLabel(priority: TaskPriority): String = when (priority) {
         TaskPriority.LOW      -> priorityLow
@@ -298,12 +301,108 @@ data class AppStrings(
         TaskPriority.CRITICAL -> priorityCritical
     }
 
-    fun habitFrequencyLabel(frequency: HabitFrequency): String = when (frequency) {
-        HabitFrequency.DAILY    -> habitFreqDaily
-        HabitFrequency.WEEKDAYS -> habitFreqWeekdays
-        HabitFrequency.WEEKENDS -> habitFreqWeekends
-        HabitFrequency.CUSTOM   -> habitFreqDaily
-    }
+    fun problemPriorityName(priority: ProblemPriority): String = problems.problemPriorityName(priority)
+
+    fun problemStatusLabel(status: ProblemStatus): String = problems.problemStatusLabel(status)
+
+    // Forwarding accessors — the Problems/Calendar/Analytics/Reminders strings live in
+    // ProblemStrings (see the note there) but stay reachable as strings.<name>.
+    val tabProblems get() = problems.tabProblems
+    val problemsTitle get() = problems.problemsTitle
+    val problemsSubtitle get() = problems.problemsSubtitle
+    val problemsEmptyTitle get() = problems.problemsEmptyTitle
+    val problemsEmptySubtitle get() = problems.problemsEmptySubtitle
+    val problemsSectionActive get() = problems.problemsSectionActive
+    val problemsSectionInProgress get() = problems.problemsSectionInProgress
+    val problemsSectionResolved get() = problems.problemsSectionResolved
+    val problemsViewList get() = problems.problemsViewList
+    val problemsViewCalendar get() = problems.problemsViewCalendar
+    val problemsViewAnalytics get() = problems.problemsViewAnalytics
+    val problemPriorityLow get() = problems.problemPriorityLow
+    val problemPriorityMedium get() = problems.problemPriorityMedium
+    val problemPriorityHigh get() = problems.problemPriorityHigh
+    val problemPriorityLabel get() = problems.problemPriorityLabel
+    val problemStatusActive get() = problems.problemStatusActive
+    val problemStatusInProgress get() = problems.problemStatusInProgress
+    val problemStatusResolved get() = problems.problemStatusResolved
+    val problemStatusLabelField get() = problems.problemStatusLabelField
+    val problemFieldSolutions get() = problems.problemFieldSolutions
+    val problemFieldActionPlan get() = problems.problemFieldActionPlan
+    val problemFieldCategory get() = problems.problemFieldCategory
+    val problemFieldCategoryPlaceholder get() = problems.problemFieldCategoryPlaceholder
+    val problemProgressLabel get() = problems.problemProgressLabel
+    val problemHistoryTitle get() = problems.problemHistoryTitle
+    val problemNoHistory get() = problems.problemNoHistory
+    val problemDueLabel get() = problems.problemDueLabel
+    val problemNoDue get() = problems.problemNoDue
+    val problemEditAction get() = problems.problemEditAction
+    val problemDeleteAction get() = problems.problemDeleteAction
+    val problemMarkResolved get() = problems.problemMarkResolved
+    val problemReopen get() = problems.problemReopen
+    val problemUpdateProgress get() = problems.problemUpdateProgress
+    val addProblemTitle get() = problems.addProblemTitle
+    val addProblemSubtitle get() = problems.addProblemSubtitle
+    val editProblemTitle get() = problems.editProblemTitle
+    val addProblemFieldTitle get() = problems.addProblemFieldTitle
+    val addProblemPlaceholderTitle get() = problems.addProblemPlaceholderTitle
+    val addProblemFieldDescription get() = problems.addProblemFieldDescription
+    val addProblemDescPlaceholder get() = problems.addProblemDescPlaceholder
+    val addProblemSolutionsPlaceholder get() = problems.addProblemSolutionsPlaceholder
+    val addProblemActionPlanPlaceholder get() = problems.addProblemActionPlanPlaceholder
+    val addProblemErrorTitle get() = problems.addProblemErrorTitle
+    val addProblemCreateButton get() = problems.addProblemCreateButton
+    val historyCreated get() = problems.historyCreated
+    val historyStatusChanged get() = problems.historyStatusChanged
+    val historyProgress get() = problems.historyProgress
+    val historyEdited get() = problems.historyEdited
+    val historyPriorityChanged get() = problems.historyPriorityChanged
+    val calendarDay get() = problems.calendarDay
+    val calendarWeek get() = problems.calendarWeek
+    val calendarMonth get() = problems.calendarMonth
+    val calendarToday get() = problems.calendarToday
+    val calendarNothing get() = problems.calendarNothing
+    val calendarProblemsLabel get() = problems.calendarProblemsLabel
+    val calendarTasksLabel get() = problems.calendarTasksLabel
+    val calendarMarkProgress get() = problems.calendarMarkProgress
+    val calendarSelectDayHint get() = problems.calendarSelectDayHint
+    val analyticsCreated get() = problems.analyticsCreated
+    val analyticsResolved get() = problems.analyticsResolved
+    val analyticsActiveLabel get() = problems.analyticsActiveLabel
+    val analyticsResolutionRate get() = problems.analyticsResolutionRate
+    val analyticsThisWeek get() = problems.analyticsThisWeek
+    val analyticsThisMonth get() = problems.analyticsThisMonth
+    val analyticsProgressTitle get() = problems.analyticsProgressTitle
+    val analyticsTopCategories get() = problems.analyticsTopCategories
+    val analyticsNoData get() = problems.analyticsNoData
+    val analyticsUncategorized get() = problems.analyticsUncategorized
+    val remindersTitle get() = problems.remindersTitle
+    val remindersSubtitle get() = problems.remindersSubtitle
+    val remindersManageEntry get() = problems.remindersManageEntry
+    val remindersEntrySub get() = problems.remindersEntrySub
+    val reminderEmptyTitle get() = problems.reminderEmptyTitle
+    val reminderEmptySubtitle get() = problems.reminderEmptySubtitle
+    val reminderAddButton get() = problems.reminderAddButton
+    val reminderNewTitle get() = problems.reminderNewTitle
+    val reminderEditTitle get() = problems.reminderEditTitle
+    val reminderMessageField get() = problems.reminderMessageField
+    val reminderMessagePlaceholder get() = problems.reminderMessagePlaceholder
+    val reminderTimeField get() = problems.reminderTimeField
+    val reminderFrequencyField get() = problems.reminderFrequencyField
+    val reminderFreqDaily get() = problems.reminderFreqDaily
+    val reminderFreqWeekdays get() = problems.reminderFreqWeekdays
+    val reminderFreqWeekends get() = problems.reminderFreqWeekends
+    val reminderFreqCustom get() = problems.reminderFreqCustom
+    val reminderDaysField get() = problems.reminderDaysField
+    val reminderEnabledLabel get() = problems.reminderEnabledLabel
+    val reminderSaveButton get() = problems.reminderSaveButton
+    val reminderDeleteAction get() = problems.reminderDeleteAction
+    val reminderDefaultMessage get() = problems.reminderDefaultMessage
+    val reminderNotifTitle get() = problems.reminderNotifTitle
+    val dashboardProblemsLabel get() = problems.dashboardProblemsLabel
+    val dashboardActiveProblems get() = problems.dashboardActiveProblems
+    val dashboardProblemsCount get() = problems.dashboardProblemsCount
+    val dashboardNoProblems get() = problems.dashboardNoProblems
+    val profileStatProblems get() = problems.profileStatProblems
 
     fun transactionTypeLabel(type: TransactionType): String = when (type) {
         TransactionType.INCOME  -> financeAddTitleIncome
@@ -577,6 +676,8 @@ val EnglishStrings = AppStrings(
     cryptoPurchasePriceLabel = "Purchase Price",
     cryptoAddButton = "Add",
     cryptoCancelButton = "Cancel",
+
+    problems = ProblemStringsEn,
 )
 
 val RussianStrings = AppStrings(
@@ -913,6 +1014,8 @@ val RussianStrings = AppStrings(
     cryptoPurchasePriceLabel = "Цена покупки",
     cryptoAddButton = "Добавить",
     cryptoCancelButton = "Отмена",
+
+    problems = ProblemStringsRu,
 )
 
 val LocalStrings = compositionLocalOf<AppStrings> { EnglishStrings }

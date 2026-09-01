@@ -35,7 +35,6 @@ import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.core.util.roundTo
 import tj.mahram.lifetrack.domain.model.Goal
-import tj.mahram.lifetrack.feature.habits.parseHabitColor
 import tj.mahram.lifetrack.ui.components.EmptyState
 import tj.mahram.lifetrack.ui.components.FieldLabel
 import tj.mahram.lifetrack.ui.components.GradientButton
@@ -45,6 +44,7 @@ import tj.mahram.lifetrack.ui.components.SheetTextField
 import tj.mahram.lifetrack.ui.components.brandHorizontalGradient
 import tj.mahram.lifetrack.ui.components.brandVividGradient
 import tj.mahram.lifetrack.ui.components.glassSurface
+import tj.mahram.lifetrack.ui.components.parseHexColor
 
 private val GoalIcons = listOf("🎯", "🏆", "💪", "📚", "💰", "🚀", "❤️", "🌍", "🎸", "⚽", "🎓", "🏋️")
 private val GoalColors = listOf("#7C3AED", "#4F46E5", "#0EA5E9", "#10B981", "#F59E0B", "#EF4444", "#EC4899", "#06B6D4")
@@ -200,7 +200,7 @@ private fun GoalCard(
     modifier: Modifier = Modifier
 ) {
     val s = LocalStrings.current
-    val goalColor = parseHabitColor(goal.color)
+    val goalColor = parseHexColor(goal.color)
     val isPurchase = goal.affectsBalance
     val animProgress by animateFloatAsState(targetValue = goal.progressFraction, animationSpec = tween(900, easing = FastOutSlowInEasing), label = "goalProgress_${goal.id}")
 
@@ -322,7 +322,7 @@ private fun AddGoalSheet(currency: String, onDismiss: () -> Unit, onConfirm: (Go
                 SheetTextField(value = title, onValueChange = { title = it; titleError = false }, placeholder = s.addGoalPlaceholderTitle, isError = titleError, errorText = if (titleError) s.addGoalErrorTitleEmpty else null)
 
                 // Purchase toggle — links the goal to the central balance.
-                val purchaseColor = parseHabitColor(GoalColors.first())
+                val purchaseColor = parseHexColor(GoalColors.first())
                 Row(
                     modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp))
                         .background(if (isPurchase) purchaseColor.copy(alpha = 0.12f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.04f))
@@ -381,7 +381,7 @@ private fun AddGoalSheet(currency: String, onDismiss: () -> Unit, onConfirm: (Go
                     FieldLabel(s.addHabitColorLabel)
                     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                         GoalColors.forEach { hex ->
-                            val color = parseHabitColor(hex)
+                            val color = parseHexColor(hex)
                             val isSelected = hex == selectedColor
                             Box(
                                 modifier = Modifier.size(38.dp).clip(CircleShape).background(color)
@@ -427,7 +427,7 @@ private fun AddGoalSheet(currency: String, onDismiss: () -> Unit, onConfirm: (Go
 @Composable
 private fun UpdateProgressDialog(goal: Goal, onDismiss: () -> Unit, onConfirm: (Double) -> Unit) {
     val s = LocalStrings.current
-    val goalColor = parseHabitColor(goal.color)
+    val goalColor = parseHexColor(goal.color)
     var valueText by remember { mutableStateOf(goal.currentValue.let { if (it == 0.0) "" else formatGoalValue(it) }) }
     var isError by remember { mutableStateOf(false) }
 

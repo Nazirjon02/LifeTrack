@@ -24,7 +24,7 @@ import androidx.compose.ui.unit.dp
 import tj.mahram.lifetrack.core.i18n.LocalStrings
 import tj.mahram.lifetrack.domain.model.Category
 import tj.mahram.lifetrack.domain.model.TransactionType
-import tj.mahram.lifetrack.feature.habits.parseHabitColor
+import tj.mahram.lifetrack.ui.components.parseHexColor
 import tj.mahram.lifetrack.ui.components.FieldLabel
 import tj.mahram.lifetrack.ui.components.SheetHandle
 import tj.mahram.lifetrack.ui.components.SheetTextField
@@ -114,7 +114,7 @@ fun AddTransactionSheet(
                         relevantCats.chunked(3).forEach { row ->
                             Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                                 row.forEach { cat ->
-                                    val catColor = parseHabitColor(cat.color)
+                                    val catColor = parseHexColor(cat.color)
                                     val isSelected = selectedCategory?.id == cat.id
                                     Box(
                                         modifier = Modifier

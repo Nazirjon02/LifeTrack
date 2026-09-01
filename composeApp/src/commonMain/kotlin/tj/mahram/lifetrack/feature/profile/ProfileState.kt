@@ -19,14 +19,14 @@ data class ProfileState(
     val balance: BalanceOverview? = null,
     val tasksDone: Int = 0,
     val tasksTotal: Int = 0,
-    val habitsCount: Int = 0,
+    val problemsResolved: Int = 0,
+    val problemsTotal: Int = 0,
     val goalsAchieved: Int = 0,
-    val goalsTotal: Int = 0,
-    val bestStreak: Int = 0
+    val goalsTotal: Int = 0
 ) {
     /** A gamified score aggregated from everything the user has accomplished. */
     val productivityScore: Int
-        get() = tasksDone * 10 + habitsCount * 15 + goalsAchieved * 40 + bestStreak * 5
+        get() = tasksDone * 10 + problemsResolved * 20 + goalsAchieved * 40
 
     /** Points needed to advance one level. */
     val pointsPerLevel: Int get() = 100
