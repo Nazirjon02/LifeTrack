@@ -3,13 +3,16 @@ package tj.mahram.lifetrack.data.repository
 import kotlinx.coroutines.flow.Flow
 import kotlin.time.Instant
 import tj.mahram.lifetrack.data.local.TransactionLocalDataSource
+import tj.mahram.lifetrack.data.sync.SyncCollectionNames
+import tj.mahram.lifetrack.data.sync.SyncTracker
 import tj.mahram.lifetrack.domain.model.FinanceSummary
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
 import tj.mahram.lifetrack.domain.repository.TransactionRepository
 
 class TransactionRepositoryImpl(
-    private val local: TransactionLocalDataSource
+    private val local: TransactionLocalDataSource,
+    private val sync: SyncTracker
 ) : TransactionRepository {
 
     override fun getAllTransactions(): Flow<List<Transaction>> = local.getAllTransactions()
@@ -23,14 +26,21 @@ class TransactionRepositoryImpl(
     override fun getRecentTransactions(limit: Long): Flow<List<Transaction>> =
         local.getRecent(limit)
 
-    override suspend fun addTransaction(transaction: Transaction) = local.insert(transaction)
+    override suspend fun addTransaction(transaction: Transaction) {
+        local.insert(transaction)
+        sync.markDirty(SyncCollectionNames.TRANSACTIONS, transaction.id)
+    }
 
     override suspend fun updateTransaction(transaction: Transaction) {
         local.delete(transaction.id)
         local.insert(transaction)
+        sync.markDirty(SyncCollectionNames.TRANSACTIONS, transaction.id)
     }
 
-    override suspend fun deleteTransaction(id: String) = local.delete(id)
+    override suspend fun deleteTransaction(id: String) {
+        local.delete(id)
+        sync.markDeleted(SyncCollectionNames.TRANSACTIONS, id)
+    }
 
     override suspend fun getSumByTypeAndDateRange(
         type: TransactionType,

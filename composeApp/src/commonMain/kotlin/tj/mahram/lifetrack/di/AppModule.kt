@@ -1,6 +1,7 @@
 package tj.mahram.lifetrack.di
 
 import com.russhwolf.settings.Settings
+import kotlin.time.Clock
 import org.koin.core.module.dsl.factoryOf
 import org.koin.core.module.dsl.singleOf
 import org.koin.dsl.module
@@ -12,6 +13,10 @@ import tj.mahram.lifetrack.data.local.ProblemLocalDataSource
 import tj.mahram.lifetrack.data.local.TaskLocalDataSource
 import tj.mahram.lifetrack.data.local.TransactionLocalDataSource
 import tj.mahram.lifetrack.data.local.db.AppDatabase
+import tj.mahram.lifetrack.data.remote.createHttpClient
+import tj.mahram.lifetrack.data.remote.firebase.FirebaseAuthApi
+import tj.mahram.lifetrack.data.remote.firebase.RealtimeDbApi
+import tj.mahram.lifetrack.data.repository.AuthRepositoryImpl
 import tj.mahram.lifetrack.data.repository.CategoryRepositoryImpl
 import tj.mahram.lifetrack.data.repository.DebtRepositoryImpl
 import tj.mahram.lifetrack.data.repository.GoalRepositoryImpl
@@ -20,6 +25,10 @@ import tj.mahram.lifetrack.data.repository.ReminderRepositoryImpl
 import tj.mahram.lifetrack.data.repository.SettingsRepositoryImpl
 import tj.mahram.lifetrack.data.repository.TaskRepositoryImpl
 import tj.mahram.lifetrack.data.repository.TransactionRepositoryImpl
+import tj.mahram.lifetrack.data.sync.SyncEngine
+import tj.mahram.lifetrack.data.sync.SyncTracker
+import tj.mahram.lifetrack.data.sync.defaultSyncCollections
+import tj.mahram.lifetrack.domain.repository.AuthRepository
 import tj.mahram.lifetrack.domain.repository.CategoryRepository
 import tj.mahram.lifetrack.domain.repository.DebtRepository
 import tj.mahram.lifetrack.domain.repository.GoalRepository
@@ -28,6 +37,7 @@ import tj.mahram.lifetrack.domain.repository.ReminderRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.domain.repository.TaskRepository
 import tj.mahram.lifetrack.domain.repository.TransactionRepository
+import tj.mahram.lifetrack.feature.sync.SyncScreenModel
 import tj.mahram.lifetrack.domain.usecase.finance.AddTransactionUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.DeleteTransactionUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetAllTransactionsUseCase
@@ -70,6 +80,8 @@ import tj.mahram.lifetrack.feature.planner.PlannerScreenModel
 import tj.mahram.lifetrack.feature.profile.ProfileScreenModel
 import tj.mahram.lifetrack.feature.reminders.RemindersScreenModel
 
+private val nowMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() }
+
 val appModule = module {
     // Database
     single { get<DatabaseDriverFactory>().create() }
@@ -80,6 +92,14 @@ val appModule = module {
     single<SettingsRepository> { SettingsRepositoryImpl(get()) }
     single<ReminderRepository> { ReminderRepositoryImpl(get()) }
 
+    // ── Cloud sync (Firebase Auth + Firestore over REST/Ktor) ──────────────
+    single { createHttpClient() }
+    single { FirebaseAuthApi(get(), nowMillis) }
+    single<AuthRepository> { AuthRepositoryImpl(get(), get(), nowMillis) }
+    single { RealtimeDbApi(get()) }
+    single { SyncTracker(get(), nowMillis) }
+    single { SyncEngine(get(), get(), get(), defaultSyncCollections(get(), nowMillis), nowMillis) }
+
     // Local data sources
     singleOf(::TaskLocalDataSource)
     singleOf(::TransactionLocalDataSource)
@@ -88,13 +108,13 @@ val appModule = module {
     singleOf(::DebtLocalDataSource)
     singleOf(::ProblemLocalDataSource)
 
-    // Repositories
-    single<TaskRepository> { TaskRepositoryImpl(get()) }
-    single<TransactionRepository> { TransactionRepositoryImpl(get()) }
-    single<CategoryRepository> { CategoryRepositoryImpl(get()) }
-    single<GoalRepository> { GoalRepositoryImpl(get()) }
-    single<DebtRepository> { DebtRepositoryImpl(get()) }
-    single<ProblemRepository> { ProblemRepositoryImpl(get()) }
+    // Repositories (each also takes the SyncTracker to mark local changes dirty)
+    single<TaskRepository> { TaskRepositoryImpl(get(), get()) }
+    single<TransactionRepository> { TransactionRepositoryImpl(get(), get()) }
+    single<CategoryRepository> { CategoryRepositoryImpl(get(), get()) }
+    single<GoalRepository> { GoalRepositoryImpl(get(), get()) }
+    single<DebtRepository> { DebtRepositoryImpl(get(), get()) }
+    single<ProblemRepository> { ProblemRepositoryImpl(get(), get()) }
 
     // Task use cases
     factoryOf(::GetAllTasksUseCase)
@@ -148,4 +168,5 @@ val appModule = module {
     factoryOf(::DebtsScreenModel)
     factoryOf(::ProblemsScreenModel)
     factoryOf(::RemindersScreenModel)
+    factoryOf(::SyncScreenModel)
 }

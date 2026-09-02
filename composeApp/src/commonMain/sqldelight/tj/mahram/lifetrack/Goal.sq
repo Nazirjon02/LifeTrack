@@ -17,6 +17,13 @@ CREATE TABLE goal (
 insertGoal:
 INSERT INTO goal VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+-- Cloud sync helpers.
+insertOrReplaceGoal:
+INSERT OR REPLACE INTO goal VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+syncAllGoalIds:
+SELECT id FROM goal;
+
 selectAllGoals:
 SELECT * FROM goal ORDER BY isCompleted ASC, createdAt DESC;
 

@@ -39,11 +39,13 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
+import tj.mahram.lifetrack.core.i18n.syncStringsFor
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.AppTheme
 import tj.mahram.lifetrack.domain.model.SupportedCurrencies
 import tj.mahram.lifetrack.feature.reminders.RemindersScreen
+import tj.mahram.lifetrack.feature.sync.SyncScreen
 import tj.mahram.lifetrack.ui.components.GradientButton
 import tj.mahram.lifetrack.ui.components.brandVividGradient
 import tj.mahram.lifetrack.ui.components.glassSurface
@@ -64,15 +66,22 @@ class ProfileScreen : Screen {
         ProfileContent(
             state = state,
             onIntent = screenModel::handleIntent,
-            onOpenReminders = { navigator.push(RemindersScreen()) }
+            onOpenReminders = { navigator.push(RemindersScreen()) },
+            onOpenSync = { navigator.push(SyncScreen()) }
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ProfileContent(state: ProfileState, onIntent: (ProfileIntent) -> Unit, onOpenReminders: () -> Unit = {}) {
+fun ProfileContent(
+    state: ProfileState,
+    onIntent: (ProfileIntent) -> Unit,
+    onOpenReminders: () -> Unit = {},
+    onOpenSync: () -> Unit = {}
+) {
     val s = LocalStrings.current
+    val syncStrings = syncStringsFor(state.settings.language)
     var editing by remember { mutableStateOf(false) }
 
     Scaffold(containerColor = Color.Transparent) { padding ->
@@ -104,6 +113,21 @@ fun ProfileContent(state: ProfileState, onIntent: (ProfileIntent) -> Unit, onOpe
                     fontWeight = FontWeight.Bold,
                     modifier = Modifier.padding(start = 4.dp, top = 4.dp, bottom = 2.dp)
                 )
+            }
+
+            // ── Account & Sync ─────────────────────────────────────────────
+            item(key = "sec_account") {
+                SettingsSectionHeader(label = syncStrings.screenTitle, icon = Icons.Default.CloudSync)
+            }
+            item(key = "account") {
+                SettingsCard {
+                    NavRow(
+                        title = syncStrings.entryTitle,
+                        subtitle = syncStrings.entrySubtitle,
+                        icon = Icons.Default.CloudSync,
+                        onClick = onOpenSync
+                    )
+                }
             }
 
             // ── Appearance ─────────────────────────────────────────────────

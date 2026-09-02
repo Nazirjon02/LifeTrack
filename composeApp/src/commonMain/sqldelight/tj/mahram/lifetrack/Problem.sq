@@ -25,6 +25,13 @@ CREATE TABLE problem_history (
 insertProblem:
 INSERT INTO problem VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+-- Cloud sync helpers.
+insertOrReplaceProblem:
+INSERT OR REPLACE INTO problem VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+syncAllProblemIds:
+SELECT id FROM problem;
+
 selectAllProblems:
 SELECT * FROM problem ORDER BY status ASC, createdAt DESC;
 
@@ -45,6 +52,19 @@ DELETE FROM problem WHERE id = ?;
 
 insertHistory:
 INSERT INTO problem_history VALUES (?, ?, ?, ?);
+
+-- Cloud sync helpers for problem_history.
+insertOrReplaceHistory:
+INSERT OR REPLACE INTO problem_history VALUES (?, ?, ?, ?);
+
+selectHistoryById:
+SELECT * FROM problem_history WHERE id = ?;
+
+syncAllHistoryIds:
+SELECT id FROM problem_history;
+
+deleteHistoryById:
+DELETE FROM problem_history WHERE id = ?;
 
 selectHistoryForProblem:
 SELECT * FROM problem_history WHERE problemId = ? ORDER BY createdAt DESC;

@@ -16,6 +16,13 @@ CREATE TABLE debt (
 insertDebt:
 INSERT INTO debt VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+-- Cloud sync helpers.
+insertOrReplaceDebt:
+INSERT OR REPLACE INTO debt VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+syncAllDebtIds:
+SELECT id FROM debt;
+
 selectAllDebts:
 SELECT * FROM debt ORDER BY isSettled ASC, createdAt DESC;
 

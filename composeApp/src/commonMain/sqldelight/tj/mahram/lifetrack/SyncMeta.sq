@@ -1,0 +1,48 @@
+-- Bookkeeping for cloud sync. One row per (collection, entity id).
+--   dirty=1     -> local change not yet pushed to Firestore
+--   deleted=1   -> the row was deleted locally (tombstone; kept so the
+--                  delete can propagate to other devices)
+--   updatedAt   -> last-known modification time (epoch millis). Drives
+--                  Last-Write-Wins: on pull we only apply a remote doc
+--                  whose _updatedAt is strictly newer than this value.
+-- INSERT OR REPLACE is used everywhere (not the UPSERT/ON CONFLICT syntax)
+-- so the queries run on the older SQLite shipped with Android API 24.
+CREATE TABLE sync_meta (
+    collection TEXT NOT NULL,
+    id TEXT NOT NULL,
+    dirty INTEGER NOT NULL DEFAULT 1,
+    deleted INTEGER NOT NULL DEFAULT 0,
+    updatedAt INTEGER NOT NULL,
+    PRIMARY KEY (collection, id)
+);
+
+markDirty:
+INSERT OR REPLACE INTO sync_meta(collection, id, dirty, deleted, updatedAt)
+VALUES (?, ?, 1, 0, ?);
+
+markDeleted:
+INSERT OR REPLACE INTO sync_meta(collection, id, dirty, deleted, updatedAt)
+VALUES (?, ?, 1, 1, ?);
+
+setSynced:
+INSERT OR REPLACE INTO sync_meta(collection, id, dirty, deleted, updatedAt)
+VALUES (?, ?, 0, ?, ?);
+
+seedIfAbsent:
+INSERT OR IGNORE INTO sync_meta(collection, id, dirty, deleted, updatedAt)
+VALUES (?, ?, 1, 0, ?);
+
+-- Only clear the dirty flag if the row was not re-edited while we were pushing
+-- it (updatedAt unchanged). Otherwise the newer local edit stays dirty and is
+-- picked up by the next sync — prevents a lost update.
+clearDirty:
+UPDATE sync_meta SET dirty = 0 WHERE collection = ? AND id = ? AND updatedAt = ?;
+
+selectDirty:
+SELECT id, deleted, updatedAt FROM sync_meta WHERE collection = ? AND dirty = 1;
+
+selectEntry:
+SELECT id, deleted, updatedAt FROM sync_meta WHERE collection = ? AND id = ?;
+
+deleteAll:
+DELETE FROM sync_meta;

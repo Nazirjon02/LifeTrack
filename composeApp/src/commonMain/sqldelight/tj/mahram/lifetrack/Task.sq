@@ -16,6 +16,13 @@ CREATE TABLE task (
 insertTask:
 INSERT INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+-- Cloud sync: overwrite a whole row coming from Firestore, and enumerate ids.
+insertOrReplaceTask:
+INSERT OR REPLACE INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+syncAllTaskIds:
+SELECT id FROM task;
+
 selectAllTasks:
 SELECT * FROM task WHERE parentTaskId IS NULL ORDER BY
     CASE priority

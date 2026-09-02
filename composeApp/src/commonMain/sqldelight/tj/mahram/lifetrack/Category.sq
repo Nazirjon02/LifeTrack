@@ -13,6 +13,13 @@ INSERT INTO category VALUES (?, ?, ?, ?, ?, ?);
 insertCategoryOrIgnore:
 INSERT OR IGNORE INTO category VALUES (?, ?, ?, ?, ?, ?);
 
+-- Cloud sync helpers.
+insertOrReplaceCategory:
+INSERT OR REPLACE INTO category VALUES (?, ?, ?, ?, ?, ?);
+
+syncAllCategoryIds:
+SELECT id FROM category;
+
 selectAllCategories:
 SELECT * FROM category ORDER BY isCustom ASC, name ASC;
 

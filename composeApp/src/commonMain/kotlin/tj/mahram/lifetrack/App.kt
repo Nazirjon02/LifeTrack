@@ -28,6 +28,11 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.*
 import cafe.adriel.voyager.transitions.SlideTransition
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.isActive
+import tj.mahram.lifetrack.data.sync.SyncEngine
+import tj.mahram.lifetrack.domain.model.AuthState
+import tj.mahram.lifetrack.domain.repository.AuthRepository
 import tj.mahram.lifetrack.ui.components.AuroraBackground
 import tj.mahram.lifetrack.ui.components.brandHorizontalGradient
 import tj.mahram.lifetrack.ui.components.glassSurface
@@ -50,6 +55,9 @@ import tj.mahram.lifetrack.feature.problems.ProblemsScreen
 import tj.mahram.lifetrack.feature.planner.PlannerScreen
 import tj.mahram.lifetrack.feature.profile.ProfileScreen
 import tj.mahram.lifetrack.ui.theme.LifeTrackTheme
+
+/** How often to run a background sync cycle while signed in. */
+private const val SYNC_INTERVAL_MS = 20_000L
 
 private val DefaultSettings = AppSettings(
     theme = AppTheme.DARK,
@@ -78,6 +86,8 @@ fun App(
         val koin = getKoin()
         val settingsRepo = remember { koin.get<SettingsRepository>() }
         val settings by settingsRepo.getSettings().collectAsState(initial = DefaultSettings)
+        val authRepo = remember { koin.get<AuthRepository>() }
+        val authState by authRepo.state.collectAsState()
 
         LaunchedEffect(Unit) {
             runCatching { koin.get<CategoryRepository>().initDefaultCategories() }
@@ -86,6 +96,19 @@ fun App(
             runCatching {
                 val reminders = koin.get<ReminderRepository>().current()
                 koin.get<NotificationScheduler>().sync(reminders)
+            }
+        }
+
+        // Cloud sync: while signed in, sync on launch and then on an interval.
+        // Local writes mark rows dirty, so the next tick pushes them up and
+        // pulls remote changes down (offline-first — errors are ignored).
+        LaunchedEffect(authState) {
+            if (authState is AuthState.SignedIn) {
+                val engine = koin.get<SyncEngine>()
+                while (isActive) {
+                    runCatching { engine.syncAll() }
+                    delay(SYNC_INTERVAL_MS)
+                }
             }
         }
 
