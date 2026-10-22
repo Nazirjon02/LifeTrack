@@ -28,8 +28,10 @@ import androidx.compose.ui.unit.dp
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.*
 import cafe.adriel.voyager.transitions.SlideTransition
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
+import kotlinx.coroutines.withContext
 import tj.mahram.lifetrack.data.sync.SyncEngine
 import tj.mahram.lifetrack.domain.model.AuthState
 import tj.mahram.lifetrack.domain.repository.AuthRepository
@@ -105,9 +107,12 @@ fun App(
         LaunchedEffect(authState) {
             if (authState is AuthState.SignedIn) {
                 val engine = koin.get<SyncEngine>()
-                while (isActive) {
-                    runCatching { engine.syncAll() }
-                    delay(SYNC_INTERVAL_MS)
+                // Run the whole loop off the main thread to avoid UI jank.
+                withContext(Dispatchers.Default) {
+                    while (isActive) {
+                        runCatching { engine.syncAll() }
+                        delay(SYNC_INTERVAL_MS)
+                    }
                 }
             }
         }
