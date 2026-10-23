@@ -10,17 +10,21 @@ import kotlinx.datetime.toLocalDateTime
 import tj.mahram.lifetrack.core.util.endOfMonth
 import tj.mahram.lifetrack.core.util.startOfMonth
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
+import tj.mahram.lifetrack.domain.usecase.debt.ObserveDebtSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetFinanceSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.ObserveBalanceUseCase
 import tj.mahram.lifetrack.domain.usecase.problem.GetAllProblemsUseCase
 import tj.mahram.lifetrack.domain.usecase.task.GetTaskStatsUseCase
 import tj.mahram.lifetrack.domain.usecase.task.GetTodayTasksUseCase
+import tj.mahram.lifetrack.domain.usecase.wallet.ObserveWalletsOverviewUseCase
 
 class DashboardScreenModel(
     private val getTodayTasks: GetTodayTasksUseCase,
     private val getTaskStats: GetTaskStatsUseCase,
     private val getFinanceSummary: GetFinanceSummaryUseCase,
     private val observeBalance: ObserveBalanceUseCase,
+    private val observeWalletsOverview: ObserveWalletsOverviewUseCase,
+    private val observeDebtSummary: ObserveDebtSummaryUseCase,
     private val settingsRepository: SettingsRepository,
     private val getAllProblems: GetAllProblemsUseCase
 ) : ScreenModel {
@@ -32,12 +36,30 @@ class DashboardScreenModel(
         load()
         observeProblems()
         observeCentralBalance()
+        observeWallets()
+        observeDebts()
     }
 
     private fun observeCentralBalance() {
         screenModelScope.launch {
             observeBalance().collect { overview ->
                 _state.update { it.copy(balance = overview) }
+            }
+        }
+    }
+
+    private fun observeWallets() {
+        screenModelScope.launch {
+            observeWalletsOverview().collect { overview ->
+                _state.update { it.copy(walletsOverview = overview) }
+            }
+        }
+    }
+
+    private fun observeDebts() {
+        screenModelScope.launch {
+            observeDebtSummary().collect { summary ->
+                _state.update { it.copy(debtSummary = summary) }
             }
         }
     }
@@ -79,7 +101,8 @@ class DashboardScreenModel(
                             completedTasksToday = completed,
                             totalTasksToday = total,
                             monthlyFinance = finance,
-                            currency = settings.currency
+                            currency = settings.currency,
+                            language = settings.language
                         )
                     }
                 }

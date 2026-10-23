@@ -23,15 +23,20 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import cafe.adriel.voyager.core.model.rememberScreenModel
 import cafe.adriel.voyager.core.screen.Screen
+import cafe.adriel.voyager.navigator.tab.LocalTabNavigator
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.FinanceTab
 import tj.mahram.lifetrack.core.i18n.LocalStrings
+import tj.mahram.lifetrack.core.i18n.dashboardStringsFor
+import tj.mahram.lifetrack.core.i18n.walletStringsFor
 import tj.mahram.lifetrack.core.util.MonthNames
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.domain.model.Problem
 import tj.mahram.lifetrack.ui.components.GlassCard
+import tj.mahram.lifetrack.ui.components.brandVividGradient
 import tj.mahram.lifetrack.ui.components.glassSurface
 import tj.mahram.lifetrack.ui.components.parseHexColor
 import tj.mahram.lifetrack.ui.theme.appColors
@@ -43,16 +48,18 @@ class DashboardScreen : Screen {
         val koin = getKoin()
         val screenModel = rememberScreenModel<DashboardScreenModel> { koin.get() }
         val state by screenModel.state.collectAsState()
+        val tabNavigator = LocalTabNavigator.current
         DashboardContent(
             state = state,
-            onRefresh = { screenModel.handleIntent(DashboardIntent.Refresh) }
+            onRefresh = { screenModel.handleIntent(DashboardIntent.Refresh) },
+            onOpenFinance = { tabNavigator.current = FinanceTab }
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun DashboardContent(state: DashboardState, onRefresh: () -> Unit) {
+fun DashboardContent(state: DashboardState, onRefresh: () -> Unit, onOpenFinance: () -> Unit = {}) {
     val tz = TimeZone.currentSystemDefault()
     val now = Clock.System.now().toLocalDateTime(tz)
     val dayName = now.dayOfWeek.name.lowercase().replaceFirstChar { it.uppercase() }
@@ -93,11 +100,9 @@ fun DashboardContent(state: DashboardState, onRefresh: () -> Unit) {
                     CircularProgressIndicator(color = MaterialTheme.colorScheme.primary)
                 }
             } else {
-                DashStatGrid(state = state)
+                FinanceSummaryWidget(state = state, onOpenFinance = onOpenFinance)
 
-                state.monthlyFinance?.let { finance ->
-                    FinanceMonthCard(finance = finance, currency = state.currency)
-                }
+                DashStatGrid(state = state)
 
                 if (state.activeProblems.isNotEmpty()) {
                     ProblemsQuickWidget(problems = state.activeProblems, total = state.totalProblemsCount)
@@ -160,35 +165,139 @@ private fun StatTile(modifier: Modifier = Modifier, icon: ImageVector, label: St
 }
 
 // ═══════════════════════════════════════════════════════════
-// FINANCE MONTH CARD
+// FINANCE SUMMARY WIDGET (hero)
 // ═══════════════════════════════════════════════════════════
 @Composable
-private fun FinanceMonthCard(finance: tj.mahram.lifetrack.domain.model.FinanceSummary, currency: String) {
+private fun FinanceSummaryWidget(state: DashboardState, onOpenFinance: () -> Unit) {
     val s = LocalStrings.current
-    GlassCard(modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp), shape = RoundedCornerShape(24.dp), contentPadding = PaddingValues(20.dp)) {
-        Text(s.dashboardFinanceMonth, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurfaceVariant)
-        Spacer(Modifier.height(16.dp))
-        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceEvenly, verticalAlignment = Alignment.CenterVertically) {
-            FinanceMiniStat(s.dashboardIncome, finance.totalIncome, true, currency)
-            Divider34()
-            FinanceMiniStat(s.dashboardExpense, finance.totalExpense, false, currency)
-            Divider34()
-            FinanceMiniStat(s.dashboardBalance, finance.balance, finance.balance >= 0, currency)
+    val d = dashboardStringsFor(state.language)
+    val w = walletStringsFor(state.language)
+    val currency = state.currency
+
+    val balance = state.balance
+    val currentBalance = balance?.currentBalance ?: 0.0
+    val monthNet = balance?.monthNet ?: 0.0
+    val monthIncome = balance?.monthIncome ?: 0.0
+    val monthExpense = balance?.monthExpense ?: 0.0
+
+    val wallets = state.walletsOverview
+    val debt = state.debtSummary
+    val debtNet = debt.net
+
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 8.dp)
+            .clip(RoundedCornerShape(28.dp))
+            .background(brandVividGradient())
+            .clickable(onClick = onOpenFinance)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(18.dp)
+    ) {
+        // Headline — overall total balance
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+            horizontalArrangement = Arrangement.SpaceBetween
+        ) {
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text(
+                    d.totalBalance,
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = Color.White.copy(alpha = 0.82f)
+                )
+                Text(
+                    currentBalance.formatCurrency(currency),
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = Color.White,
+                    maxLines = 1
+                )
+            }
+            Box(
+                modifier = Modifier.size(46.dp).clip(RoundedCornerShape(14.dp)).background(Color.White.copy(alpha = 0.18f)),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(Icons.Outlined.AccountBalanceWallet, contentDescription = null, tint = Color.White, modifier = Modifier.size(24.dp))
+            }
+        }
+
+        // This month — net headline with the income / expense split
+        Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                Text(
+                    d.netThisMonth,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = Color.White.copy(alpha = 0.82f)
+                )
+                Text(
+                    monthNet.formatCurrency(currency, showSign = true),
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.Bold,
+                    color = Color.White
+                )
+            }
+            Row(horizontalArrangement = Arrangement.spacedBy(20.dp)) {
+                WidgetMoneyStat(Icons.AutoMirrored.Outlined.TrendingUp, s.dashboardIncome, monthIncome, currency)
+                WidgetMoneyStat(Icons.AutoMirrored.Outlined.TrendingDown, s.dashboardExpense, monthExpense, currency)
+            }
+        }
+
+        // Quick stats — wallets + debts
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            WidgetStatPill(
+                modifier = Modifier.weight(1f),
+                emoji = "💼",
+                label = w.entryTitle,
+                value = if (wallets.hasAny) wallets.totalNetWorth.formatCurrency(currency) else "—",
+                sub = if (wallets.hasAny) w.countText(wallets.count) else null
+            )
+            WidgetStatPill(
+                modifier = Modifier.weight(1f),
+                emoji = "🤝",
+                label = s.debtsTitle,
+                value = if (debt.hasAny) debtNet.formatCurrency(currency, showSign = true) else "—",
+                sub = when {
+                    !debt.hasAny -> d.allSettled
+                    debtNet > 0 -> d.owedToYou
+                    debtNet < 0 -> d.youOwe
+                    else -> d.allSettled
+                }
+            )
         }
     }
 }
 
 @Composable
-private fun Divider34() {
-    Box(Modifier.width(1.dp).height(36.dp).background(MaterialTheme.colorScheme.outline.copy(alpha = 0.4f)))
+private fun WidgetMoneyStat(icon: ImageVector, label: String, amount: Double, currency: String) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+        Icon(icon, contentDescription = null, tint = Color.White.copy(alpha = 0.9f), modifier = Modifier.size(16.dp))
+        Column {
+            Text(amount.formatCurrency(currency), style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.7f))
+        }
+    }
 }
 
 @Composable
-private fun FinanceMiniStat(label: String, amount: Double, isPositive: Boolean, currency: String) {
-    val c = MaterialTheme.appColors
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
-        Text(amount.formatCurrency(currency), style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = if (isPositive) c.success else c.danger)
-        Text(label, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+private fun WidgetStatPill(modifier: Modifier = Modifier, emoji: String, label: String, value: String, sub: String?) {
+    Row(
+        modifier = modifier
+            .clip(RoundedCornerShape(18.dp))
+            .background(Color.White.copy(alpha = 0.15f))
+            .padding(horizontal = 14.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(10.dp)
+    ) {
+        Text(emoji, fontSize = 20.sp)
+        Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+            Text(label, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.75f), maxLines = 1)
+            Text(value, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = Color.White, maxLines = 1)
+            if (sub != null) {
+                Text(sub, style = MaterialTheme.typography.labelSmall, color = Color.White.copy(alpha = 0.6f), maxLines = 1)
+            }
+        }
     }
 }
 

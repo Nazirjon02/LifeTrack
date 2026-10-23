@@ -1,10 +1,13 @@
 package tj.mahram.lifetrack.feature.dashboard
 
+import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.BalanceOverview
+import tj.mahram.lifetrack.domain.model.DebtSummary
 import tj.mahram.lifetrack.domain.model.FinanceSummary
 import tj.mahram.lifetrack.domain.model.Problem
 import tj.mahram.lifetrack.domain.model.ProblemStatus
 import tj.mahram.lifetrack.domain.model.Task
+import tj.mahram.lifetrack.domain.model.WalletsOverview
 
 data class DashboardState(
     val isLoading: Boolean = true,
@@ -14,7 +17,10 @@ data class DashboardState(
     val totalTasksToday: Int = 0,
     val monthlyFinance: FinanceSummary? = null,
     val balance: BalanceOverview? = null,
+    val walletsOverview: WalletsOverview = WalletsOverview(),
+    val debtSummary: DebtSummary = DebtSummary(),
     val currency: String = "USD",
+    val language: AppLanguage = AppLanguage.ENGLISH,
     val problems: List<Problem> = emptyList(),
     val error: String? = null
 ) {
