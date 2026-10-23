@@ -26,6 +26,7 @@ interface SyncCollection {
 fun defaultSyncCollections(db: AppDatabase, now: () -> Long): List<SyncCollection> = listOf(
     CategorySync(db),
     TaskSync(db, now),
+    WalletSync(db, now),
     TransactionSync(db, now),
     GoalSync(db, now),
     DebtSync(db, now),
@@ -119,7 +120,8 @@ private class TransactionSync(private val db: AppDatabase, private val now: () -
             "currency" to FsValue.of(r.currency),
             "isRecurring" to FsValue.Int64(r.isRecurring),
             "recurringType" to FsValue.of(r.recurringType),
-            "cryptoCoinId" to FsValue.of(r.cryptoCoinId)
+            "cryptoCoinId" to FsValue.of(r.cryptoCoinId),
+            "walletId" to FsValue.of(r.walletId)
         )
     }
     override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
@@ -133,10 +135,53 @@ private class TransactionSync(private val db: AppDatabase, private val now: () -
             currency = f.str("currency") ?: "USD",
             isRecurring = f.long("isRecurring") ?: 0L,
             recurringType = f.str("recurringType"),
-            cryptoCoinId = f.str("cryptoCoinId")
+            cryptoCoinId = f.str("cryptoCoinId"),
+            walletId = f.str("walletId")
         )
     }
     override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteTransaction(id) }
+}
+
+private class WalletSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
+    override val name = SyncCollectionNames.WALLETS
+    private val q get() = db.walletQueries
+    override suspend fun localIds() = withContext(Dispatchers.Default) { q.syncAllWalletIds().executeAsList() }
+    override suspend fun buildFields(id: String): Map<String, FsValue>? = withContext(Dispatchers.Default) {
+        val r = q.selectWalletById(id).executeAsOneOrNull() ?: return@withContext null
+        mapOf(
+            "id" to FsValue.Str(r.id),
+            "name" to FsValue.of(r.name),
+            "type" to FsValue.of(r.type),
+            "balance" to FsValue.Dbl(r.balance),
+            "currency" to FsValue.of(r.currency),
+            "icon" to FsValue.of(r.icon),
+            "color" to FsValue.of(r.color),
+            "createdAt" to FsValue.Int64(r.createdAt),
+            "updatedAt" to FsValue.Int64(r.updatedAt),
+            "isArchived" to FsValue.Int64(r.isArchived),
+            "interestRate" to FsValue.of(r.interestRate),
+            "startDate" to FsValue.of(r.startDate),
+            "endDate" to FsValue.of(r.endDate)
+        )
+    }
+    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+        q.insertOrReplaceWallet(
+            id = id,
+            name = f.str("name") ?: "",
+            type = f.str("type") ?: "CASH",
+            balance = f.double("balance") ?: 0.0,
+            currency = f.str("currency") ?: "USD",
+            icon = f.str("icon") ?: "💼",
+            color = f.str("color") ?: "#7C3AED",
+            createdAt = f.long("createdAt") ?: now(),
+            updatedAt = f.long("updatedAt") ?: now(),
+            isArchived = f.long("isArchived") ?: 0L,
+            interestRate = f.double("interestRate"),
+            startDate = f.long("startDate"),
+            endDate = f.long("endDate")
+        )
+    }
+    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteWallet(id) }
 }
 
 private class GoalSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {

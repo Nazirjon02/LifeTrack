@@ -9,6 +9,7 @@ import tj.mahram.lifetrack.domain.repository.CategoryRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.domain.usecase.debt.ObserveDebtSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.*
+import tj.mahram.lifetrack.domain.usecase.wallet.ObserveWalletsOverviewUseCase
 
 class FinanceScreenModel(
     private val getAllTransactions: GetAllTransactionsUseCase,
@@ -16,6 +17,7 @@ class FinanceScreenModel(
     private val deleteTransaction: DeleteTransactionUseCase,
     private val observeBalance: ObserveBalanceUseCase,
     private val observeDebtSummary: ObserveDebtSummaryUseCase,
+    private val observeWalletsOverview: ObserveWalletsOverviewUseCase,
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository
 ) : ScreenModel {
@@ -57,7 +59,8 @@ class FinanceScreenModel(
                         type = intent.type,
                         categoryId = intent.categoryId,
                         note = intent.note,
-                        currency = _state.value.currency
+                        currency = _state.value.currency,
+                        walletId = intent.walletId
                     )
                     _state.update { it.copy(showAddSheet = false) }
                 } catch (e: Exception) {
@@ -70,7 +73,12 @@ class FinanceScreenModel(
     private fun observeAll() {
         screenModelScope.launch {
             settingsRepository.getSettings().collectLatest { settings ->
-                _state.update { it.copy(currency = settings.currency) }
+                _state.update { it.copy(currency = settings.currency, language = settings.language) }
+            }
+        }
+        screenModelScope.launch {
+            observeWalletsOverview().collectLatest { overview ->
+                _state.update { it.copy(walletsOverview = overview) }
             }
         }
         screenModelScope.launch {

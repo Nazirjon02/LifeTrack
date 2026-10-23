@@ -7,6 +7,7 @@ object SyncCollectionNames {
     const val TRANSACTIONS = "transactions"
     const val GOALS = "goals"
     const val DEBTS = "debts"
+    const val WALLETS = "wallets"
     const val PROBLEMS = "problems"
     const val PROBLEM_HISTORY = "problem_history"
 }

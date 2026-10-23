@@ -12,7 +12,9 @@ data class Transaction(
     val currency: String,
     val isRecurring: Boolean,
     val recurringType: RecurringType?,
-    val cryptoCoinId: String?
+    val cryptoCoinId: String?,
+    /** Wallet this transaction belongs to; null for legacy/unassigned entries. */
+    val walletId: String? = null
 )
 
 enum class TransactionType(val label: String) {

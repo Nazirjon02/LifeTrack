@@ -22,8 +22,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import tj.mahram.lifetrack.core.i18n.LocalStrings
+import tj.mahram.lifetrack.core.i18n.walletStringsFor
+import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.Category
 import tj.mahram.lifetrack.domain.model.TransactionType
+import tj.mahram.lifetrack.domain.model.Wallet
 import tj.mahram.lifetrack.ui.components.parseHexColor
 import tj.mahram.lifetrack.ui.components.FieldLabel
 import tj.mahram.lifetrack.ui.components.SheetHandle
@@ -35,6 +38,8 @@ import tj.mahram.lifetrack.ui.theme.appColors
 fun AddTransactionSheet(
     type: TransactionType,
     categories: List<Category>,
+    wallets: List<Wallet> = emptyList(),
+    language: AppLanguage = AppLanguage.ENGLISH,
     onDismiss: () -> Unit,
     onConfirm: (FinanceIntent.AddTransaction) -> Unit
 ) {
@@ -50,6 +55,8 @@ fun AddTransactionSheet(
     var selectedCategory by remember { mutableStateOf(relevantCats.firstOrNull()) }
     var note by remember { mutableStateOf("") }
     var amountError by remember { mutableStateOf(false) }
+    val walletStrings = walletStringsFor(language)
+    var selectedWalletId by remember(wallets) { mutableStateOf(wallets.firstOrNull()?.id) }
 
     val accent = if (type == TransactionType.INCOME) c.success else c.danger
 
@@ -141,6 +148,40 @@ fun AddTransactionSheet(
                     }
                 }
 
+                if (wallets.isNotEmpty()) {
+                    Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                        FieldLabel(walletStrings.pickerLabel)
+                        val chips: List<Pair<String, String?>> =
+                            listOf(walletStrings.pickerNone to null) + wallets.map { "${it.icon} ${it.name}" to it.id }
+                        chips.chunked(2).forEach { row ->
+                            Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+                                row.forEach { (label, id) ->
+                                    val isSelected = selectedWalletId == id
+                                    Box(
+                                        modifier = Modifier
+                                            .weight(1f)
+                                            .clip(RoundedCornerShape(14.dp))
+                                            .background(if (isSelected) accent.copy(alpha = 0.18f) else MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f))
+                                            .border(width = if (isSelected) 1.5.dp else 1.dp, color = if (isSelected) accent else Color.Transparent, shape = RoundedCornerShape(14.dp))
+                                            .clickable { selectedWalletId = id }
+                                            .padding(vertical = 10.dp, horizontal = 8.dp),
+                                        contentAlignment = Alignment.Center
+                                    ) {
+                                        Text(
+                                            label,
+                                            style = MaterialTheme.typography.labelMedium,
+                                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Normal,
+                                            color = if (isSelected) accent else MaterialTheme.colorScheme.onSurface,
+                                            maxLines = 1
+                                        )
+                                    }
+                                }
+                                repeat(2 - row.size) { Box(Modifier.weight(1f)) }
+                            }
+                        }
+                    }
+                }
+
                 Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     FieldLabel(s.financeNoteLabel)
                     SheetTextField(value = note, onValueChange = { note = it }, placeholder = s.financeNoteLabel)
@@ -160,7 +201,7 @@ fun AddTransactionSheet(
                         val amount = amountText.toDoubleOrNull()
                         if (amount == null || amount <= 0) { amountError = true; return@clickable }
                         val cat = selectedCategory ?: return@clickable
-                        onConfirm(FinanceIntent.AddTransaction(amount = amount, type = type, categoryId = cat.id, note = note.ifBlank { null }))
+                        onConfirm(FinanceIntent.AddTransaction(amount = amount, type = type, categoryId = cat.id, note = note.ifBlank { null }, walletId = selectedWalletId))
                     },
                 contentAlignment = Alignment.Center
             ) {

@@ -29,7 +29,8 @@ class AddTransactionUseCase(private val repository: TransactionRepository) {
         categoryId: String,
         note: String? = null,
         dateMillis: Long = Clock.System.now().toEpochMilliseconds(),
-        currency: String = "USD"
+        currency: String = "USD",
+        walletId: String? = null
     ) {
         require(amount > 0) { "Amount must be positive" }
         require(categoryId.isNotBlank()) { "Category must be selected" }
@@ -43,7 +44,8 @@ class AddTransactionUseCase(private val repository: TransactionRepository) {
             currency = currency,
             isRecurring = false,
             recurringType = null,
-            cryptoCoinId = null
+            cryptoCoinId = null,
+            walletId = walletId
         )
         repository.addTransaction(transaction)
     }

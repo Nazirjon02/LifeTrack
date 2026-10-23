@@ -15,11 +15,13 @@ data class BalanceOverview(
     val totalExpense: Double,
     val monthIncome: Double,
     val monthExpense: Double,
-    val currency: String
+    val currency: String,
+    /** Combined base balance of every wallet (0 when no wallets exist yet). */
+    val walletsBalance: Double = 0.0
 ) {
-    /** Money the user has right now. */
+    /** Money the user has right now, across the central ledger and all wallets. */
     val currentBalance: Double
-        get() = openingBalance + totalIncome - totalExpense
+        get() = openingBalance + walletsBalance + totalIncome - totalExpense
 
     /** Net change over the current month. */
     val monthNet: Double

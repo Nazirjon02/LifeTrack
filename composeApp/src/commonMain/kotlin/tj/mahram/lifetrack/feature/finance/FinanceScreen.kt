@@ -32,6 +32,7 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
+import tj.mahram.lifetrack.core.i18n.walletStringsFor
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.core.util.roundTo
 import tj.mahram.lifetrack.domain.model.BalanceOverview
@@ -39,7 +40,9 @@ import tj.mahram.lifetrack.domain.model.Category
 import tj.mahram.lifetrack.domain.model.DebtSummary
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
+import tj.mahram.lifetrack.domain.model.WalletsOverview
 import tj.mahram.lifetrack.feature.debts.DebtsScreen
+import tj.mahram.lifetrack.feature.wallets.WalletsScreen
 import tj.mahram.lifetrack.ui.components.parseHexColor
 import tj.mahram.lifetrack.ui.components.EmptyState
 import tj.mahram.lifetrack.ui.components.TransactionCard
@@ -58,14 +61,20 @@ class FinanceScreen : Screen {
         FinanceContent(
             state = state,
             onIntent = screenModel::handleIntent,
-            onOpenDebts = { navigator.push(DebtsScreen()) }
+            onOpenDebts = { navigator.push(DebtsScreen()) },
+            onOpenWallets = { navigator.push(WalletsScreen()) }
         )
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit, onOpenDebts: () -> Unit = {}) {
+fun FinanceContent(
+    state: FinanceState,
+    onIntent: (FinanceIntent) -> Unit,
+    onOpenDebts: () -> Unit = {},
+    onOpenWallets: () -> Unit = {}
+) {
     val s = LocalStrings.current
     val c = MaterialTheme.appColors
     Scaffold(
@@ -101,6 +110,10 @@ fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit, onOpe
                         onAdjust = { onIntent(FinanceIntent.ShowAdjustBalance) }
                     )
                 }
+            }
+
+            item(key = "wallets") {
+                WalletsEntryCard(overview = state.walletsOverview, language = state.language, currency = state.currency, onClick = onOpenWallets)
             }
 
             item(key = "debts") {
@@ -147,6 +160,8 @@ fun FinanceContent(state: FinanceState, onIntent: (FinanceIntent) -> Unit, onOpe
             AddTransactionSheet(
                 type = state.addSheetType,
                 categories = state.categories,
+                wallets = state.walletsOverview.wallets.map { it.wallet },
+                language = state.language,
                 onDismiss = { onIntent(FinanceIntent.HideAddSheet) },
                 onConfirm = onIntent
             )
@@ -250,6 +265,41 @@ private fun DebtMiniStat(color: Color, up: Boolean, amount: Double, currency: St
     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
         Icon(if (up) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward, contentDescription = null, tint = color, modifier = Modifier.size(13.dp))
         Text(amount.formatCurrency(currency), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = color)
+    }
+}
+
+// ─── Wallets entry card ───────────────────────────────────────────────────────
+@Composable
+private fun WalletsEntryCard(overview: WalletsOverview, language: tj.mahram.lifetrack.domain.model.AppLanguage, currency: String, onClick: () -> Unit) {
+    val w = walletStringsFor(language)
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 6.dp)
+            .glassSurface(shape = RoundedCornerShape(22.dp))
+            .clickable(onClick = onClick)
+            .padding(16.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier.size(46.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
+            contentAlignment = Alignment.Center
+        ) { Text("💼", fontSize = 22.sp) }
+        Spacer(Modifier.width(14.dp))
+        Column(modifier = Modifier.weight(1f)) {
+            Text(w.entryTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Spacer(Modifier.height(4.dp))
+            if (overview.hasAny) {
+                Text(
+                    "${w.countText(overview.count)} · ${overview.totalNetWorth.formatCurrency(currency)}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            } else {
+                Text(w.entryEmptySubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+            }
+        }
+        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
     }
 }
 

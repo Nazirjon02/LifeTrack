@@ -1,0 +1,46 @@
+-- A wallet: a place the user keeps money. DEPOSIT wallets additionally carry
+-- an interest rate and a start/maturity date so the UI can project accrued
+-- interest and the payout at maturity. Non-deposit wallets leave those NULL.
+CREATE TABLE wallet (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'CASH',
+    balance REAL NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    icon TEXT NOT NULL DEFAULT '💼',
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    isArchived INTEGER NOT NULL DEFAULT 0,
+    interestRate REAL,
+    startDate INTEGER,
+    endDate INTEGER
+);
+
+insertWallet:
+INSERT INTO wallet VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Cloud sync helpers.
+insertOrReplaceWallet:
+INSERT OR REPLACE INTO wallet VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+syncAllWalletIds:
+SELECT id FROM wallet;
+
+selectAllWallets:
+SELECT * FROM wallet ORDER BY isArchived ASC, createdAt ASC;
+
+selectWalletById:
+SELECT * FROM wallet WHERE id = ?;
+
+updateWallet:
+UPDATE wallet SET
+    name = ?, type = ?, balance = ?, currency = ?, icon = ?, color = ?,
+    isArchived = ?, interestRate = ?, startDate = ?, endDate = ?, updatedAt = ?
+WHERE id = ?;
+
+updateWalletBalance:
+UPDATE wallet SET balance = ?, updatedAt = ? WHERE id = ?;
+
+deleteWallet:
+DELETE FROM wallet WHERE id = ?;

@@ -32,6 +32,10 @@ class TransactionLocalDataSource(private val db: AppDatabase) {
         db.transactionRecordQueries.selectRecentTransactions(limit).asFlow().mapToList(Dispatchers.Default)
             .map { it.map { t -> t.toDomain() } }
 
+    fun getByWallet(walletId: String): Flow<List<Transaction>> =
+        db.transactionRecordQueries.selectTransactionsByWallet(walletId).asFlow().mapToList(Dispatchers.Default)
+            .map { it.map { t -> t.toDomain() } }
+
     suspend fun insert(transaction: Transaction) {
         withContext(Dispatchers.Default) {
             db.transactionRecordQueries.insertTransaction(
@@ -44,7 +48,8 @@ class TransactionLocalDataSource(private val db: AppDatabase) {
                 currency = transaction.currency,
                 isRecurring = if (transaction.isRecurring) 1L else 0L,
                 recurringType = transaction.recurringType?.name,
-                cryptoCoinId = transaction.cryptoCoinId
+                cryptoCoinId = transaction.cryptoCoinId,
+                walletId = transaction.walletId
             )
         }
     }
@@ -52,6 +57,18 @@ class TransactionLocalDataSource(private val db: AppDatabase) {
     suspend fun delete(id: String) {
         withContext(Dispatchers.Default) {
             db.transactionRecordQueries.deleteTransaction(id)
+        }
+    }
+
+    /** Ids of every transaction assigned to [walletId] (for sync bookkeeping). */
+    suspend fun idsByWallet(walletId: String): List<String> = withContext(Dispatchers.Default) {
+        db.transactionRecordQueries.transactionIdsByWallet(walletId).executeAsList()
+    }
+
+    /** Unassigns every transaction from [walletId], keeping the ledger entries. */
+    suspend fun clearWallet(walletId: String) {
+        withContext(Dispatchers.Default) {
+            db.transactionRecordQueries.clearWalletFromTransactions(walletId)
         }
     }
 
@@ -69,6 +86,7 @@ class TransactionLocalDataSource(private val db: AppDatabase) {
         currency = currency,
         isRecurring = isRecurring == 1L,
         recurringType = recurringType?.let { RecurringType.valueOf(it) },
-        cryptoCoinId = cryptoCoinId
+        cryptoCoinId = cryptoCoinId,
+        walletId = walletId
     )
 }

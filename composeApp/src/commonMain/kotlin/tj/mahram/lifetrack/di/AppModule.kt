@@ -12,6 +12,7 @@ import tj.mahram.lifetrack.data.local.GoalLocalDataSource
 import tj.mahram.lifetrack.data.local.ProblemLocalDataSource
 import tj.mahram.lifetrack.data.local.TaskLocalDataSource
 import tj.mahram.lifetrack.data.local.TransactionLocalDataSource
+import tj.mahram.lifetrack.data.local.WalletLocalDataSource
 import tj.mahram.lifetrack.data.local.db.AppDatabase
 import tj.mahram.lifetrack.data.remote.createHttpClient
 import tj.mahram.lifetrack.data.remote.firebase.FirebaseAuthApi
@@ -25,6 +26,7 @@ import tj.mahram.lifetrack.data.repository.ReminderRepositoryImpl
 import tj.mahram.lifetrack.data.repository.SettingsRepositoryImpl
 import tj.mahram.lifetrack.data.repository.TaskRepositoryImpl
 import tj.mahram.lifetrack.data.repository.TransactionRepositoryImpl
+import tj.mahram.lifetrack.data.repository.WalletRepositoryImpl
 import tj.mahram.lifetrack.data.sync.SyncEngine
 import tj.mahram.lifetrack.data.sync.SyncTracker
 import tj.mahram.lifetrack.data.sync.defaultSyncCollections
@@ -37,6 +39,7 @@ import tj.mahram.lifetrack.domain.repository.ReminderRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.domain.repository.TaskRepository
 import tj.mahram.lifetrack.domain.repository.TransactionRepository
+import tj.mahram.lifetrack.domain.repository.WalletRepository
 import tj.mahram.lifetrack.feature.sync.SyncScreenModel
 import tj.mahram.lifetrack.domain.usecase.finance.AddTransactionUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.DeleteTransactionUseCase
@@ -71,6 +74,11 @@ import tj.mahram.lifetrack.domain.usecase.task.GetTodayTasksUseCase
 import tj.mahram.lifetrack.domain.usecase.task.SearchTasksUseCase
 import tj.mahram.lifetrack.domain.usecase.task.ToggleTaskCompletionUseCase
 import tj.mahram.lifetrack.domain.usecase.task.UpdateTaskUseCase
+import tj.mahram.lifetrack.domain.usecase.wallet.CreateWalletUseCase
+import tj.mahram.lifetrack.domain.usecase.wallet.DeleteWalletUseCase
+import tj.mahram.lifetrack.domain.usecase.wallet.GetAllWalletsUseCase
+import tj.mahram.lifetrack.domain.usecase.wallet.ObserveWalletsOverviewUseCase
+import tj.mahram.lifetrack.domain.usecase.wallet.UpdateWalletUseCase
 import tj.mahram.lifetrack.feature.dashboard.DashboardScreenModel
 import tj.mahram.lifetrack.feature.debts.DebtsScreenModel
 import tj.mahram.lifetrack.feature.finance.FinanceScreenModel
@@ -79,6 +87,7 @@ import tj.mahram.lifetrack.feature.problems.ProblemsScreenModel
 import tj.mahram.lifetrack.feature.planner.PlannerScreenModel
 import tj.mahram.lifetrack.feature.profile.ProfileScreenModel
 import tj.mahram.lifetrack.feature.reminders.RemindersScreenModel
+import tj.mahram.lifetrack.feature.wallets.WalletsScreenModel
 
 private val nowMillis: () -> Long = { Clock.System.now().toEpochMilliseconds() }
 
@@ -107,6 +116,7 @@ val appModule = module {
     singleOf(::GoalLocalDataSource)
     singleOf(::DebtLocalDataSource)
     singleOf(::ProblemLocalDataSource)
+    singleOf(::WalletLocalDataSource)
 
     // Repositories (each also takes the SyncTracker to mark local changes dirty)
     single<TaskRepository> { TaskRepositoryImpl(get(), get()) }
@@ -115,6 +125,7 @@ val appModule = module {
     single<GoalRepository> { GoalRepositoryImpl(get(), get()) }
     single<DebtRepository> { DebtRepositoryImpl(get(), get()) }
     single<ProblemRepository> { ProblemRepositoryImpl(get(), get()) }
+    single<WalletRepository> { WalletRepositoryImpl(get(), get(), get()) }
 
     // Task use cases
     factoryOf(::GetAllTasksUseCase)
@@ -150,6 +161,13 @@ val appModule = module {
     factoryOf(::SetDebtSettledUseCase)
     factoryOf(::DeleteDebtUseCase)
 
+    // Wallet use cases
+    factoryOf(::GetAllWalletsUseCase)
+    factoryOf(::ObserveWalletsOverviewUseCase)
+    factoryOf(::CreateWalletUseCase)
+    factoryOf(::UpdateWalletUseCase)
+    factoryOf(::DeleteWalletUseCase)
+
     // Problem use cases
     factoryOf(::GetAllProblemsUseCase)
     factoryOf(::GetProblemHistoryUseCase)
@@ -166,6 +184,7 @@ val appModule = module {
     factoryOf(::ProfileScreenModel)
     factoryOf(::GoalsScreenModel)
     factoryOf(::DebtsScreenModel)
+    factoryOf(::WalletsScreenModel)
     factoryOf(::ProblemsScreenModel)
     factoryOf(::RemindersScreenModel)
     factoryOf(::SyncScreenModel)

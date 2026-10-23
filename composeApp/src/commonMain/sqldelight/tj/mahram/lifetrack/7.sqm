@@ -1,0 +1,22 @@
+-- Migration 7 -> 8: multi-wallet support.
+--   * a `wallet` table (CASH / CARD / SAVINGS / DEPOSIT); deposit wallets carry
+--     an interest rate and start/maturity dates for interest projections.
+--   * transactions gain an optional `walletId` so each entry can belong to a
+--     wallet. Existing rows keep walletId = NULL (unassigned) and are untouched.
+CREATE TABLE IF NOT EXISTS wallet (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'CASH',
+    balance REAL NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    icon TEXT NOT NULL DEFAULT '💼',
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL,
+    isArchived INTEGER NOT NULL DEFAULT 0,
+    interestRate REAL,
+    startDate INTEGER,
+    endDate INTEGER
+);
+
+ALTER TABLE transaction_record ADD COLUMN walletId TEXT;
