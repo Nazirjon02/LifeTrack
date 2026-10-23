@@ -309,7 +309,7 @@ private fun DebtCard(
                 DebtActionButton(modifier = Modifier.weight(1f), label = s.debtActionSettle, icon = Icons.Default.Check, filled = false, accent = accent, onClick = onToggleSettled)
             } else {
                 Box(
-                    modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(c.success.copy(alpha = 0.15f)).padding(horizontal = 10.dp, vertical = 6.dp),
+                    modifier = Modifier.clip(RoundedCornerShape(12.dp)).background(c.success.copy(alpha = 0.15f)).padding(horizontal = 10.dp, vertical = 6.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -320,7 +320,7 @@ private fun DebtCard(
                 DebtActionButton(modifier = Modifier.weight(1f), label = s.debtActionReopen, icon = Icons.AutoMirrored.Filled.Undo, filled = false, accent = MaterialTheme.colorScheme.primary, onClick = onToggleSettled)
             }
             Box(
-                modifier = Modifier.size(36.dp).clip(RoundedCornerShape(10.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.05f)).clickable(onClick = onDelete),
+                modifier = Modifier.size(38.dp).clip(RoundedCornerShape(12.dp)).background(MaterialTheme.colorScheme.onSurface.copy(alpha = 0.06f)).clickable(onClick = onDelete),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(Icons.Outlined.DeleteOutline, contentDescription = "Delete", tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f), modifier = Modifier.size(18.dp))
