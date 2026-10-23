@@ -32,15 +32,17 @@ import cafe.adriel.voyager.navigator.LocalNavigator
 import cafe.adriel.voyager.navigator.currentOrThrow
 import org.koin.compose.getKoin
 import tj.mahram.lifetrack.core.i18n.LocalStrings
+import tj.mahram.lifetrack.core.i18n.financeHubStringsFor
 import tj.mahram.lifetrack.core.i18n.investmentStringsFor
 import tj.mahram.lifetrack.core.i18n.walletStringsFor
 import tj.mahram.lifetrack.core.util.formatCurrency
 import tj.mahram.lifetrack.core.util.roundTo
+import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.BalanceOverview
 import tj.mahram.lifetrack.domain.model.Category
 import tj.mahram.lifetrack.domain.model.DebtSummary
-import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.InvestmentsOverview
+import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
 import tj.mahram.lifetrack.domain.model.WalletsOverview
 import tj.mahram.lifetrack.feature.debts.DebtsScreen
@@ -48,6 +50,7 @@ import tj.mahram.lifetrack.feature.investments.InvestmentsScreen
 import tj.mahram.lifetrack.feature.wallets.WalletsScreen
 import tj.mahram.lifetrack.ui.components.parseHexColor
 import tj.mahram.lifetrack.ui.components.EmptyState
+import tj.mahram.lifetrack.ui.components.SectionHeader
 import tj.mahram.lifetrack.ui.components.TransactionCard
 import tj.mahram.lifetrack.ui.components.brandHorizontalGradient
 import tj.mahram.lifetrack.ui.components.brandVividGradient
@@ -81,6 +84,7 @@ fun FinanceContent(
     onOpenInvestments: () -> Unit = {}
 ) {
     val s = LocalStrings.current
+    val hub = financeHubStringsFor(state.language)
     val c = MaterialTheme.appColors
     Scaffold(
         containerColor = Color.Transparent,
@@ -107,6 +111,7 @@ fun FinanceContent(
                 }
             }
 
+            // ── Balance hero ─────────────────────────────────────────────
             item(key = "balance") {
                 state.balance?.let { balance ->
                     FinanceBalanceHero(
@@ -117,32 +122,65 @@ fun FinanceContent(
                 }
             }
 
+            // ── Net worth summary (assets − liabilities) ──────────────────
+            if (state.walletsOverview.hasAny || state.investmentsOverview.hasAny || state.debtSummary.hasAny) {
+                item(key = "networth") {
+                    NetWorthStrip(
+                        walletsTotal = state.walletsOverview.totalNetWorth,
+                        investmentsTotal = state.investmentsOverview.totalCurrentValue,
+                        debtNet = state.debtSummary.net,
+                        currency = state.currency,
+                        language = state.language
+                    )
+                }
+            }
+
+            // ── Accounts: uniform entry cards ─────────────────────────────
+            item(key = "accounts-header") {
+                FinanceGroupHeader(title = hub.sectionAccounts)
+            }
             item(key = "wallets") {
-                WalletsEntryCard(overview = state.walletsOverview, language = state.language, currency = state.currency, onClick = onOpenWallets)
+                FinanceSectionCard(emoji = "💼", title = walletStringsFor(state.language).entryTitle, onClick = onOpenWallets) {
+                    WalletsEntryDetail(overview = state.walletsOverview, language = state.language, currency = state.currency)
+                }
             }
-
-            item(key = "investments") {
-                InvestmentsEntryCard(overview = state.investmentsOverview, language = state.language, currency = state.currency, onClick = onOpenInvestments)
-            }
-
             item(key = "debts") {
-                DebtsEntryCard(summary = state.debtSummary, currency = state.currency, onClick = onOpenDebts)
+                FinanceSectionCard(emoji = "🤝", title = s.debtsTitle, onClick = onOpenDebts) {
+                    DebtsEntryDetail(summary = state.debtSummary, currency = state.currency)
+                }
+            }
+            item(key = "investments") {
+                FinanceSectionCard(emoji = "📈", title = investmentStringsFor(state.language).entryTitle, onClick = onOpenInvestments) {
+                    InvestmentsEntryDetail(overview = state.investmentsOverview, language = state.language, currency = state.currency)
+                }
             }
 
-            if (state.transactions.size >= 2) {
+            // ── Insights: charts ──────────────────────────────────────────
+            val hasSparkline = state.transactions.size >= 2 &&
+                state.filteredTransactions.take(30).count { it.type == TransactionType.EXPENSE } >= 2
+            val expensesByCategory = state.transactions
+                .filter { it.type == TransactionType.EXPENSE }
+                .groupBy { it.categoryId }
+                .mapValues { (_, txns) -> txns.sumOf { it.amount } }
+            val hasDonut = expensesByCategory.size >= 2
+            if (hasSparkline || hasDonut) {
+                item(key = "insights-header") {
+                    FinanceGroupHeader(title = hub.sectionInsights)
+                }
+            }
+            if (hasSparkline) {
                 item(key = "chart") { FinanceSparklineCard(transactions = state.filteredTransactions.take(30)) }
             }
-
-            item(key = "donut") {
-                val expensesByCategory = state.transactions
-                    .filter { it.type == TransactionType.EXPENSE }
-                    .groupBy { it.categoryId }
-                    .mapValues { (_, txns) -> txns.sumOf { it.amount } }
-                if (expensesByCategory.size >= 2) {
+            if (hasDonut) {
+                item(key = "donut") {
                     ExpenseDonutCard(expensesByCategory = expensesByCategory, categories = state.categories, currency = state.currency)
                 }
             }
 
+            // ── Activity: filter + transactions ───────────────────────────
+            item(key = "activity-header") {
+                FinanceGroupHeader(title = hub.sectionActivity)
+            }
             item(key = "tabs") {
                 FinancePillTabs(selectedType = state.selectedType, onSelect = { onIntent(FinanceIntent.SelectType(it)) })
             }
@@ -234,16 +272,38 @@ private fun FinanceBalanceHero(balance: BalanceOverview, currency: String, onAdj
     }
 }
 
-// ─── Debts entry card ───────────────────────────────────────────────────────────
+// ─── Group header ────────────────────────────────────────────────────────────
+/** Small labelled divider that groups the hub into Accounts / Insights / Activity. */
 @Composable
-private fun DebtsEntryCard(summary: DebtSummary, currency: String, onClick: () -> Unit) {
-    val s = LocalStrings.current
-    val c = MaterialTheme.appColors
+private fun FinanceGroupHeader(title: String) {
+    SectionHeader(
+        title = title,
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 18.dp, bottom = 4.dp)
+    )
+}
+
+// ─── Shared section entry card ─────────────────────────────────────────────────
+/**
+ * One uniform entry card used by every Finance section (Wallets, Debts,
+ * Investments). Chrome — glass surface, icon bubble, title, chevron — is
+ * identical for all; the [detail] slot holds the per-section stat line so the
+ * three cards read as a single designed set. Keep this the single source of
+ * truth for section cards so new sections (and the parallel Investments branch)
+ * drop in without restyling.
+ */
+@Composable
+private fun FinanceSectionCard(
+    emoji: String,
+    title: String,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier,
+    detail: @Composable ColumnScope.() -> Unit
+) {
     Row(
-        modifier = Modifier
+        modifier = modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .glassSurface(shape = RoundedCornerShape(22.dp))
+            .padding(horizontal = 16.dp, vertical = 5.dp)
+            .glassSurface(shape = RoundedCornerShape(20.dp))
             .clickable(onClick = onClick)
             .padding(16.dp),
         verticalAlignment = Alignment.CenterVertically
@@ -251,21 +311,67 @@ private fun DebtsEntryCard(summary: DebtSummary, currency: String, onClick: () -
         Box(
             modifier = Modifier.size(46.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
             contentAlignment = Alignment.Center
-        ) { Text("🤝", fontSize = 22.sp) }
+        ) { Text(emoji, fontSize = 22.sp) }
         Spacer(Modifier.width(14.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Text(s.debtsTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
+            Text(title, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
             Spacer(Modifier.height(4.dp))
-            if (summary.hasAny) {
-                Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
-                    DebtMiniStat(color = c.success, up = true, amount = summary.totalLent, currency = currency)
-                    DebtMiniStat(color = c.danger, up = false, amount = summary.totalBorrowed, currency = currency)
-                }
-            } else {
-                Text(s.debtEmptySubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
+            detail()
         }
         Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+    }
+}
+
+@Composable
+private fun WalletsEntryDetail(overview: WalletsOverview, language: AppLanguage, currency: String) {
+    val w = walletStringsFor(language)
+    if (overview.hasAny) {
+        Text(
+            "${w.countText(overview.count)} · ${overview.totalNetWorth.formatCurrency(currency)}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    } else {
+        Text(w.entryEmptySubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun InvestmentsEntryDetail(overview: InvestmentsOverview, language: AppLanguage, currency: String) {
+    val inv = investmentStringsFor(language)
+    val c = MaterialTheme.appColors
+    if (overview.hasAny) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Text(
+                "${inv.countText(overview.count)} · ${overview.totalCurrentValue.formatCurrency(currency)}",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            if (overview.totalProfit != 0.0) {
+                Text(
+                    inv.percentText(overview.overallReturnPercent),
+                    style = MaterialTheme.typography.labelSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = if (overview.totalProfit >= 0) c.success else c.danger
+                )
+            }
+        }
+    } else {
+        Text(inv.entryEmptySubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+    }
+}
+
+@Composable
+private fun DebtsEntryDetail(summary: DebtSummary, currency: String) {
+    val s = LocalStrings.current
+    val c = MaterialTheme.appColors
+    if (summary.hasAny) {
+        Row(horizontalArrangement = Arrangement.spacedBy(12.dp), verticalAlignment = Alignment.CenterVertically) {
+            DebtMiniStat(color = c.success, up = true, amount = summary.totalLent, currency = currency)
+            DebtMiniStat(color = c.danger, up = false, amount = summary.totalBorrowed, currency = currency)
+        }
+    } else {
+        Text(s.debtEmptySubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
     }
 }
 
@@ -277,83 +383,67 @@ private fun DebtMiniStat(color: Color, up: Boolean, amount: Double, currency: St
     }
 }
 
-// ─── Wallets entry card ───────────────────────────────────────────────────────
+// ─── Net worth summary ──────────────────────────────────────────────────────
+/**
+ * Compact "assets − liabilities" lens that sits under the ledger balance hero:
+ * wallets + investments + the net debt position (receivables − payables). It is
+ * deliberately distinct from the balance hero, which reflects the cash ledger.
+ */
 @Composable
-private fun WalletsEntryCard(overview: WalletsOverview, language: tj.mahram.lifetrack.domain.model.AppLanguage, currency: String, onClick: () -> Unit) {
-    val w = walletStringsFor(language)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .glassSurface(shape = RoundedCornerShape(22.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+private fun NetWorthStrip(
+    walletsTotal: Double,
+    investmentsTotal: Double,
+    debtNet: Double,
+    currency: String,
+    language: AppLanguage
+) {
+    val hub = financeHubStringsFor(language)
+    val c = MaterialTheme.appColors
+    val netWorth = walletsTotal + investmentsTotal + debtNet
+    Column(
+        modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 6.dp)
+            .glassSurface(shape = RoundedCornerShape(20.dp)).padding(18.dp)
     ) {
-        Box(
-            modifier = Modifier.size(46.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center
-        ) { Text("💼", fontSize = 22.sp) }
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(w.entryTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Spacer(Modifier.height(4.dp))
-            if (overview.hasAny) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Box(
+                modifier = Modifier.size(42.dp).clip(CircleShape).background(c.success.copy(alpha = 0.14f)),
+                contentAlignment = Alignment.Center
+            ) { Text("💎", fontSize = 20.sp) }
+            Spacer(Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
+                Text(hub.netWorthLabel, style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Spacer(Modifier.height(2.dp))
                 Text(
-                    "${w.countText(overview.count)} · ${overview.totalNetWorth.formatCurrency(currency)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                    netWorth.formatCurrency(currency),
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.ExtraBold,
+                    color = if (netWorth >= 0) MaterialTheme.colorScheme.onSurface else c.danger,
+                    letterSpacing = (-0.3).sp
                 )
-            } else {
-                Text(w.entryEmptySubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+            NetWorthChip(emoji = "💼", amount = walletsTotal, currency = currency, color = MaterialTheme.colorScheme.primary)
+            if (investmentsTotal != 0.0) {
+                NetWorthChip(emoji = "📈", amount = investmentsTotal, currency = currency, color = c.info)
+            }
+            if (debtNet != 0.0) {
+                NetWorthChip(emoji = "🤝", amount = debtNet, currency = currency, color = if (debtNet >= 0) c.success else c.danger, showSign = true)
+            }
+        }
     }
 }
 
-// ─── Investments entry card ─────────────────────────────────────────────────────
 @Composable
-private fun InvestmentsEntryCard(overview: InvestmentsOverview, language: tj.mahram.lifetrack.domain.model.AppLanguage, currency: String, onClick: () -> Unit) {
-    val iv = investmentStringsFor(language)
-    val c = MaterialTheme.appColors
+private fun NetWorthChip(emoji: String, amount: Double, currency: String, color: Color, showSign: Boolean = false) {
     Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 16.dp, vertical = 6.dp)
-            .glassSurface(shape = RoundedCornerShape(22.dp))
-            .clickable(onClick = onClick)
-            .padding(16.dp),
-        verticalAlignment = Alignment.CenterVertically
+        modifier = Modifier.clip(RoundedCornerShape(10.dp)).background(color.copy(alpha = 0.12f)).padding(horizontal = 10.dp, vertical = 6.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(5.dp)
     ) {
-        Box(
-            modifier = Modifier.size(46.dp).clip(CircleShape).background(MaterialTheme.colorScheme.primary.copy(alpha = 0.14f)),
-            contentAlignment = Alignment.Center
-        ) { Text("📈", fontSize = 22.sp) }
-        Spacer(Modifier.width(14.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(iv.entryTitle, style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurface)
-            Spacer(Modifier.height(4.dp))
-            if (overview.hasAny) {
-                Text(
-                    "${iv.countText(overview.count)} · ${overview.totalCurrentValue.formatCurrency(currency)}",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            } else {
-                Text(iv.entryEmptySubtitle, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-            }
-        }
-        if (overview.hasAny) {
-            Text(
-                iv.percentText(overview.overallReturnPercent),
-                style = MaterialTheme.typography.labelMedium,
-                fontWeight = FontWeight.Bold,
-                color = if (overview.totalProfit >= 0) c.success else c.danger
-            )
-            Spacer(Modifier.width(6.dp))
-        }
-        Icon(Icons.AutoMirrored.Filled.KeyboardArrowRight, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.size(24.dp))
+        Text(emoji, fontSize = 12.sp)
+        Text(amount.formatCurrency(currency, showSign = showSign), style = MaterialTheme.typography.labelSmall, fontWeight = FontWeight.SemiBold, color = color)
     }
 }
 
