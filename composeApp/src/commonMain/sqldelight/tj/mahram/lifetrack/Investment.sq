@@ -1,0 +1,41 @@
+-- An investment holding: a kind of asset (stock, fund, business, metal, real
+-- estate, other) with the amount invested (cost basis) and its current value.
+-- The gap between the two is the holding's profit/loss.
+CREATE TABLE investment (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'STOCK',
+    amountInvested REAL NOT NULL DEFAULT 0,
+    currentValue REAL NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    note TEXT,
+    icon TEXT NOT NULL DEFAULT '📈',
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);
+
+insertInvestment:
+INSERT INTO investment VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+-- Cloud sync helpers.
+insertOrReplaceInvestment:
+INSERT OR REPLACE INTO investment VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
+syncAllInvestmentIds:
+SELECT id FROM investment;
+
+selectAllInvestments:
+SELECT * FROM investment ORDER BY createdAt ASC;
+
+selectInvestmentById:
+SELECT * FROM investment WHERE id = ?;
+
+updateInvestment:
+UPDATE investment SET
+    name = ?, type = ?, amountInvested = ?, currentValue = ?, currency = ?,
+    note = ?, icon = ?, color = ?, updatedAt = ?
+WHERE id = ?;
+
+deleteInvestment:
+DELETE FROM investment WHERE id = ?;

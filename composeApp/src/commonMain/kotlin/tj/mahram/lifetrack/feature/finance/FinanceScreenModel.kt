@@ -9,6 +9,7 @@ import tj.mahram.lifetrack.domain.repository.CategoryRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.domain.usecase.debt.ObserveDebtSummaryUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.*
+import tj.mahram.lifetrack.domain.usecase.investment.ObserveInvestmentsOverviewUseCase
 import tj.mahram.lifetrack.domain.usecase.wallet.ObserveWalletsOverviewUseCase
 
 class FinanceScreenModel(
@@ -18,6 +19,7 @@ class FinanceScreenModel(
     private val observeBalance: ObserveBalanceUseCase,
     private val observeDebtSummary: ObserveDebtSummaryUseCase,
     private val observeWalletsOverview: ObserveWalletsOverviewUseCase,
+    private val observeInvestmentsOverview: ObserveInvestmentsOverviewUseCase,
     private val categoryRepository: CategoryRepository,
     private val settingsRepository: SettingsRepository
 ) : ScreenModel {
@@ -79,6 +81,11 @@ class FinanceScreenModel(
         screenModelScope.launch {
             observeWalletsOverview().collectLatest { overview ->
                 _state.update { it.copy(walletsOverview = overview) }
+            }
+        }
+        screenModelScope.launch {
+            observeInvestmentsOverview().collectLatest { overview ->
+                _state.update { it.copy(investmentsOverview = overview) }
             }
         }
         screenModelScope.launch {

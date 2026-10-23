@@ -9,6 +9,7 @@ import tj.mahram.lifetrack.data.local.CategoryLocalDataSource
 import tj.mahram.lifetrack.data.local.DatabaseDriverFactory
 import tj.mahram.lifetrack.data.local.DebtLocalDataSource
 import tj.mahram.lifetrack.data.local.GoalLocalDataSource
+import tj.mahram.lifetrack.data.local.InvestmentLocalDataSource
 import tj.mahram.lifetrack.data.local.ProblemLocalDataSource
 import tj.mahram.lifetrack.data.local.TaskLocalDataSource
 import tj.mahram.lifetrack.data.local.TransactionLocalDataSource
@@ -21,6 +22,7 @@ import tj.mahram.lifetrack.data.repository.AuthRepositoryImpl
 import tj.mahram.lifetrack.data.repository.CategoryRepositoryImpl
 import tj.mahram.lifetrack.data.repository.DebtRepositoryImpl
 import tj.mahram.lifetrack.data.repository.GoalRepositoryImpl
+import tj.mahram.lifetrack.data.repository.InvestmentRepositoryImpl
 import tj.mahram.lifetrack.data.repository.ProblemRepositoryImpl
 import tj.mahram.lifetrack.data.repository.ReminderRepositoryImpl
 import tj.mahram.lifetrack.data.repository.SettingsRepositoryImpl
@@ -34,6 +36,7 @@ import tj.mahram.lifetrack.domain.repository.AuthRepository
 import tj.mahram.lifetrack.domain.repository.CategoryRepository
 import tj.mahram.lifetrack.domain.repository.DebtRepository
 import tj.mahram.lifetrack.domain.repository.GoalRepository
+import tj.mahram.lifetrack.domain.repository.InvestmentRepository
 import tj.mahram.lifetrack.domain.repository.ProblemRepository
 import tj.mahram.lifetrack.domain.repository.ReminderRepository
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
@@ -59,6 +62,11 @@ import tj.mahram.lifetrack.domain.usecase.goal.DeleteGoalUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.GetAllGoalsUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.SetGoalPurchasedUseCase
 import tj.mahram.lifetrack.domain.usecase.goal.UpdateGoalProgressUseCase
+import tj.mahram.lifetrack.domain.usecase.investment.CreateInvestmentUseCase
+import tj.mahram.lifetrack.domain.usecase.investment.DeleteInvestmentUseCase
+import tj.mahram.lifetrack.domain.usecase.investment.GetAllInvestmentsUseCase
+import tj.mahram.lifetrack.domain.usecase.investment.ObserveInvestmentsOverviewUseCase
+import tj.mahram.lifetrack.domain.usecase.investment.UpdateInvestmentUseCase
 import tj.mahram.lifetrack.domain.usecase.problem.CreateProblemUseCase
 import tj.mahram.lifetrack.domain.usecase.problem.DeleteProblemUseCase
 import tj.mahram.lifetrack.domain.usecase.problem.GetAllProblemsUseCase
@@ -83,6 +91,7 @@ import tj.mahram.lifetrack.feature.dashboard.DashboardScreenModel
 import tj.mahram.lifetrack.feature.debts.DebtsScreenModel
 import tj.mahram.lifetrack.feature.finance.FinanceScreenModel
 import tj.mahram.lifetrack.feature.goals.GoalsScreenModel
+import tj.mahram.lifetrack.feature.investments.InvestmentsScreenModel
 import tj.mahram.lifetrack.feature.problems.ProblemsScreenModel
 import tj.mahram.lifetrack.feature.planner.PlannerScreenModel
 import tj.mahram.lifetrack.feature.profile.ProfileScreenModel
@@ -117,6 +126,7 @@ val appModule = module {
     singleOf(::DebtLocalDataSource)
     singleOf(::ProblemLocalDataSource)
     singleOf(::WalletLocalDataSource)
+    singleOf(::InvestmentLocalDataSource)
 
     // Repositories (each also takes the SyncTracker to mark local changes dirty)
     single<TaskRepository> { TaskRepositoryImpl(get(), get()) }
@@ -126,6 +136,7 @@ val appModule = module {
     single<DebtRepository> { DebtRepositoryImpl(get(), get()) }
     single<ProblemRepository> { ProblemRepositoryImpl(get(), get()) }
     single<WalletRepository> { WalletRepositoryImpl(get(), get(), get()) }
+    single<InvestmentRepository> { InvestmentRepositoryImpl(get(), get()) }
 
     // Task use cases
     factoryOf(::GetAllTasksUseCase)
@@ -168,6 +179,13 @@ val appModule = module {
     factoryOf(::UpdateWalletUseCase)
     factoryOf(::DeleteWalletUseCase)
 
+    // Investment use cases
+    factoryOf(::GetAllInvestmentsUseCase)
+    factoryOf(::ObserveInvestmentsOverviewUseCase)
+    factoryOf(::CreateInvestmentUseCase)
+    factoryOf(::UpdateInvestmentUseCase)
+    factoryOf(::DeleteInvestmentUseCase)
+
     // Problem use cases
     factoryOf(::GetAllProblemsUseCase)
     factoryOf(::GetProblemHistoryUseCase)
@@ -185,6 +203,7 @@ val appModule = module {
     factoryOf(::GoalsScreenModel)
     factoryOf(::DebtsScreenModel)
     factoryOf(::WalletsScreenModel)
+    factoryOf(::InvestmentsScreenModel)
     factoryOf(::ProblemsScreenModel)
     factoryOf(::RemindersScreenModel)
     factoryOf(::SyncScreenModel)

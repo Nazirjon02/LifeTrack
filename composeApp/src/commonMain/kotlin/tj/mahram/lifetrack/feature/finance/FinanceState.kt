@@ -4,6 +4,7 @@ import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.BalanceOverview
 import tj.mahram.lifetrack.domain.model.Category
 import tj.mahram.lifetrack.domain.model.DebtSummary
+import tj.mahram.lifetrack.domain.model.InvestmentsOverview
 import tj.mahram.lifetrack.domain.model.Transaction
 import tj.mahram.lifetrack.domain.model.TransactionType
 import tj.mahram.lifetrack.domain.model.WalletsOverview
@@ -21,6 +22,7 @@ data class FinanceState(
     val showAdjustBalance: Boolean = false,
     val debtSummary: DebtSummary = DebtSummary(),
     val walletsOverview: WalletsOverview = WalletsOverview(),
+    val investmentsOverview: InvestmentsOverview = InvestmentsOverview(),
     val error: String? = null
 ) {
     val filteredTransactions: List<Transaction>
