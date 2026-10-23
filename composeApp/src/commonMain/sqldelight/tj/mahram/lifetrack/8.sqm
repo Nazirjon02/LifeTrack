@@ -1,0 +1,17 @@
+-- Migration 8 -> 9: investments portfolio.
+--   * an `investment` table holding assets (STOCK / FUND / BUSINESS / METAL /
+--     REAL_ESTATE / OTHER) with the amount invested and their current value so
+--     the UI can show per-asset and portfolio profit/loss and returns.
+CREATE TABLE IF NOT EXISTS investment (
+    id TEXT NOT NULL PRIMARY KEY,
+    name TEXT NOT NULL,
+    type TEXT NOT NULL DEFAULT 'STOCK',
+    amountInvested REAL NOT NULL DEFAULT 0,
+    currentValue REAL NOT NULL DEFAULT 0,
+    currency TEXT NOT NULL DEFAULT 'USD',
+    note TEXT,
+    icon TEXT NOT NULL DEFAULT '📈',
+    color TEXT NOT NULL DEFAULT '#7C3AED',
+    createdAt INTEGER NOT NULL,
+    updatedAt INTEGER NOT NULL
+);

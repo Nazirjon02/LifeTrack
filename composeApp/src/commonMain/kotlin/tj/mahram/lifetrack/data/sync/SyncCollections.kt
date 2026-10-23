@@ -27,6 +27,7 @@ fun defaultSyncCollections(db: AppDatabase, now: () -> Long): List<SyncCollectio
     CategorySync(db),
     TaskSync(db, now),
     WalletSync(db, now),
+    InvestmentSync(db, now),
     TransactionSync(db, now),
     GoalSync(db, now),
     DebtSync(db, now),
@@ -182,6 +183,44 @@ private class WalletSync(private val db: AppDatabase, private val now: () -> Lon
         )
     }
     override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteWallet(id) }
+}
+
+private class InvestmentSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
+    override val name = SyncCollectionNames.INVESTMENTS
+    private val q get() = db.investmentQueries
+    override suspend fun localIds() = withContext(Dispatchers.Default) { q.syncAllInvestmentIds().executeAsList() }
+    override suspend fun buildFields(id: String): Map<String, FsValue>? = withContext(Dispatchers.Default) {
+        val r = q.selectInvestmentById(id).executeAsOneOrNull() ?: return@withContext null
+        mapOf(
+            "id" to FsValue.Str(r.id),
+            "name" to FsValue.of(r.name),
+            "type" to FsValue.of(r.type),
+            "amountInvested" to FsValue.Dbl(r.amountInvested),
+            "currentValue" to FsValue.Dbl(r.currentValue),
+            "currency" to FsValue.of(r.currency),
+            "note" to FsValue.of(r.note),
+            "icon" to FsValue.of(r.icon),
+            "color" to FsValue.of(r.color),
+            "createdAt" to FsValue.Int64(r.createdAt),
+            "updatedAt" to FsValue.Int64(r.updatedAt)
+        )
+    }
+    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+        q.insertOrReplaceInvestment(
+            id = id,
+            name = f.str("name") ?: "",
+            type = f.str("type") ?: "STOCK",
+            amountInvested = f.double("amountInvested") ?: 0.0,
+            currentValue = f.double("currentValue") ?: 0.0,
+            currency = f.str("currency") ?: "USD",
+            note = f.str("note"),
+            icon = f.str("icon") ?: "📈",
+            color = f.str("color") ?: "#7C3AED",
+            createdAt = f.long("createdAt") ?: now(),
+            updatedAt = f.long("updatedAt") ?: now()
+        )
+    }
+    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteInvestment(id) }
 }
 
 private class GoalSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
