@@ -47,11 +47,12 @@ class FinanceScreenModel(
             FinanceIntent.ShowAdjustBalance -> _state.update { it.copy(showAdjustBalance = true) }
             FinanceIntent.HideAdjustBalance -> _state.update { it.copy(showAdjustBalance = false) }
             is FinanceIntent.SetCurrentBalance -> screenModelScope.launch {
-                // Store the opening balance so that current balance == the value
-                // the user entered, given the existing ledger net.
-                val overview = _state.value.balance
-                val ledgerNet = if (overview != null) overview.totalIncome - overview.totalExpense else 0.0
-                settingsRepository.setOpeningBalance(intent.amount - ledgerNet)
+                // Store the opening balance so that current balance == the value the
+                // user entered. The current balance also includes wallets, so they must
+                // be accounted for too (ignoring them added the wallets' total on every
+                // save). Read a fresh overview if the screen hasn't received one yet.
+                val overview = _state.value.balance ?: observeBalance().first()
+                settingsRepository.setOpeningBalance(overview.openingBalanceFor(intent.amount))
                 _state.update { it.copy(showAdjustBalance = false) }
             }
             is FinanceIntent.AddTransaction -> screenModelScope.launch {

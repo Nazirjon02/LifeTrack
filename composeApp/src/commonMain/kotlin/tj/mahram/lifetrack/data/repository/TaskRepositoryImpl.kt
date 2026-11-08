@@ -28,6 +28,11 @@ class TaskRepositoryImpl(
         sync.markDirty(SyncCollectionNames.TASKS, task.id)
     }
 
+    override suspend fun addSampleTasks(tasks: List<Task>) {
+        tasks.forEach { local.insertIfAbsent(it) }
+        sync.markPristine(SyncCollectionNames.TASKS, tasks.map { it.id })
+    }
+
     override suspend fun updateTask(task: Task) {
         local.update(task)
         sync.markDirty(SyncCollectionNames.TASKS, task.id)

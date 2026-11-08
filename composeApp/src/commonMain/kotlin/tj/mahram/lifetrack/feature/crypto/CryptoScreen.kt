@@ -334,8 +334,8 @@ fun AddToPortfolioDialog(
         },
         confirmButton = {
             TextButton(onClick = {
-                val amount = amountText.toDoubleOrNull() ?: return@TextButton
-                val price = priceText.toDoubleOrNull() ?: return@TextButton
+                val amount = amountText.replace(',', '.').toDoubleOrNull() ?: return@TextButton
+                val price = priceText.replace(',', '.').toDoubleOrNull() ?: return@TextButton
                 onConfirm(amount, price)
             }) { Text(s.cryptoAddButton) }
         },

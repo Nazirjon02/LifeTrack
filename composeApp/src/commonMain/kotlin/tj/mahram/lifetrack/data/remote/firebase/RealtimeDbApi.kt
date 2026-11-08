@@ -12,7 +12,9 @@ import io.ktor.http.isSuccess
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 
 /** Meta field names stored alongside the entity's own columns in each record. */
 const val FS_META_UPDATED_AT = "_updatedAt"
@@ -34,7 +36,7 @@ class RemoteStoreException(message: String) : Exception(message)
  * `?auth=` query parameter (the documented REST method for ID tokens; the call
  * is HTTPS so it is not sent in clear text). Cross-platform: plain HTTPS.
  */
-class RealtimeDbApi(private val client: HttpClient) {
+class RealtimeDbApi(private val client: HttpClient) : RemoteStore {
 
     private val json = Json { ignoreUnknownKeys = true; isLenient = true }
 
@@ -44,8 +46,12 @@ class RealtimeDbApi(private val client: HttpClient) {
     private fun collectionUrl(uid: String, collection: String, token: String) =
         "${FirebaseConfig.databaseUrl}/users/$uid/$collection.json?auth=$token"
 
+    // Lives under users/{uid}, so the existing security rules already cover it.
+    private fun revisionUrl(uid: String, token: String) =
+        "${FirebaseConfig.databaseUrl}/users/$uid/meta/rev.json?auth=$token"
+
     /** Create or overwrite a record (PUT replaces the whole node). */
-    suspend fun upsert(
+    override suspend fun upsert(
         uid: String,
         collection: String,
         docId: String,
@@ -62,8 +68,22 @@ class RealtimeDbApi(private val client: HttpClient) {
         ensureSuccess(response, "upsert $collection/$docId")
     }
 
+    override suspend fun readRevision(uid: String, idToken: String): String? {
+        val response = client.get(revisionUrl(uid, idToken))
+        ensureSuccess(response, "read revision")
+        return (json.parseToJsonElement(response.bodyAsText()) as? JsonPrimitive)?.contentOrNull
+    }
+
+    override suspend fun writeRevision(uid: String, revision: String, idToken: String) {
+        val response = client.put(revisionUrl(uid, idToken)) {
+            contentType(ContentType.Application.Json)
+            setBody(json.encodeToString(JsonPrimitive.serializer(), JsonPrimitive(revision)))
+        }
+        ensureSuccess(response, "write revision")
+    }
+
     /** Read every record in the user's collection. Returns [] when empty. */
-    suspend fun list(uid: String, collection: String, idToken: String): List<RemoteDoc> {
+    override suspend fun list(uid: String, collection: String, idToken: String): List<RemoteDoc> {
         val response = client.get(collectionUrl(uid, collection, idToken))
         ensureSuccess(response, "list $collection")
         val root = json.parseToJsonElement(response.bodyAsText())

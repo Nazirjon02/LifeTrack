@@ -26,4 +26,11 @@ data class BalanceOverview(
     /** Net change over the current month. */
     val monthNet: Double
         get() = monthIncome - monthExpense
+
+    /**
+     * The opening balance that makes [currentBalance] equal [targetCurrentBalance]
+     * while everything else (wallets, income, expenses) stays as it is.
+     */
+    fun openingBalanceFor(targetCurrentBalance: Double): Double =
+        targetCurrentBalance - (currentBalance - openingBalance)
 }

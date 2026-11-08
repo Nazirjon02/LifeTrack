@@ -462,7 +462,7 @@ private fun UpdateProgressDialog(goal: Goal, onDismiss: () -> Unit, onConfirm: (
         confirmButton = {
             Box(
                 modifier = Modifier.clip(RoundedCornerShape(14.dp)).background(goalColor).clickable {
-                    val v = valueText.toDoubleOrNull()
+                    val v = valueText.replace(',', '.').toDoubleOrNull()
                     if (v == null || v < 0) { isError = true; return@clickable }
                     onConfirm(v.coerceAtMost(goal.targetValue))
                 }.padding(horizontal = 20.dp, vertical = 10.dp)

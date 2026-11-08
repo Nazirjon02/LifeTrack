@@ -62,6 +62,26 @@ class TaskLocalDataSource(private val db: AppDatabase) {
         }
     }
 
+    /** Insert [task] unless a row with its id already exists (built-in sample tasks). */
+    suspend fun insertIfAbsent(task: Task) {
+        withContext(Dispatchers.Default) {
+            db.taskQueries.insertTaskOrIgnore(
+                id = task.id,
+                title = task.title,
+                description = task.description,
+                priority = task.priority.name,
+                categoryId = task.categoryId,
+                isCompleted = if (task.isCompleted) 1L else 0L,
+                dueDate = task.dueDate?.toEpochMilliseconds(),
+                createdAt = task.createdAt.toEpochMilliseconds(),
+                updatedAt = task.updatedAt.toEpochMilliseconds(),
+                isRecurring = if (task.isRecurring) 1L else 0L,
+                recurringType = task.recurringType?.name,
+                parentTaskId = task.parentTaskId
+            )
+        }
+    }
+
     suspend fun update(task: Task) {
         withContext(Dispatchers.Default) {
             db.taskQueries.updateTask(

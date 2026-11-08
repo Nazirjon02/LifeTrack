@@ -10,6 +10,11 @@ interface TaskRepository {
     fun searchTasks(query: String): Flow<List<Task>>
     suspend fun getTaskById(id: String): Task?
     suspend fun createTask(task: Task)
+    /**
+     * Insert built-in sample tasks (skipping ids that already exist). They stay on
+     * this device until the user edits them, so they never pile up in the cloud.
+     */
+    suspend fun addSampleTasks(tasks: List<Task>)
     suspend fun updateTask(task: Task)
     suspend fun deleteTask(id: String)
     suspend fun toggleTaskCompletion(id: String, isCompleted: Boolean)

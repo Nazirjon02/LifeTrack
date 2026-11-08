@@ -32,6 +32,13 @@ seedIfAbsent:
 INSERT OR IGNORE INTO sync_meta(collection, id, dirty, deleted, updatedAt)
 VALUES (?, ?, 1, 0, ?);
 
+-- Built-in rows every device creates with the same id (default categories,
+-- sample tasks): tracked as already synced at updatedAt = 0, so they are not
+-- uploaded until the user edits them and any copy from the cloud always wins.
+markPristine:
+INSERT OR IGNORE INTO sync_meta(collection, id, dirty, deleted, updatedAt)
+VALUES (?, ?, 0, 0, 0);
+
 -- Only clear the dirty flag if the row was not re-edited while we were pushing
 -- it (updatedAt unchanged). Otherwise the newer local edit stays dirty and is
 -- picked up by the next sync — prevents a lost update.
@@ -46,3 +53,34 @@ SELECT id, deleted, updatedAt FROM sync_meta WHERE collection = ? AND id = ?;
 
 deleteAll:
 DELETE FROM sync_meta;
+
+-- ── Which account this bookkeeping belongs to ───────────────────────────────
+-- Stored as one row in the reserved '__owner__' collection whose id is the
+-- Firebase uid (no schema change needed). Real collections never use it.
+selectOwner:
+SELECT id FROM sync_meta WHERE collection = '__owner__' LIMIT 1;
+
+deleteOwner:
+DELETE FROM sync_meta WHERE collection = '__owner__';
+
+insertOwner:
+INSERT INTO sync_meta(collection, id, dirty, deleted, updatedAt)
+VALUES ('__owner__', ?, 0, 0, 0);
+
+-- Special updatedAt values:
+--   0 -> pristine built-in row (see markPristine): stays local until edited.
+--   1 -> real data at the lowest priority (rows that predate sync, data merged
+--        on an account switch): uploaded, but any real edit (a timestamp) wins.
+
+-- A different account signed in on this device: merge the local data into it
+-- at the lowest priority. The previous account's tombstones are dropped (they
+-- must not delete the new account's records), and rows that were in sync with
+-- the previous account are queued for upload with updatedAt = 1, so the new
+-- account's own copy of the same id wins. Unpushed local edits keep their
+-- timestamps; pristine built-in rows (updatedAt = 0) stay local.
+dropTombstonesForAccountSwitch:
+DELETE FROM sync_meta WHERE deleted = 1 AND collection != '__owner__';
+
+requeueForAccountSwitch:
+UPDATE sync_meta SET dirty = 1, updatedAt = 1
+WHERE dirty = 0 AND updatedAt > 0 AND collection != '__owner__';

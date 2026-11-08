@@ -198,7 +198,7 @@ fun AddTransactionSheet(
                     .clip(RoundedCornerShape(18.dp))
                     .background(Brush.horizontalGradient(listOf(accent, accent.copy(alpha = 0.75f))))
                     .clickable {
-                        val amount = amountText.toDoubleOrNull()
+                        val amount = amountText.replace(',', '.').toDoubleOrNull()
                         if (amount == null || amount <= 0) { amountError = true; return@clickable }
                         val cat = selectedCategory ?: return@clickable
                         onConfirm(FinanceIntent.AddTransaction(amount = amount, type = type, categoryId = cat.id, note = note.ifBlank { null }, walletId = selectedWalletId))

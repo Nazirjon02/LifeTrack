@@ -115,6 +115,7 @@ fun DebtsContent(state: DebtsState, onIntent: (DebtsIntent) -> Unit, onBack: () 
                 items(visible, key = { it.id }) { debt ->
                     DebtCard(
                         debt = debt,
+                        currency = state.currency,
                         onPay = { onIntent(DebtsIntent.ShowPayment(debt)) },
                         onToggleSettled = { onIntent(DebtsIntent.SetSettled(debt, !debt.isSettled)) },
                         onDelete = { onIntent(DebtsIntent.DeleteDebt(debt.id)) },
@@ -228,6 +229,8 @@ private fun DebtFilterTabs(selected: DebtFilter, onSelect: (DebtFilter) -> Unit)
 @Composable
 private fun DebtCard(
     debt: Debt,
+    /** The app currency — the summary above sums debts in it, so show them in it too. */
+    currency: String,
     onPay: () -> Unit,
     onToggleSettled: () -> Unit,
     onDelete: () -> Unit,
@@ -274,7 +277,7 @@ private fun DebtCard(
             Spacer(Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    (if (debt.type == DebtType.LENT) "+" else "-") + debt.remaining.formatCurrency(debt.currency),
+                    (if (debt.type == DebtType.LENT) "+" else "-") + debt.remaining.formatCurrency(currency),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = if (dimmed) MaterialTheme.colorScheme.onSurfaceVariant else accent
@@ -294,7 +297,7 @@ private fun DebtCard(
             }
             Spacer(Modifier.height(6.dp))
             Text(
-                "${s.debtRepaidLabel}: ${debt.paidAmount.formatCurrency(debt.currency)} / ${debt.amount.formatCurrency(debt.currency)}",
+                "${s.debtRepaidLabel}: ${debt.paidAmount.formatCurrency(currency)} / ${debt.amount.formatCurrency(currency)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )

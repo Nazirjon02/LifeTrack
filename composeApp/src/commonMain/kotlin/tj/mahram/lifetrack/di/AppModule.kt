@@ -18,6 +18,7 @@ import tj.mahram.lifetrack.data.local.db.AppDatabase
 import tj.mahram.lifetrack.data.remote.createHttpClient
 import tj.mahram.lifetrack.data.remote.firebase.FirebaseAuthApi
 import tj.mahram.lifetrack.data.remote.firebase.RealtimeDbApi
+import tj.mahram.lifetrack.data.remote.firebase.RemoteStore
 import tj.mahram.lifetrack.data.repository.AuthRepositoryImpl
 import tj.mahram.lifetrack.data.repository.CategoryRepositoryImpl
 import tj.mahram.lifetrack.data.repository.DebtRepositoryImpl
@@ -44,6 +45,7 @@ import tj.mahram.lifetrack.domain.repository.TaskRepository
 import tj.mahram.lifetrack.domain.repository.TransactionRepository
 import tj.mahram.lifetrack.domain.repository.WalletRepository
 import tj.mahram.lifetrack.feature.sync.SyncScreenModel
+import tj.mahram.lifetrack.domain.usecase.app.InitializeAppDataUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.AddTransactionUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.DeleteTransactionUseCase
 import tj.mahram.lifetrack.domain.usecase.finance.GetAllTransactionsUseCase
@@ -114,7 +116,7 @@ val appModule = module {
     single { createHttpClient() }
     single { FirebaseAuthApi(get(), nowMillis) }
     single<AuthRepository> { AuthRepositoryImpl(get(), get(), nowMillis) }
-    single { RealtimeDbApi(get()) }
+    single<RemoteStore> { RealtimeDbApi(get()) }
     single { SyncTracker(get(), nowMillis) }
     single { SyncEngine(get(), get(), get(), defaultSyncCollections(get(), nowMillis), nowMillis) }
 
@@ -137,6 +139,9 @@ val appModule = module {
     single<ProblemRepository> { ProblemRepositoryImpl(get(), get()) }
     single<WalletRepository> { WalletRepositoryImpl(get(), get(), get()) }
     single<InvestmentRepository> { InvestmentRepositoryImpl(get(), get()) }
+
+    // App start-up (default categories + first-launch sample tasks)
+    factoryOf(::InitializeAppDataUseCase)
 
     // Task use cases
     factoryOf(::GetAllTasksUseCase)

@@ -198,6 +198,8 @@ fun ProfileContent(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Row(
+                            // weight: long subtitles wrap instead of running under the dropdown
+                            modifier = Modifier.weight(1f).padding(end = 12.dp),
                             verticalAlignment = Alignment.CenterVertically,
                             horizontalArrangement = Arrangement.spacedBy(12.dp)
                         ) {

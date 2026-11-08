@@ -110,6 +110,7 @@ fun WalletsContent(
                     WalletCard(
                         ww = ww,
                         strings = w,
+                        currency = state.currency,
                         onOpen = { onOpenWallet(ww.wallet.id) },
                         onEdit = { onIntent(WalletsIntent.ShowEditSheet(ww.wallet)) },
                         onDelete = { onIntent(WalletsIntent.RequestDelete(ww.wallet)) },
@@ -176,6 +177,9 @@ private fun WalletsHero(state: WalletsState, strings: WalletStrings) {
 private fun WalletCard(
     ww: WalletWithBalance,
     strings: WalletStrings,
+    // The app currency: totals are summed in it without conversion, so every
+    // amount is shown in it too (not the label stored when the wallet was made).
+    currency: String,
     onOpen: () -> Unit,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
@@ -207,7 +211,7 @@ private fun WalletCard(
             }
             Spacer(Modifier.width(8.dp))
             Text(
-                ww.currentBalance.formatCurrency(wallet.currency),
+                ww.currentBalance.formatCurrency(currency),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
                 color = if (ww.currentBalance >= 0) MaterialTheme.colorScheme.onSurface else c.danger
@@ -217,7 +221,7 @@ private fun WalletCard(
 
         if (wallet.isDeposit) {
             Spacer(Modifier.height(14.dp))
-            DepositProgressStrip(wallet = wallet, strings = strings)
+            DepositProgressStrip(wallet = wallet, strings = strings, currency = currency)
         }
 
         Spacer(Modifier.height(12.dp))
@@ -253,7 +257,7 @@ private fun TypeChip(label: String, accent: Color) {
 }
 
 @Composable
-private fun DepositProgressStrip(wallet: Wallet, strings: WalletStrings) {
+private fun DepositProgressStrip(wallet: Wallet, strings: WalletStrings, currency: String) {
     val c = MaterialTheme.appColors
     val now = Clock.System.now()
     val matured = wallet.isMatured(now)
@@ -265,7 +269,7 @@ private fun DepositProgressStrip(wallet: Wallet, strings: WalletStrings) {
         }
         Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
             Text(
-                "${strings.maturityPayoutLabel}: ${wallet.maturityPayout.formatCurrency(wallet.currency)}",
+                "${strings.maturityPayoutLabel}: ${wallet.maturityPayout.formatCurrency(currency)}",
                 style = MaterialTheme.typography.labelSmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant
             )
