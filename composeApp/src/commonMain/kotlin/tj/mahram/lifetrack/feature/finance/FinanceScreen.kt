@@ -102,7 +102,9 @@ fun FinanceContent(
         }
     ) { padding ->
         LazyColumn(
-            contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 96.dp)
+            // Room for the two stacked FABs: with less, the last transaction's amount
+            // and delete button stayed hidden under the "add income" button.
+            contentPadding = PaddingValues(top = padding.calculateTopPadding(), bottom = 170.dp)
         ) {
             item(key = "header") {
                 Column(modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp).padding(top = 16.dp, bottom = 4.dp)) {
@@ -194,6 +196,7 @@ fun FinanceContent(
                     val cat = state.categoryById(txn.categoryId)
                     TransactionCard(
                         transaction = txn,
+                        currency = state.currency,
                         categoryIcon = cat?.icon ?: "💵",
                         categoryName = cat?.name ?: "Other",
                         onDelete = { onIntent(FinanceIntent.DeleteTransaction(txn.id)) },

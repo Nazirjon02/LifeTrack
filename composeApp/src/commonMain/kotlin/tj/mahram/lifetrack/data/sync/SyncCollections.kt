@@ -18,8 +18,11 @@ interface SyncCollection {
     suspend fun localIds(): List<String>
     /** Entity fields for [id], or null when the row no longer exists locally. */
     suspend fun buildFields(id: String): Map<String, FsValue>?
-    suspend fun applyUpsert(id: String, f: FsFields)
-    suspend fun localDelete(id: String)
+    // The two writers below are synchronous: the engine calls them inside
+    // SyncTracker.inTransaction, so a whole pulled collection lands in one
+    // transaction (fast, and one UI refresh per table instead of per row).
+    fun applyUpsert(id: String, f: FsFields)
+    fun localDelete(id: String)
 }
 
 /** All syncable collections in a stable order (parents before dependents). */
@@ -52,7 +55,7 @@ private class CategorySync(private val db: AppDatabase) : SyncCollection {
             "isCustom" to FsValue.Int64(r.isCustom)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceCategory(
             id = id,
             name = f.str("name") ?: "",
@@ -62,7 +65,7 @@ private class CategorySync(private val db: AppDatabase) : SyncCollection {
             isCustom = f.long("isCustom") ?: 0L
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteCategory(id) }
+    override fun localDelete(id: String) { q.deleteCategory(id) }
 }
 
 private class TaskSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
@@ -86,7 +89,7 @@ private class TaskSync(private val db: AppDatabase, private val now: () -> Long)
             "parentTaskId" to FsValue.of(r.parentTaskId)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceTask(
             id = id,
             title = f.str("title") ?: "",
@@ -102,7 +105,7 @@ private class TaskSync(private val db: AppDatabase, private val now: () -> Long)
             parentTaskId = f.str("parentTaskId")
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteTask(id) }
+    override fun localDelete(id: String) { q.deleteTask(id) }
 }
 
 private class TransactionSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
@@ -125,7 +128,7 @@ private class TransactionSync(private val db: AppDatabase, private val now: () -
             "walletId" to FsValue.of(r.walletId)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceTransaction(
             id = id,
             amount = f.double("amount") ?: 0.0,
@@ -140,7 +143,7 @@ private class TransactionSync(private val db: AppDatabase, private val now: () -
             walletId = f.str("walletId")
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteTransaction(id) }
+    override fun localDelete(id: String) { q.deleteTransaction(id) }
 }
 
 private class WalletSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
@@ -165,7 +168,7 @@ private class WalletSync(private val db: AppDatabase, private val now: () -> Lon
             "endDate" to FsValue.of(r.endDate)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceWallet(
             id = id,
             name = f.str("name") ?: "",
@@ -182,7 +185,7 @@ private class WalletSync(private val db: AppDatabase, private val now: () -> Lon
             endDate = f.long("endDate")
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteWallet(id) }
+    override fun localDelete(id: String) { q.deleteWallet(id) }
 }
 
 private class InvestmentSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
@@ -205,7 +208,7 @@ private class InvestmentSync(private val db: AppDatabase, private val now: () ->
             "updatedAt" to FsValue.Int64(r.updatedAt)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceInvestment(
             id = id,
             name = f.str("name") ?: "",
@@ -220,7 +223,7 @@ private class InvestmentSync(private val db: AppDatabase, private val now: () ->
             updatedAt = f.long("updatedAt") ?: now()
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteInvestment(id) }
+    override fun localDelete(id: String) { q.deleteInvestment(id) }
 }
 
 private class GoalSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
@@ -245,7 +248,7 @@ private class GoalSync(private val db: AppDatabase, private val now: () -> Long)
             "affectsBalance" to FsValue.Int64(r.affectsBalance)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceGoal(
             id = id,
             title = f.str("title") ?: "",
@@ -262,7 +265,7 @@ private class GoalSync(private val db: AppDatabase, private val now: () -> Long)
             affectsBalance = f.long("affectsBalance") ?: 0L
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteGoal(id) }
+    override fun localDelete(id: String) { q.deleteGoal(id) }
 }
 
 private class DebtSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
@@ -286,7 +289,7 @@ private class DebtSync(private val db: AppDatabase, private val now: () -> Long)
             "color" to FsValue.of(r.color)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceDebt(
             id = id,
             type = f.str("type") ?: "LENT",
@@ -302,7 +305,7 @@ private class DebtSync(private val db: AppDatabase, private val now: () -> Long)
             color = f.str("color") ?: "#7C3AED"
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteDebt(id) }
+    override fun localDelete(id: String) { q.deleteDebt(id) }
 }
 
 private class ProblemSync(private val db: AppDatabase, private val now: () -> Long) : SyncCollection {
@@ -328,7 +331,7 @@ private class ProblemSync(private val db: AppDatabase, private val now: () -> Lo
             "resolvedAt" to FsValue.of(r.resolvedAt)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceProblem(
             id = id,
             title = f.str("title") ?: "",
@@ -346,7 +349,7 @@ private class ProblemSync(private val db: AppDatabase, private val now: () -> Lo
             resolvedAt = f.long("resolvedAt")
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteProblem(id) }
+    override fun localDelete(id: String) { q.deleteProblem(id) }
 }
 
 private class ProblemHistorySync(private val db: AppDatabase) : SyncCollection {
@@ -362,7 +365,7 @@ private class ProblemHistorySync(private val db: AppDatabase) : SyncCollection {
             "createdAt" to FsValue.Int64(r.createdAt)
         )
     }
-    override suspend fun applyUpsert(id: String, f: FsFields): Unit = withContext(Dispatchers.Default) {
+    override fun applyUpsert(id: String, f: FsFields) {
         q.insertOrReplaceHistory(
             id = id,
             problemId = f.str("problemId") ?: "",
@@ -370,5 +373,5 @@ private class ProblemHistorySync(private val db: AppDatabase) : SyncCollection {
             createdAt = f.long("createdAt") ?: 0L
         )
     }
-    override suspend fun localDelete(id: String): Unit = withContext(Dispatchers.Default) { q.deleteHistoryById(id) }
+    override fun localDelete(id: String) { q.deleteHistoryById(id) }
 }

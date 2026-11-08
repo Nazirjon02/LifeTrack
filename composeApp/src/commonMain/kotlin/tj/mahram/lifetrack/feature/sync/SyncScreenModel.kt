@@ -61,7 +61,8 @@ class SyncScreenModel(
     }
 
     fun syncNow() {
-        screenModelScope.launch { syncEngine.syncAll() }
+        // An explicit "Sync now" re-downloads everything, not just on a marker change.
+        screenModelScope.launch { syncEngine.syncAll(forceFullPull = true) }
     }
 
     fun clearError() = _state.update { it.copy(error = null) }

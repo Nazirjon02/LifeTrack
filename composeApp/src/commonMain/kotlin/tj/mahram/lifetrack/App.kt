@@ -25,6 +25,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import cafe.adriel.voyager.core.lifecycle.LocalNavigatorScreenLifecycleProvider
+import cafe.adriel.voyager.core.lifecycle.NavigatorScreenLifecycleProvider
+import cafe.adriel.voyager.core.lifecycle.ScreenLifecycleContentProvider
+import cafe.adriel.voyager.core.screen.Screen
 import cafe.adriel.voyager.navigator.Navigator
 import cafe.adriel.voyager.navigator.tab.*
 import cafe.adriel.voyager.transitions.SlideTransition
@@ -47,8 +51,8 @@ import tj.mahram.lifetrack.di.appModule
 import tj.mahram.lifetrack.domain.model.AppLanguage
 import tj.mahram.lifetrack.domain.model.AppSettings
 import tj.mahram.lifetrack.domain.model.AppTheme
-import tj.mahram.lifetrack.domain.repository.CategoryRepository
 import tj.mahram.lifetrack.domain.repository.ReminderRepository
+import tj.mahram.lifetrack.domain.usecase.app.InitializeAppDataUseCase
 import tj.mahram.lifetrack.domain.repository.SettingsRepository
 import tj.mahram.lifetrack.feature.dashboard.DashboardScreen
 import tj.mahram.lifetrack.feature.finance.FinanceScreen
@@ -71,6 +75,22 @@ private val DefaultSettings = AppSettings(
     cryptoNotificationsEnabled = true
 )
 
+/**
+ * Voyager 1.0.0 gives every screen an `AndroidScreenLifecycleOwner` and destroys it the moment
+ * the screen is popped — while [SlideTransition] is still animating it out. When the animation
+ * ends, Voyager moves that DESTROYED lifecycle back to STARTED/CREATED, which androidx.lifecycle
+ * 2.10 rejects ("State is 'DESTROYED' and cannot be moved to STARTED"), so every back navigation
+ * from a nested screen (Wallets, Debts, Investments, Reminders, Sync…) crashed the Android app.
+ *
+ * LifeTrack keeps screen state in Voyager ScreenModels (disposed on pop independently of this
+ * owner) and uses no screen-scoped AndroidX ViewModels or lifecycles, so we opt out of the
+ * per-screen owner. Screens then share the Activity's lifecycle — exactly what Voyager already
+ * does on Desktop and iOS, whose default provider is also empty.
+ */
+private object NoScreenLifecycleOwners : NavigatorScreenLifecycleProvider {
+    override fun provide(screen: Screen): List<ScreenLifecycleContentProvider> = emptyList()
+}
+
 @Composable
 fun App(
     driverFactory: tj.mahram.lifetrack.data.local.DatabaseDriverFactory,
@@ -92,7 +112,8 @@ fun App(
         val authState by authRepo.state.collectAsState()
 
         LaunchedEffect(Unit) {
-            runCatching { koin.get<CategoryRepository>().initDefaultCategories() }
+            // Default categories every launch; sample tasks only on a fresh install.
+            runCatching { koin.get<InitializeAppDataUseCase>()() }
             // Re-arm reminder alarms on every launch (covers first launch and
             // schedules that may have been cleared by the OS).
             runCatching {
@@ -117,7 +138,11 @@ fun App(
             }
         }
 
-        CompositionLocalProvider(LocalStrings provides stringsFor(settings.language)) {
+        CompositionLocalProvider(
+            LocalStrings provides stringsFor(settings.language),
+            // Must wrap every Navigator (tabs + nested) — see NoScreenLifecycleOwners.
+            LocalNavigatorScreenLifecycleProvider provides NoScreenLifecycleOwners
+        ) {
             LifeTrackTheme(appTheme = settings.theme) {
                 AuroraBackground {
                     TabNavigator(tab = DashboardTab) { navigator ->

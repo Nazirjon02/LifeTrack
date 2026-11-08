@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import android.os.Build
 import tj.mahram.lifetrack.MainActivity
 import tj.mahram.lifetrack.core.notifications.ReminderScheduling
 
@@ -33,7 +34,19 @@ class ReminderReceiver : BroadcastReceiver() {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
         )
 
-        val notification = Notification.Builder(context, ReminderScheduling.CHANNEL_ID)
+        val builder = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            Notification.Builder(context, ReminderScheduling.CHANNEL_ID)
+        } else {
+            // Android 7.x (API 24–25, minSdk) has no channels and no (Context, String)
+            // constructor — calling it there throws NoSuchMethodError. Mirror the
+            // channel's IMPORTANCE_DEFAULT: normal priority with the default sound.
+            @Suppress("DEPRECATION")
+            Notification.Builder(context)
+                .setPriority(Notification.PRIORITY_DEFAULT)
+                .setDefaults(Notification.DEFAULT_SOUND)
+        }
+
+        val notification = builder
             .setSmallIcon(android.R.drawable.ic_popup_reminder)
             .setContentTitle("LifeTracker")
             .setContentText(reminder.message.ifBlank { "Time to review your problems and goals 💪" })

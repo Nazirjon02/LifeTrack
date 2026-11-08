@@ -54,6 +54,7 @@ data class WalletDetailScreen(val walletId: String) : Screen {
         WalletDetailContent(
             ww = ww,
             transactions = txns,
+            currency = state.currency,
             strings = walletStringsFor(state.language),
             onBack = { navigator.pop() }
         )
@@ -64,6 +65,8 @@ data class WalletDetailScreen(val walletId: String) : Screen {
 private fun WalletDetailContent(
     ww: WalletWithBalance?,
     transactions: List<Transaction>,
+    /** The app currency — every amount is shown in it (see WalletCard). */
+    currency: String,
     strings: WalletStrings,
     onBack: () -> Unit
 ) {
@@ -98,10 +101,10 @@ private fun WalletDetailContent(
             }
         }
 
-        item(key = "hero") { DetailHero(ww = ww, strings = strings) }
+        item(key = "hero") { DetailHero(ww = ww, strings = strings, currency = currency) }
 
         if (wallet.isDeposit) {
-            item(key = "deposit") { DepositDetailCard(wallet = wallet, strings = strings) }
+            item(key = "deposit") { DepositDetailCard(wallet = wallet, strings = strings, currency = currency) }
         }
 
         item(key = "txnHeader") {
@@ -125,14 +128,14 @@ private fun WalletDetailContent(
             }
         } else {
             items(transactions, key = { it.id }) { txn ->
-                WalletTxnRow(txn = txn, currency = wallet.currency)
+                WalletTxnRow(txn = txn, currency = currency)
             }
         }
     }
 }
 
 @Composable
-private fun DetailHero(ww: WalletWithBalance, strings: WalletStrings) {
+private fun DetailHero(ww: WalletWithBalance, strings: WalletStrings, currency: String) {
     val wallet = ww.wallet
     Box(
         modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp)
@@ -148,7 +151,7 @@ private fun DetailHero(ww: WalletWithBalance, strings: WalletStrings) {
             }
             Spacer(Modifier.height(16.dp))
             Text(
-                ww.currentBalance.formatCurrency(wallet.currency),
+                ww.currentBalance.formatCurrency(currency),
                 style = MaterialTheme.typography.displaySmall,
                 fontWeight = FontWeight.ExtraBold,
                 color = Color.White,
@@ -163,7 +166,7 @@ private fun DetailHero(ww: WalletWithBalance, strings: WalletStrings) {
 }
 
 @Composable
-private fun DepositDetailCard(wallet: Wallet, strings: WalletStrings) {
+private fun DepositDetailCard(wallet: Wallet, strings: WalletStrings, currency: String) {
     val c = MaterialTheme.appColors
     val now = Clock.System.now()
     val progress by animateFloatAsState(targetValue = wallet.termProgress(now), animationSpec = tween(700), label = "detailProgress")
@@ -190,14 +193,14 @@ private fun DepositDetailCard(wallet: Wallet, strings: WalletStrings) {
                 }
             }
             Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                StatBlock(label = strings.maturityPayoutLabel, value = wallet.maturityPayout.formatCurrency(wallet.currency), valueColor = c.success)
-                StatBlock(label = strings.accruedLabel, value = "+ " + accrued.formatCurrency(wallet.currency), valueColor = c.success)
+                StatBlock(label = strings.maturityPayoutLabel, value = wallet.maturityPayout.formatCurrency(currency), valueColor = c.success)
+                StatBlock(label = strings.accruedLabel, value = "+ " + accrued.formatCurrency(currency), valueColor = c.success)
             }
         }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.08f))
 
-        StatRow(label = strings.principalLabel, value = wallet.balance.formatCurrency(wallet.currency))
+        StatRow(label = strings.principalLabel, value = wallet.balance.formatCurrency(currency))
         wallet.interestRate?.let { StatRow(label = strings.rateLabel, value = strings.rateText(it)) }
         wallet.startDate?.let { StatRow(label = strings.startedLabel, value = it.formatDate()) }
         wallet.endDate?.let {

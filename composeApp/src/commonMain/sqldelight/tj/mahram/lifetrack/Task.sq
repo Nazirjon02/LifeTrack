@@ -16,6 +16,10 @@ CREATE TABLE task (
 insertTask:
 INSERT INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
 
+-- Built-in sample tasks: never overwrite a row that already exists.
+insertTaskOrIgnore:
+INSERT OR IGNORE INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);
+
 -- Cloud sync: overwrite a whole row coming from Firestore, and enumerate ids.
 insertOrReplaceTask:
 INSERT OR REPLACE INTO task VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);

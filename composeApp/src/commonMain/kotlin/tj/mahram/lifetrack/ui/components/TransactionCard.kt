@@ -23,6 +23,8 @@ import tj.mahram.lifetrack.ui.theme.appColors
 @Composable
 fun TransactionCard(
     transaction: Transaction,
+    /** The app currency — balances sum transactions in it, so show them in it too. */
+    currency: String,
     categoryIcon: String,
     categoryName: String,
     onDelete: () -> Unit,
@@ -74,7 +76,7 @@ fun TransactionCard(
         }
         Column(horizontalAlignment = Alignment.End) {
             Text(
-                "$amountPrefix${transaction.amount.formatCurrency(transaction.currency)}",
+                "$amountPrefix${transaction.amount.formatCurrency(currency)}",
                 style = MaterialTheme.typography.titleSmall,
                 fontWeight = FontWeight.Bold,
                 color = amountColor

@@ -105,6 +105,7 @@ fun InvestmentsContent(
                     InvestmentCard(
                         investment = investment,
                         strings = iv,
+                        currency = state.currency,
                         onEdit = { onIntent(InvestmentsIntent.ShowEditSheet(investment)) },
                         onDelete = { onIntent(InvestmentsIntent.RequestDelete(investment)) },
                         modifier = Modifier.animateItem()
@@ -194,6 +195,8 @@ private fun InvestmentsHero(overview: InvestmentsOverview, currency: String, str
 private fun InvestmentCard(
     investment: Investment,
     strings: InvestmentStrings,
+    /** The app currency — the portfolio hero sums holdings in it, so show them in it too. */
+    currency: String,
     onEdit: () -> Unit,
     onDelete: () -> Unit,
     modifier: Modifier = Modifier
@@ -221,7 +224,7 @@ private fun InvestmentCard(
             Spacer(Modifier.width(8.dp))
             Column(horizontalAlignment = Alignment.End) {
                 Text(
-                    investment.currentValue.formatCurrency(investment.currency),
+                    investment.currentValue.formatCurrency(currency),
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
@@ -239,11 +242,11 @@ private fun InvestmentCard(
         // invested → current, with the signed P/L amount on the right.
         Row(verticalAlignment = Alignment.CenterVertically) {
             Row(modifier = Modifier.weight(1f), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text(investment.amountInvested.formatCurrency(investment.currency), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                Text(investment.amountInvested.formatCurrency(currency), style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 Text("→", style = MaterialTheme.typography.labelMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                Text(investment.currentValue.formatCurrency(investment.currency), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
+                Text(investment.currentValue.formatCurrency(currency), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onSurface)
             }
-            Text(investment.profit.formatCurrency(investment.currency, showSign = true), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = plColor)
+            Text(investment.profit.formatCurrency(currency, showSign = true), style = MaterialTheme.typography.labelMedium, fontWeight = FontWeight.Bold, color = plColor)
         }
 
         if (!investment.note.isNullOrBlank()) {

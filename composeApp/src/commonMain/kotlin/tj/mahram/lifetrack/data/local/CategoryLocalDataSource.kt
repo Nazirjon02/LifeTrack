@@ -55,20 +55,21 @@ class CategoryLocalDataSource(private val db: AppDatabase) {
         }
     }
 
-    suspend fun initDefaultsIfEmpty() = withContext(Dispatchers.Default) {
+    /** Creates the default categories when the table is empty; returns the ids it inserted. */
+    suspend fun initDefaultsIfEmpty(): List<String> = withContext(Dispatchers.Default) {
         val count = db.categoryQueries.countCategories().executeAsOne()
-        if (count == 0L) {
-            DefaultCategories.all.forEach { category ->
-                db.categoryQueries.insertCategory(
-                    id = category.id,
-                    name = category.name,
-                    type = category.type.name,
-                    icon = category.icon,
-                    color = category.color,
-                    isCustom = if (category.isCustom) 1L else 0L
-                )
-            }
+        if (count != 0L) return@withContext emptyList()
+        DefaultCategories.all.forEach { category ->
+            db.categoryQueries.insertCategory(
+                id = category.id,
+                name = category.name,
+                type = category.type.name,
+                icon = category.icon,
+                color = category.color,
+                isCustom = if (category.isCustom) 1L else 0L
+            )
         }
+        DefaultCategories.all.map { it.id }
     }
 
     private fun DbCategory.toDomain() = Category(

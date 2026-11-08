@@ -34,9 +34,13 @@ class CategoryRepositoryImpl(
         sync.markDeleted(SyncCollectionNames.CATEGORIES, id)
     }
 
-    // Default categories are seeded here; the sync engine's seed() step will
-    // pick them up and push them, so no explicit dirty-mark is needed.
-    override suspend fun initDefaultCategories() = local.initDefaultsIfEmpty()
+    // Default categories have fixed ids and are created on every device, so they
+    // are tracked as pristine: not uploaded until the user edits them, and an
+    // account's own (possibly renamed) copy always wins over a fresh install's.
+    override suspend fun initDefaultCategories() {
+        val inserted = local.initDefaultsIfEmpty()
+        if (inserted.isNotEmpty()) sync.markPristine(SyncCollectionNames.CATEGORIES, inserted)
+    }
 
     override suspend fun ensureCategory(category: Category) {
         local.ensure(category)
