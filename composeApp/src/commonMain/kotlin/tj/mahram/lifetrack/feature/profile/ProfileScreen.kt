@@ -254,23 +254,10 @@ fun ProfileContent(
                             subtitle = s.labelEnableNotifSub,
                             icon = Icons.Default.NotificationsActive,
                             checked = state.settings.notificationsEnabled,
+                            // The master switch for the app's reminder alarms (App.kt).
+                            // "Task Reminders" / "Finance Alerts" toggles were removed:
+                            // no such notifications exist, so they did nothing.
                             onToggle = { onIntent(ProfileIntent.SetNotifications(it)) },
-                            showDivider = true
-                        )
-                        NotifRow(
-                            title = s.labelTaskReminders,
-                            subtitle = s.labelTaskRemindersSub,
-                            icon = Icons.Default.CheckCircle,
-                            checked = state.settings.taskNotificationsEnabled,
-                            onToggle = { onIntent(ProfileIntent.SetTaskNotifications(it)) },
-                            showDivider = true
-                        )
-                        NotifRow(
-                            title = s.labelFinanceAlerts,
-                            subtitle = s.labelFinanceAlertsSub,
-                            icon = Icons.Default.AccountBalance,
-                            checked = state.settings.financeNotificationsEnabled,
-                            onToggle = { onIntent(ProfileIntent.SetFinanceNotifications(it)) },
                             showDivider = true
                         )
                         NavRow(

@@ -15,7 +15,9 @@ interface AuthRepository {
 
     /**
      * A currently-valid Firebase id token, refreshing it first if it is close
-     * to expiry. Returns null when signed out or when a refresh fails.
+     * to expiry. Returns null when signed out or when the server rejects the
+     * session; throws (e.g. an IOException) when the server can't be reached,
+     * so callers can tell "offline" apart from "session expired".
      */
     suspend fun validIdToken(): String?
 }

@@ -1,5 +1,6 @@
 package tj.mahram.lifetrack.feature.goals
 
+import tj.mahram.lifetrack.ui.components.rememberDeleteConfirmation
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -63,6 +64,7 @@ class GoalsScreen : Screen {
 @Composable
 fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
     val s = LocalStrings.current
+    val confirmDelete = rememberDeleteConfirmation()
     Scaffold(
         topBar = {
             TopAppBar(
@@ -117,7 +119,7 @@ fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
                         Text(s.goalsActiveSection, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.primary, modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp))
                     }
                     items(state.activeGoals, key = { it.id }) { goal ->
-                        GoalCard(goal = goal, currency = state.currency, onUpdate = { onIntent(GoalsIntent.ShowUpdate(goal)) }, onSetPurchased = { onIntent(GoalsIntent.SetPurchased(goal, it)) }, onDelete = { onIntent(GoalsIntent.Delete(goal.id)) }, modifier = Modifier.animateItem())
+                        GoalCard(goal = goal, currency = state.currency, onUpdate = { onIntent(GoalsIntent.ShowUpdate(goal)) }, onSetPurchased = { onIntent(GoalsIntent.SetPurchased(goal, it)) }, onDelete = { confirmDelete.request(goal.title) { onIntent(GoalsIntent.Delete(goal.id)) } }, modifier = Modifier.animateItem())
                     }
                 }
                 if (state.completedGoals.isNotEmpty()) {
@@ -125,7 +127,7 @@ fun GoalsContent(state: GoalsState, onIntent: (GoalsIntent) -> Unit) {
                         Text(s.goalsCompletedSection, style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.Bold, color = MaterialTheme.colorScheme.onSurfaceVariant, modifier = Modifier.padding(horizontal = 4.dp, vertical = 4.dp))
                     }
                     items(state.completedGoals, key = { it.id }) { goal ->
-                        GoalCard(goal = goal, currency = state.currency, onUpdate = { onIntent(GoalsIntent.ShowUpdate(goal)) }, onSetPurchased = { onIntent(GoalsIntent.SetPurchased(goal, it)) }, onDelete = { onIntent(GoalsIntent.Delete(goal.id)) }, modifier = Modifier.animateItem())
+                        GoalCard(goal = goal, currency = state.currency, onUpdate = { onIntent(GoalsIntent.ShowUpdate(goal)) }, onSetPurchased = { onIntent(GoalsIntent.SetPurchased(goal, it)) }, onDelete = { confirmDelete.request(goal.title) { onIntent(GoalsIntent.Delete(goal.id)) } }, modifier = Modifier.animateItem())
                     }
                 }
             }

@@ -79,13 +79,13 @@ class TransactionLocalDataSource(private val db: AppDatabase) {
     private fun DbTransaction.toDomain() = Transaction(
         id = id,
         amount = amount,
-        type = TransactionType.valueOf(type),
+        type = runCatching { TransactionType.valueOf(type) }.getOrDefault(TransactionType.EXPENSE),
         categoryId = categoryId,
         note = note,
         date = Instant.fromEpochMilliseconds(date),
         currency = currency,
         isRecurring = isRecurring == 1L,
-        recurringType = recurringType?.let { RecurringType.valueOf(it) },
+        recurringType = recurringType?.let { runCatching { RecurringType.valueOf(it) }.getOrNull() },
         cryptoCoinId = cryptoCoinId,
         walletId = walletId
     )

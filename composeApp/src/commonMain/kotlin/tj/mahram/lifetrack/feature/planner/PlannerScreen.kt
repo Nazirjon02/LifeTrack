@@ -1,5 +1,6 @@
 package tj.mahram.lifetrack.feature.planner
 
+import tj.mahram.lifetrack.ui.components.rememberDeleteConfirmation
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -400,6 +401,7 @@ private fun CalendarDayCell(
 @Composable
 private fun PlannerDayView(state: PlannerState, onIntent: (PlannerIntent) -> Unit) {
     val s = LocalStrings.current
+    val confirmDelete = rememberDeleteConfirmation()
     var selectedTab by remember { mutableStateOf(0) }
     val date = state.selectedDate
 
@@ -463,7 +465,7 @@ private fun PlannerDayView(state: PlannerState, onIntent: (PlannerIntent) -> Uni
                 TaskCard(
                     task = task,
                     onToggle = { done -> onIntent(PlannerIntent.ToggleTask(task.id, done)) },
-                    onDelete = { onIntent(PlannerIntent.DeleteTask(task.id)) },
+                    onDelete = { confirmDelete.request(task.title) { onIntent(PlannerIntent.DeleteTask(task.id)) } },
                     onClick = {},
                     modifier = Modifier.animateItem()
                 )

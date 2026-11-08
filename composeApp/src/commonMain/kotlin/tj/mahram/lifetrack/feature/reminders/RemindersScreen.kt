@@ -1,5 +1,6 @@
 package tj.mahram.lifetrack.feature.reminders
 
+import tj.mahram.lifetrack.ui.components.rememberDeleteConfirmation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -98,6 +99,12 @@ private fun RemindersContent(state: RemindersState, onIntent: (RemindersIntent) 
                         Text("⚠️ ${s.labelEnableNotif}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
                     }
                 }
+                if (!state.notificationsEnabled) {
+                    // The Profile master switch is off: App.kt arms no alarms.
+                    Box(modifier = Modifier.fillMaxWidth().glassSurface(shape = RoundedCornerShape(16.dp), glow = MaterialTheme.colorScheme.error).padding(14.dp)) {
+                        Text("🔕 ${s.remindersMutedBanner}", style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurface)
+                    }
+                }
                 state.reminders.forEach { reminder ->
                     ReminderCard(reminder = reminder, onIntent = onIntent)
                 }
@@ -113,6 +120,7 @@ private fun RemindersContent(state: RemindersState, onIntent: (RemindersIntent) 
 @Composable
 private fun ReminderCard(reminder: ReminderSchedule, onIntent: (RemindersIntent) -> Unit) {
     val s = LocalStrings.current
+    val confirmDelete = rememberDeleteConfirmation()
     val freqLabel = when (reminder.frequency) {
         ReminderFrequency.DAILY -> s.reminderFreqDaily
         ReminderFrequency.WEEKDAYS -> s.reminderFreqWeekdays
@@ -139,7 +147,7 @@ private fun ReminderCard(reminder: ReminderSchedule, onIntent: (RemindersIntent)
                 IconButton(onClick = { onIntent(RemindersIntent.ShowEdit(reminder)) }, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Outlined.Edit, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(17.dp))
                 }
-                IconButton(onClick = { onIntent(RemindersIntent.Delete(reminder.id)) }, modifier = Modifier.size(32.dp)) {
+                IconButton(onClick = { confirmDelete.request("${reminder.hour.toString().padStart(2, '0')}:${reminder.minute.toString().padStart(2, '0')} · ${reminder.message}") { onIntent(RemindersIntent.Delete(reminder.id)) } }, modifier = Modifier.size(32.dp)) {
                     Icon(Icons.Outlined.DeleteOutline, contentDescription = null, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(17.dp))
                 }
             }

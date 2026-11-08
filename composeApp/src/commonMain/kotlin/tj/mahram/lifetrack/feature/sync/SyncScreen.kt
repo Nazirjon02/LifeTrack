@@ -30,6 +30,7 @@ import kotlin.time.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import org.koin.compose.getKoin
+import tj.mahram.lifetrack.data.sync.SyncEngine
 import tj.mahram.lifetrack.core.i18n.SyncStrings
 import tj.mahram.lifetrack.core.i18n.syncStringsFor
 import tj.mahram.lifetrack.domain.model.AuthState
@@ -97,6 +98,8 @@ class SyncScreen : Screen {
 private fun localizedError(error: String?, s: SyncStrings): String? = when (error) {
     null -> null
     SyncScreenModel.EMPTY_FIELDS -> s.emptyFields
+    SyncEngine.ERROR_OFFLINE -> s.errorOffline
+    SyncEngine.ERROR_SESSION_EXPIRED -> s.errorSessionExpired
     else -> error
 }
 
@@ -234,8 +237,9 @@ private fun SignedInCard(
                 )
             }
         }
-        if (lastError != null && !running) {
-            Text(lastError, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
+        val errorText = localizedError(lastError, strings)
+        if (errorText != null && !running) {
+            Text(errorText, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.error)
         }
 
         GradientButton(

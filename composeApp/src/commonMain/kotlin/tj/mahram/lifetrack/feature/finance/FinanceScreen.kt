@@ -1,5 +1,6 @@
 package tj.mahram.lifetrack.feature.finance
 
+import tj.mahram.lifetrack.ui.components.rememberDeleteConfirmation
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.*
@@ -84,6 +85,7 @@ fun FinanceContent(
     onOpenInvestments: () -> Unit = {}
 ) {
     val s = LocalStrings.current
+    val confirmDelete = rememberDeleteConfirmation()
     val hub = financeHubStringsFor(state.language)
     val c = MaterialTheme.appColors
     Scaffold(
@@ -199,7 +201,7 @@ fun FinanceContent(
                         currency = state.currency,
                         categoryIcon = cat?.icon ?: "💵",
                         categoryName = cat?.name ?: "Other",
-                        onDelete = { onIntent(FinanceIntent.DeleteTransaction(txn.id)) },
+                        onDelete = { confirmDelete.request("${cat?.name ?: "Other"} · ${txn.amount.formatCurrency(state.currency)}") { onIntent(FinanceIntent.DeleteTransaction(txn.id)) } },
                         modifier = Modifier.animateItem()
                     )
                 }

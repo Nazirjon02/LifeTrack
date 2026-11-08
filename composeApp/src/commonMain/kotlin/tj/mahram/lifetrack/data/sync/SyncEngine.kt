@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlin.random.Random
+import kotlinx.io.IOException
 import tj.mahram.lifetrack.data.remote.firebase.FS_META_DELETED
 import tj.mahram.lifetrack.data.remote.firebase.FS_META_UPDATED_AT
 import tj.mahram.lifetrack.data.remote.firebase.FirebaseConfig
@@ -71,8 +72,9 @@ class SyncEngine(
         return mutex.withLock {
             _status.value = _status.value.copy(running = true, lastError = null)
             val result = runCatching {
-                val token = auth.validIdToken()
-                    ?: throw IllegalStateException("Session expired — sign in again")
+                // Null only when the server rejected the session; being offline
+                // throws an IOException instead (reported as ERROR_OFFLINE).
+                val token = auth.validIdToken() ?: throw SessionExpiredException()
                 val accountSwitched = tracker.claimFor(uid)
                 for (c in collections) seed(c)
 
@@ -99,10 +101,18 @@ class SyncEngine(
             _status.value = if (result.isSuccess) {
                 _status.value.copy(running = false, lastSyncedAt = nowMillis(), lastError = null)
             } else {
-                _status.value.copy(running = false, lastError = result.exceptionOrNull()?.message ?: "Sync failed")
+                _status.value.copy(running = false, lastError = describeError(result.exceptionOrNull()))
             }
             result
         }
+    }
+
+    /** What [SyncStatus.lastError] shows: a sentinel the UI localizes, or the message. */
+    private fun describeError(e: Throwable?): String = when (e) {
+        is SessionExpiredException -> ERROR_SESSION_EXPIRED
+        // No connection / DNS failure / timeout — from the token refresh or the database.
+        is IOException -> ERROR_OFFLINE
+        else -> e?.message ?: "Sync failed"
     }
 
     /**
@@ -168,5 +178,12 @@ class SyncEngine(
 
         /** updatedAt for real data with the lowest priority (0 = pristine built-in). */
         const val LOWEST_PRIORITY_UPDATED_AT: Long = 1L
+
+        /** [SyncStatus.lastError] sentinels; the Sync screen shows localized text. */
+        const val ERROR_OFFLINE = "__offline__"
+        const val ERROR_SESSION_EXPIRED = "__session_expired__"
     }
 }
+
+/** The server rejected the stored session (refresh token revoked or expired). */
+class SessionExpiredException : IllegalStateException("Session expired — sign in again")

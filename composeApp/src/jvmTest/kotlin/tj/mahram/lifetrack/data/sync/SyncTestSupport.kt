@@ -74,12 +74,21 @@ class FakeCloud : RemoteStore {
 }
 
 class FakeAuth(var currentUid: String?) : AuthRepository {
+    /** Thrown by [validIdToken], like a token refresh with no connection. */
+    var tokenFailure: Throwable? = null
+    /** The server rejected the refresh token: [validIdToken] returns null. */
+    var sessionRejected = false
+
     override val state: StateFlow<AuthState> = MutableStateFlow(AuthState.SignedOut)
     override suspend fun signIn(email: String, password: String): Result<Unit> = Result.success(Unit)
     override suspend fun signUp(email: String, password: String): Result<Unit> = Result.success(Unit)
     override suspend fun signOut() { currentUid = null }
     override fun uid(): String? = currentUid
-    override suspend fun validIdToken(): String? = currentUid?.let { "token-$it" }
+    override suspend fun validIdToken(): String? {
+        tokenFailure?.let { throw it }
+        if (sessionRejected) return null
+        return currentUid?.let { "token-$it" }
+    }
 }
 
 /** One device: its own database, the real repositories and the real sync engine. */

@@ -34,6 +34,9 @@ import cafe.adriel.voyager.navigator.tab.*
 import cafe.adriel.voyager.transitions.SlideTransition
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.withContext
 import tj.mahram.lifetrack.data.sync.SyncEngine
@@ -114,12 +117,18 @@ fun App(
         LaunchedEffect(Unit) {
             // Default categories every launch; sample tasks only on a fresh install.
             runCatching { koin.get<InitializeAppDataUseCase>()() }
-            // Re-arm reminder alarms on every launch (covers first launch and
-            // schedules that may have been cleared by the OS).
-            runCatching {
-                val reminders = koin.get<ReminderRepository>().current()
-                koin.get<NotificationScheduler>().sync(reminders)
-            }
+        }
+
+        // The single place that arms OS reminder alarms: on launch (covers
+        // schedules the OS may have cleared) and whenever the reminder list or
+        // the "Enable notifications" master switch changes — off arms nothing.
+        LaunchedEffect(Unit) {
+            val scheduler = koin.get<NotificationScheduler>()
+            combine(
+                koin.get<ReminderRepository>().getReminders(),
+                settingsRepo.getSettings().map { it.notificationsEnabled }.distinctUntilChanged()
+            ) { reminders, enabled -> if (enabled) reminders else emptyList() }
+                .collect { runCatching { scheduler.sync(it) } }
         }
 
         // Cloud sync: while signed in, sync on launch and then on an interval.

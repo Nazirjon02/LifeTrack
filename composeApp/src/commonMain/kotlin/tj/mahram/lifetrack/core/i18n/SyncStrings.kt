@@ -30,7 +30,9 @@ data class SyncStrings(
     val statusIdle: String,
     val notConfigured: String,
     val genericError: String,
-    val emptyFields: String
+    val emptyFields: String,
+    val errorOffline: String,
+    val errorSessionExpired: String
 ) {
     fun lastSyncedText(value: String): String = "$lastSynced $value"
     fun signedInAsText(email: String): String = "$signedInAs $email"
@@ -59,7 +61,9 @@ private val SyncStringsEn = SyncStrings(
     statusIdle = "Up to date",
     notConfigured = "Firebase is not configured yet.",
     genericError = "Something went wrong. Please try again.",
-    emptyFields = "Enter your email and password."
+    emptyFields = "Enter your email and password.",
+    errorOffline = "No internet connection. Check your network and try again.",
+    errorSessionExpired = "Your session has expired. Sign out and sign in again."
 )
 
 private val SyncStringsRu = SyncStrings(
@@ -85,7 +89,9 @@ private val SyncStringsRu = SyncStrings(
     statusIdle = "Всё синхронизировано",
     notConfigured = "Firebase ещё не настроен.",
     genericError = "Что-то пошло не так. Попробуйте ещё раз.",
-    emptyFields = "Введите почту и пароль."
+    emptyFields = "Введите почту и пароль.",
+    errorOffline = "Нет подключения к интернету. Проверьте сеть и попробуйте снова.",
+    errorSessionExpired = "Сессия истекла. Выйдите из аккаунта и войдите снова."
 )
 
 fun syncStringsFor(language: AppLanguage): SyncStrings = when (language) {

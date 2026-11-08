@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.io.IOException
 import tj.mahram.lifetrack.data.sync.SyncEngine
 import tj.mahram.lifetrack.data.sync.SyncStatus
 import tj.mahram.lifetrack.domain.model.AppLanguage
@@ -51,7 +52,12 @@ class SyncScreenModel(
         screenModelScope.launch {
             _state.update { it.copy(busy = true, error = null) }
             val result = if (signUp) auth.signUp(email, password) else auth.signIn(email, password)
-            _state.update { it.copy(busy = false, error = result.exceptionOrNull()?.message) }
+            val error = when (val e = result.exceptionOrNull()) {
+                null -> null
+                is IOException -> SyncEngine.ERROR_OFFLINE // no connection / timeout
+                else -> e.message
+            }
+            _state.update { it.copy(busy = false, error = error) }
             if (result.isSuccess) syncEngine.syncAll()
         }
     }
