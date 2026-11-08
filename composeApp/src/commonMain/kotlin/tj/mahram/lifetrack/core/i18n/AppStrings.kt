@@ -210,48 +210,6 @@ data class AppStrings(
     val goalPurchaseToggleHint: String,
     val goalPriceLabel: String,
 
-    // Debts
-    val tabDebts: String,
-    val debtsTitle: String,
-    val debtsSubtitle: String,
-    val debtOwedToMe: String,
-    val debtIOwe: String,
-    val debtNetPosition: String,
-    val debtNetPositive: String,
-    val debtNetNegative: String,
-    val debtNetEven: String,
-    val debtsFilterAll: String,
-    val debtEmptyTitle: String,
-    val debtEmptySubtitle: String,
-    val debtAddLent: String,
-    val debtAddBorrowed: String,
-    val debtAddTitle: String,
-    val debtDirectionLabel: String,
-    val debtPersonLabel: String,
-    val debtPersonPlaceholder: String,
-    val debtAmountLabel: String,
-    val debtNoteLabel: String,
-    val debtDueLabel: String,
-    val debtDueNone: String,
-    val debtDueWeek: String,
-    val debtDue2Weeks: String,
-    val debtDueMonth: String,
-    val debtDue3Months: String,
-    val debtNameError: String,
-    val debtCreateButton: String,
-    val debtRepaidLabel: String,
-    val debtRemainingWord: String,
-    val debtDuePrefix: String,
-    val debtOverdue: String,
-    val debtSettledBadge: String,
-    val debtActionPay: String,
-    val debtActionSettle: String,
-    val debtActionReopen: String,
-    val debtPaymentTitle: String,
-    val debtPaymentHint: String,
-    val debtPaymentFull: String,
-    val debtCount: (Int) -> String,
-
     // Planner screen title & view switcher
     val plannerScreenTitle: String,
     val plannerViewYear: String,
@@ -292,8 +250,51 @@ data class AppStrings(
     val cryptoAddButton: String,
     val cryptoCancelButton: String,
 
+    val debts: DebtStrings,
     val problems: ProblemStrings,
 ) {
+    // Debts — held by [debts] (DebtStrings), see AppStrings' size note above.
+    val tabDebts get() = debts.tabDebts
+    val debtsTitle get() = debts.debtsTitle
+    val debtsSubtitle get() = debts.debtsSubtitle
+    val debtOwedToMe get() = debts.debtOwedToMe
+    val debtIOwe get() = debts.debtIOwe
+    val debtNetPosition get() = debts.debtNetPosition
+    val debtNetPositive get() = debts.debtNetPositive
+    val debtNetNegative get() = debts.debtNetNegative
+    val debtNetEven get() = debts.debtNetEven
+    val debtsFilterAll get() = debts.debtsFilterAll
+    val debtEmptyTitle get() = debts.debtEmptyTitle
+    val debtEmptySubtitle get() = debts.debtEmptySubtitle
+    val debtAddLent get() = debts.debtAddLent
+    val debtAddBorrowed get() = debts.debtAddBorrowed
+    val debtAddTitle get() = debts.debtAddTitle
+    val debtDirectionLabel get() = debts.debtDirectionLabel
+    val debtPersonLabel get() = debts.debtPersonLabel
+    val debtPersonPlaceholder get() = debts.debtPersonPlaceholder
+    val debtAmountLabel get() = debts.debtAmountLabel
+    val debtNoteLabel get() = debts.debtNoteLabel
+    val debtDueLabel get() = debts.debtDueLabel
+    val debtDueNone get() = debts.debtDueNone
+    val debtDueWeek get() = debts.debtDueWeek
+    val debtDue2Weeks get() = debts.debtDue2Weeks
+    val debtDueMonth get() = debts.debtDueMonth
+    val debtDue3Months get() = debts.debtDue3Months
+    val debtNameError get() = debts.debtNameError
+    val debtCreateButton get() = debts.debtCreateButton
+    val debtRepaidLabel get() = debts.debtRepaidLabel
+    val debtRemainingWord get() = debts.debtRemainingWord
+    val debtDuePrefix get() = debts.debtDuePrefix
+    val debtOverdue get() = debts.debtOverdue
+    val debtSettledBadge get() = debts.debtSettledBadge
+    val debtActionPay get() = debts.debtActionPay
+    val debtActionSettle get() = debts.debtActionSettle
+    val debtActionReopen get() = debts.debtActionReopen
+    val debtPaymentTitle get() = debts.debtPaymentTitle
+    val debtPaymentHint get() = debts.debtPaymentHint
+    val debtPaymentFull get() = debts.debtPaymentFull
+    val debtCount get() = debts.debtCount
+
     fun priorityLabel(priority: TaskPriority): String = when (priority) {
         TaskPriority.LOW      -> priorityLow
         TaskPriority.MEDIUM   -> priorityMedium
@@ -599,47 +600,6 @@ val EnglishStrings = AppStrings(
     goalPurchaseToggleHint = "Deducts the price from your balance when bought",
     goalPriceLabel = "Price",
 
-    tabDebts = "Debts",
-    debtsTitle = "Debts",
-    debtsSubtitle = "Who owes you, and whom you owe",
-    debtOwedToMe = "Owed to me",
-    debtIOwe = "I owe",
-    debtNetPosition = "Net position",
-    debtNetPositive = "Overall, you're owed",
-    debtNetNegative = "Overall, you owe",
-    debtNetEven = "All settled up",
-    debtsFilterAll = "All",
-    debtEmptyTitle = "No debts yet",
-    debtEmptySubtitle = "Track money you lent out or borrowed",
-    debtAddLent = "I lent",
-    debtAddBorrowed = "I borrowed",
-    debtAddTitle = "New debt",
-    debtDirectionLabel = "Direction",
-    debtPersonLabel = "Person *",
-    debtPersonPlaceholder = "Name",
-    debtAmountLabel = "Amount *",
-    debtNoteLabel = "Note (optional)",
-    debtDueLabel = "Due date",
-    debtDueNone = "No date",
-    debtDueWeek = "1 week",
-    debtDue2Weeks = "2 weeks",
-    debtDueMonth = "1 month",
-    debtDue3Months = "3 months",
-    debtNameError = "Enter a name",
-    debtCreateButton = "Add debt",
-    debtRepaidLabel = "Repaid",
-    debtRemainingWord = "left",
-    debtDuePrefix = "Due",
-    debtOverdue = "Overdue",
-    debtSettledBadge = "Settled",
-    debtActionPay = "Payment",
-    debtActionSettle = "Settle",
-    debtActionReopen = "Reopen",
-    debtPaymentTitle = "Record payment",
-    debtPaymentHint = "How much was repaid?",
-    debtPaymentFull = "Repay all",
-    debtCount = { n -> if (n == 1) "1 debt" else "$n debts" },
-
     plannerScreenTitle = "Planner",
     plannerViewYear = "Year",
     plannerViewMonth = "Month",
@@ -677,6 +637,7 @@ val EnglishStrings = AppStrings(
     cryptoAddButton = "Add",
     cryptoCancelButton = "Cancel",
 
+    debts = DebtStringsEn,
     problems = ProblemStringsEn,
 )
 
@@ -918,57 +879,6 @@ val RussianStrings = AppStrings(
     goalPurchaseToggleHint = "Спишет цену с баланса при покупке",
     goalPriceLabel = "Цена",
 
-    tabDebts = "Долги",
-    debtsTitle = "Долги",
-    debtsSubtitle = "Кто должен вам и кому должны вы",
-    debtOwedToMe = "Мне должны",
-    debtIOwe = "Я должен",
-    debtNetPosition = "Чистая позиция",
-    debtNetPositive = "В целом должны вам",
-    debtNetNegative = "В целом должны вы",
-    debtNetEven = "Всё в расчёте",
-    debtsFilterAll = "Все",
-    debtEmptyTitle = "Долгов пока нет",
-    debtEmptySubtitle = "Отслеживайте, что вы дали или взяли в долг",
-    debtAddLent = "Я дал",
-    debtAddBorrowed = "Я взял",
-    debtAddTitle = "Новый долг",
-    debtDirectionLabel = "Направление",
-    debtPersonLabel = "Кто *",
-    debtPersonPlaceholder = "Имя",
-    debtAmountLabel = "Сумма *",
-    debtNoteLabel = "Заметка (необязательно)",
-    debtDueLabel = "Срок возврата",
-    debtDueNone = "Без срока",
-    debtDueWeek = "1 неделя",
-    debtDue2Weeks = "2 недели",
-    debtDueMonth = "1 месяц",
-    debtDue3Months = "3 месяца",
-    debtNameError = "Введите имя",
-    debtCreateButton = "Добавить долг",
-    debtRepaidLabel = "Погашено",
-    debtRemainingWord = "осталось",
-    debtDuePrefix = "Срок",
-    debtOverdue = "Просрочено",
-    debtSettledBadge = "Закрыт",
-    debtActionPay = "Платёж",
-    debtActionSettle = "Закрыть",
-    debtActionReopen = "Открыть",
-    debtPaymentTitle = "Внести платёж",
-    debtPaymentHint = "Сколько вернули?",
-    debtPaymentFull = "Погасить всё",
-    debtCount = { n ->
-        val mod10 = n % 10
-        val mod100 = n % 100
-        val word = when {
-            mod100 in 11..19 -> "долгов"
-            mod10 == 1       -> "долг"
-            mod10 in 2..4    -> "долга"
-            else             -> "долгов"
-        }
-        "$n $word"
-    },
-
     plannerScreenTitle = "Планировщик",
     plannerViewYear = "Год",
     plannerViewMonth = "Месяц",
@@ -1015,6 +925,7 @@ val RussianStrings = AppStrings(
     cryptoAddButton = "Добавить",
     cryptoCancelButton = "Отмена",
 
+    debts = DebtStringsRu,
     problems = ProblemStringsRu,
 )
 
