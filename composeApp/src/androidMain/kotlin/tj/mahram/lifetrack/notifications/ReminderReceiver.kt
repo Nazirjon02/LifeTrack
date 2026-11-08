@@ -20,6 +20,9 @@ class ReminderReceiver : BroadcastReceiver() {
         val id = intent.getStringExtra(ReminderScheduling.EXTRA_ID) ?: return
         val reminder = ReminderScheduling.loadMirror(context).firstOrNull { it.id == id } ?: return
         if (!reminder.enabled) return
+        // Alarms are one-shot: arm tomorrow's first, even if today isn't one of
+        // the reminder's days, so the chain never breaks.
+        ReminderScheduling.scheduleNext(context, reminder)
         if (!reminder.firesOn(ReminderScheduling.isoDayOfWeekToday())) return
 
         ReminderScheduling.ensureChannel(context)

@@ -10,10 +10,13 @@ import kotlinx.coroutines.launch
 import tj.mahram.lifetrack.core.notifications.NotificationScheduler
 import tj.mahram.lifetrack.domain.model.ReminderSchedule
 import tj.mahram.lifetrack.domain.repository.ReminderRepository
+import tj.mahram.lifetrack.domain.repository.SettingsRepository
 
 data class RemindersState(
     val reminders: List<ReminderSchedule> = emptyList(),
     val hasPermission: Boolean = true,
+    /** The Profile "Enable notifications" master switch; off = no reminder fires. */
+    val notificationsEnabled: Boolean = true,
     val showSheet: Boolean = false,
     val editing: ReminderSchedule? = null
 )
@@ -29,18 +32,24 @@ sealed class RemindersIntent {
 
 class RemindersScreenModel(
     private val reminderRepository: ReminderRepository,
-    private val notificationScheduler: NotificationScheduler
+    private val notificationScheduler: NotificationScheduler,
+    private val settingsRepository: SettingsRepository
 ) : ScreenModel {
 
     private val _state = MutableStateFlow(RemindersState(hasPermission = notificationScheduler.hasPermission()))
     val state: StateFlow<RemindersState> = _state.asStateFlow()
 
     init {
+        // OS alarms are re-armed centrally in App.kt (it also honours the master
+        // switch); this screen only shows the list.
         screenModelScope.launch {
             reminderRepository.getReminders().collect { reminders ->
                 _state.update { it.copy(reminders = reminders, hasPermission = notificationScheduler.hasPermission()) }
-                // Any change to the list re-arms the OS alarms.
-                notificationScheduler.sync(reminders)
+            }
+        }
+        screenModelScope.launch {
+            settingsRepository.getSettings().collect { settings ->
+                _state.update { it.copy(notificationsEnabled = settings.notificationsEnabled) }
             }
         }
     }

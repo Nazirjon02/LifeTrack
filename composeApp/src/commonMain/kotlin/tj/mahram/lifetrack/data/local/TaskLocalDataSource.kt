@@ -132,14 +132,14 @@ class TaskLocalDataSource(private val db: AppDatabase) {
         id = id,
         title = title,
         description = description,
-        priority = TaskPriority.valueOf(priority),
+        priority = runCatching { TaskPriority.valueOf(priority) }.getOrDefault(TaskPriority.MEDIUM),
         categoryId = categoryId,
         isCompleted = isCompleted == 1L,
         dueDate = dueDate?.let { Instant.fromEpochMilliseconds(it) },
         createdAt = Instant.fromEpochMilliseconds(createdAt),
         updatedAt = Instant.fromEpochMilliseconds(updatedAt),
         isRecurring = isRecurring == 1L,
-        recurringType = recurringType?.let { RecurringType.valueOf(it) },
+        recurringType = recurringType?.let { runCatching { RecurringType.valueOf(it) }.getOrNull() },
         parentTaskId = parentTaskId
     )
 }

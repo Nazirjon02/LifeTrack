@@ -55,8 +55,6 @@ class ProfileScreenModel(
                 is ProfileIntent.SetCurrency -> settingsRepository.setCurrency(intent.currency)
                 is ProfileIntent.SetLanguage -> settingsRepository.setLanguage(intent.language)
                 is ProfileIntent.SetNotifications -> settingsRepository.setNotificationsEnabled(intent.enabled)
-                is ProfileIntent.SetTaskNotifications -> settingsRepository.setTaskNotificationsEnabled(intent.enabled)
-                is ProfileIntent.SetFinanceNotifications -> settingsRepository.setFinanceNotificationsEnabled(intent.enabled)
                 is ProfileIntent.SetDisplayName -> settingsRepository.setDisplayName(intent.name.trim())
                 is ProfileIntent.SetAvatar -> settingsRepository.setAvatarEmoji(intent.emoji)
             }

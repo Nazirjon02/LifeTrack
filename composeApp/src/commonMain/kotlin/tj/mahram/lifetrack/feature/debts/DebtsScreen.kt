@@ -1,5 +1,6 @@
 package tj.mahram.lifetrack.feature.debts
 
+import tj.mahram.lifetrack.ui.components.rememberDeleteConfirmation
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
@@ -62,6 +63,7 @@ class DebtsScreen : Screen {
 @Composable
 fun DebtsContent(state: DebtsState, onIntent: (DebtsIntent) -> Unit, onBack: () -> Unit) {
     val s = LocalStrings.current
+    val confirmDelete = rememberDeleteConfirmation()
     val c = MaterialTheme.appColors
     Scaffold(
         containerColor = Color.Transparent,
@@ -118,7 +120,7 @@ fun DebtsContent(state: DebtsState, onIntent: (DebtsIntent) -> Unit, onBack: () 
                         currency = state.currency,
                         onPay = { onIntent(DebtsIntent.ShowPayment(debt)) },
                         onToggleSettled = { onIntent(DebtsIntent.SetSettled(debt, !debt.isSettled)) },
-                        onDelete = { onIntent(DebtsIntent.DeleteDebt(debt.id)) },
+                        onDelete = { confirmDelete.request(debt.counterparty) { onIntent(DebtsIntent.DeleteDebt(debt.id)) } },
                         modifier = Modifier.animateItem()
                     )
                 }

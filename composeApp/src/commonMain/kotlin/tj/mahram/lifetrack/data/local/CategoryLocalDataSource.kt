@@ -75,7 +75,7 @@ class CategoryLocalDataSource(private val db: AppDatabase) {
     private fun DbCategory.toDomain() = Category(
         id = id,
         name = name,
-        type = CategoryType.valueOf(type),
+        type = runCatching { CategoryType.valueOf(type) }.getOrDefault(CategoryType.EXPENSE),
         icon = icon,
         color = color,
         isCustom = isCustom == 1L

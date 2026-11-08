@@ -1,5 +1,6 @@
 package tj.mahram.lifetrack.feature.problems
 
+import tj.mahram.lifetrack.ui.components.rememberDeleteConfirmation
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -37,6 +38,7 @@ fun ProblemDetailSheet(
     onIntent: (ProblemsIntent) -> Unit
 ) {
     val s = LocalStrings.current
+    val confirmDelete = rememberDeleteConfirmation()
     val accent = statusColor(problem.status)
 
     ModalBottomSheet(
@@ -91,7 +93,7 @@ fun ProblemDetailSheet(
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
                     DetailButton(text = s.problemEditAction, color = MaterialTheme.colorScheme.primary, modifier = Modifier.weight(1f)) { onIntent(ProblemsIntent.ShowEdit(problem)) }
                     DetailButton(text = s.problemDeleteAction, color = MaterialTheme.colorScheme.error, modifier = Modifier.weight(1f)) {
-                        onIntent(ProblemsIntent.Delete(problem.id)); onDismiss()
+                        confirmDelete.request(problem.title) { onIntent(ProblemsIntent.Delete(problem.id)); onDismiss() }
                     }
                 }
 

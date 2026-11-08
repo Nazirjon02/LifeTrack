@@ -2,6 +2,7 @@ package tj.mahram.lifetrack.feature.planner
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import tj.mahram.lifetrack.domain.model.CategoryType
@@ -19,6 +20,12 @@ class PlannerScreenModel(
 
     private val _state = MutableStateFlow(PlannerState())
     val state: StateFlow<PlannerState> = _state.asStateFlow()
+
+    // Only one task subscription at a time. Each search used to start another
+    // collector without stopping the previous ones, so on any database change
+    // they all re-emitted and an old query's results could overwrite the list.
+    // (Declared before init: initializers run in order, and init starts it.)
+    private var tasksJob: Job? = null
 
     // Sample tasks are added once, on a fresh install's first launch, by
     // InitializeAppDataUseCase — not here (that re-created them whenever the
@@ -41,15 +48,7 @@ class PlannerScreenModel(
 
             is PlannerIntent.Search -> {
                 _state.update { it.copy(searchQuery = intent.query) }
-                if (intent.query.isNotBlank()) {
-                    screenModelScope.launch {
-                        searchTasks(intent.query).collectLatest { tasks ->
-                            _state.update { it.copy(tasks = tasks) }
-                        }
-                    }
-                } else {
-                    observeTasks()
-                }
+                observeTasks(intent.query)
             }
 
             PlannerIntent.ShowAddTask -> _state.update { it.copy(showAddTaskSheet = true) }
@@ -89,9 +88,11 @@ class PlannerScreenModel(
         }
     }
 
-    private fun observeTasks() {
-        screenModelScope.launch {
-            getAllTasks().collectLatest { tasks ->
+    private fun observeTasks(query: String = "") {
+        tasksJob?.cancel()
+        tasksJob = screenModelScope.launch {
+            val source = if (query.isBlank()) getAllTasks() else searchTasks(query)
+            source.collectLatest { tasks ->
                 _state.update { it.copy(isLoading = false, tasks = tasks) }
             }
         }

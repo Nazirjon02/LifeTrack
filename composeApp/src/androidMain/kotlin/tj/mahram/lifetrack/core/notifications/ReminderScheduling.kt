@@ -17,12 +17,18 @@ import java.util.Calendar
  * All the Android AlarmManager + notification plumbing lives here so both the
  * [NotificationScheduler] actual and the boot receiver share one code path.
  *
- * Each enabled reminder arms a daily inexact repeating alarm at its time. When
- * it fires, [ReminderReceiver] re-checks the reminder's frequency (weekdays /
- * weekends / custom days) before actually posting, so a single daily alarm
- * covers every frequency. The reminder list is mirrored into a private prefs
- * file so [tj.mahram.lifetrack.notifications.BootReceiver] can re-arm alarms
- * after a reboot without opening the database.
+ * Each enabled reminder arms a one-shot alarm for its next occurrence; when it
+ * fires, [ReminderReceiver] arms the following day's alarm and re-checks the
+ * reminder's frequency (weekdays / weekends / custom days) before actually
+ * posting, so one daily alarm covers every frequency. The reminder list is
+ * mirrored into a private prefs file so
+ * [tj.mahram.lifetrack.notifications.BootReceiver] can re-arm alarms after a
+ * reboot or a clock change without opening the database.
+ *
+ * Timing: the alarm is exact when the app may schedule exact alarms (always on
+ * Android 7–11; on 12+ with the "Alarms & reminders" permission), otherwise it
+ * fires within a 10-minute window. The previous `setInexactRepeating` daily
+ * alarm could legitimately be deferred by hours.
  */
 object ReminderScheduling {
 
@@ -39,13 +45,13 @@ object ReminderScheduling {
         ensureChannel(context)
         loadMirror(context).forEach { cancel(context, it.id) }
         saveMirror(context, reminders)
-        reminders.filter { it.enabled }.forEach { schedule(context, it) }
+        reminders.filter { it.enabled }.forEach { scheduleNext(context, it) }
     }
 
-    /** Re-arm alarms from the persisted mirror — used after a device reboot. */
+    /** Re-arm alarms from the persisted mirror — after a reboot or a clock change. */
     fun rescheduleFromMirror(context: Context) {
         ensureChannel(context)
-        loadMirror(context).filter { it.enabled }.forEach { schedule(context, it) }
+        loadMirror(context).filter { it.enabled }.forEach { scheduleNext(context, it) }
     }
 
     fun loadMirror(context: Context): List<ReminderSchedule> {
@@ -60,16 +66,26 @@ object ReminderScheduling {
             .apply()
     }
 
-    private fun schedule(context: Context, reminder: ReminderSchedule) {
+    /** Arm (or replace) the one-shot alarm for the reminder's next occurrence. */
+    fun scheduleNext(context: Context, reminder: ReminderSchedule) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return
         val trigger = nextTrigger(reminder.hour, reminder.minute)
-        am.setInexactRepeating(
-            AlarmManager.RTC_WAKEUP,
-            trigger,
-            AlarmManager.INTERVAL_DAY,
-            pendingIntent(context, reminder.id, mutableCreate = true)!!
-        )
+        val pi = pendingIntent(context, reminder.id, mutableCreate = true) ?: return
+        val exactAllowed = Build.VERSION.SDK_INT < Build.VERSION_CODES.S || am.canScheduleExactAlarms()
+        try {
+            if (exactAllowed) {
+                am.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, trigger, pi)
+            } else {
+                am.setWindow(AlarmManager.RTC_WAKEUP, trigger, INEXACT_WINDOW_MS, pi)
+            }
+        } catch (_: SecurityException) {
+            // The exact-alarm permission was revoked between the check and the call.
+            am.setWindow(AlarmManager.RTC_WAKEUP, trigger, INEXACT_WINDOW_MS, pi)
+        }
     }
+
+    /** Without exact-alarm access the reminder fires within this window. */
+    private const val INEXACT_WINDOW_MS = 10 * 60 * 1000L
 
     private fun cancel(context: Context, id: String) {
         val am = context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager ?: return

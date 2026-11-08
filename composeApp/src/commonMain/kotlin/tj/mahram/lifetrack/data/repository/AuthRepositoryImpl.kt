@@ -8,6 +8,7 @@ import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import tj.mahram.lifetrack.data.remote.firebase.AuthTokens
 import tj.mahram.lifetrack.data.remote.firebase.FirebaseAuthApi
+import tj.mahram.lifetrack.data.remote.firebase.FirebaseAuthException
 import tj.mahram.lifetrack.domain.model.AuthState
 import tj.mahram.lifetrack.domain.repository.AuthRepository
 
@@ -89,10 +90,14 @@ class AuthRepositoryImpl(
             if (freshCached != null && nowMillis() < freshExpiry - EXPIRY_SKEW_MS) return@withLock freshCached
 
             val email = settings.getStringOrNull(KEY_EMAIL) ?: ""
-            runCatching { api.refresh(refresh, email) }
-                .onSuccess { persist(it) }
-                .map { it.idToken }
-                .getOrNull()
+            try {
+                api.refresh(refresh, email).also { persist(it) }.idToken
+            } catch (e: FirebaseAuthException) {
+                // The server rejected the refresh token: the session really is over.
+                null
+            }
+            // Anything else (no connection, timeout) propagates. It used to be
+            // swallowed too, so being offline was reported as "Session expired".
         }
     }
 }

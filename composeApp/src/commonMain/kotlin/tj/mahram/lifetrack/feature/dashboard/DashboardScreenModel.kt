@@ -2,6 +2,7 @@ package tj.mahram.lifetrack.feature.dashboard
 
 import cafe.adriel.voyager.core.model.ScreenModel
 import cafe.adriel.voyager.core.model.screenModelScope
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import kotlin.time.Clock
@@ -31,6 +32,11 @@ class DashboardScreenModel(
 
     private val _state = MutableStateFlow(DashboardState())
     val state: StateFlow<DashboardState> = _state.asStateFlow()
+
+    // "Refresh" restarts the load; the previous collectors must be stopped first
+    // (each press used to add another pair that was never cancelled).
+    // (Declared before init: initializers run in order, and init starts it.)
+    private var loadJob: Job? = null
 
     init {
         load()
@@ -73,7 +79,8 @@ class DashboardScreenModel(
     }
 
     private fun load() {
-        screenModelScope.launch {
+        loadJob?.cancel()
+        loadJob = screenModelScope.launch {
             _state.update { it.copy(isLoading = true, error = null) }
             val tz = TimeZone.currentSystemDefault()
             val now = Clock.System.now()

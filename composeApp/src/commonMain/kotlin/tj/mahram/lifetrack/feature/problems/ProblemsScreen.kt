@@ -1,5 +1,6 @@
 package tj.mahram.lifetrack.feature.problems
 
+import tj.mahram.lifetrack.ui.components.rememberDeleteConfirmation
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
@@ -264,6 +265,7 @@ private fun ProblemsSummary(state: ProblemsState) {
 @Composable
 fun ProblemCard(problem: Problem, onIntent: (ProblemsIntent) -> Unit, modifier: Modifier = Modifier) {
     val s = LocalStrings.current
+    val confirmDelete = rememberDeleteConfirmation()
     val accent = statusColor(problem.status)
     val prioColor = priorityColor(problem.priority)
     val resolved = problem.isResolved
@@ -315,7 +317,7 @@ fun ProblemCard(problem: Problem, onIntent: (ProblemsIntent) -> Unit, modifier: 
             IconButton(onClick = { onIntent(ProblemsIntent.ShowEdit(problem)) }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Outlined.Edit, contentDescription = s.problemEditAction, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f), modifier = Modifier.size(18.dp))
             }
-            IconButton(onClick = { onIntent(ProblemsIntent.Delete(problem.id)) }, modifier = Modifier.size(34.dp)) {
+            IconButton(onClick = { confirmDelete.request(problem.title) { onIntent(ProblemsIntent.Delete(problem.id)) } }, modifier = Modifier.size(34.dp)) {
                 Icon(Icons.Outlined.DeleteOutline, contentDescription = s.problemDeleteAction, tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f), modifier = Modifier.size(18.dp))
             }
         }

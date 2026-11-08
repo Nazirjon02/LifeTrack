@@ -85,7 +85,7 @@ class DebtLocalDataSource(private val db: AppDatabase) {
 
     private fun DbDebt.toDomain() = Debt(
         id = id,
-        type = DebtType.valueOf(type),
+        type = runCatching { DebtType.valueOf(type) }.getOrDefault(DebtType.LENT),
         counterparty = counterparty,
         amount = amount,
         paidAmount = paidAmount,

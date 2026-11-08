@@ -49,8 +49,6 @@ sealed class ProfileIntent {
     data class SetCurrency(val currency: String) : ProfileIntent()
     data class SetLanguage(val language: AppLanguage) : ProfileIntent()
     data class SetNotifications(val enabled: Boolean) : ProfileIntent()
-    data class SetTaskNotifications(val enabled: Boolean) : ProfileIntent()
-    data class SetFinanceNotifications(val enabled: Boolean) : ProfileIntent()
     data class SetDisplayName(val name: String) : ProfileIntent()
     data class SetAvatar(val emoji: String) : ProfileIntent()
 }
